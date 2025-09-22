@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Post Result - Instagram Posting Agent{% endblock %}
+
+{% block content %}
+<h1>📊 Posting Result</h1>
+
+{% if result.success %}
+    <div class="success">
+        <h3>✅ Success!</h3>
+        <p>Your post has been successfully published to Instagram!</p>
+        <ul>
+            <li><strong>Container ID:</strong> {{ result.container_id }}</li>
+            <li><strong>Media ID:</strong> {{ result.media_id }}</li>
+        </ul>
+    </div>
+{% else %}
+    <div class="error">
+        <h3>❌ Error</h3>
+        <p>Failed to post to Instagram:</p>
+        <p><strong>{{ result.error }}</strong></p>
+        {% if result.container_id %}
+            <p><em>Container was created (ID: {{ result.container_id }}) but publishing failed.</em></p>
+        {% endif %}
+    </div>
+{% endif %}
+
+<div class="info">
+    <h4>📝 Post Details:</h4>
+    <p><strong>Image URL:</strong> <a href="{{ image_url }}" target="_blank">{{ image_url }}</a></p>
+    <p><strong>Caption:</strong></p>
+    <p style="white-space: pre-wrap; background: #f8f9fa; padding: 10px; border-radius: 4px;">{{ caption }}</p>
+</div>
+
+<a href="/" class="back-link">← Post Another Image</a>
+{% endblock %}

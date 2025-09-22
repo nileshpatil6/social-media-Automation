@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Generate Single Advertisement{% endblock %}
+
+{% block content %}
+<h1>🎨 AI Advertisement Generator</h1>
+
+<div class="info">
+    <strong>🤖 How it works:</strong>
+    <ol>
+        <li>Gemini analyzes your topic and creates optimized image prompt</li>
+        <li>Ideogram generates high-quality advertisement image</li>
+        <li>Gemini Vision analyzes image quality and brand suitability</li>
+        <li>System automatically edits or regenerates if needed</li>
+        <li>Final image ready for Instagram posting</li>
+    </ol>
+</div>
+
+<form id="generateForm">
+    <div class="form-group">
+        <label for="topic">Advertisement Topic *</label>
+        <input 
+            type="text" 
+            id="topic" 
+            name="topic" 
+            placeholder="e.g., Summer Sale - 50% off fashion items"
+            required
+        >
+        <small>Describe what you want to advertise</small>
+    </div>
+    
+    <div class="form-group">
+        <label for="brand_context">Brand Context</label>
+        <textarea 
+            id="brand_context" 
+            name="brand_context" 
+            placeholder="e.g., Modern fashion brand targeting young professionals, minimalist aesthetic, premium quality"
+        ></textarea>
+        <small>Describe your brand's style, target audience, and positioning</small>
+    </div>
+    
+    <div class="form-group">
+        <label for="constraints">Image Constraints</label>
+        <textarea 
+            id="constraints" 
+            name="constraints" 
+            placeholder="e.g., Use blue and white colors, include product photos, minimal text, square format"
+        ></textarea>
+        <small>Specific requirements for the generated image</small>
+    </div>
+    
+    <button type="submit" id="generateBtn">🚀 Generate Advertisement</button>
+</form>
+
+<div id="generationProgress" style="display: none;">
+    <div class="info">
+        <h3>🔄 Generating Your Advertisement...</h3>
+        <div id="progressSteps"></div>
+        <div id="progressBar" style="background: #f0f0f0; border-radius: 10px; margin: 20px 0;">
+            <div id="progressFill" style="background: linear-gradient(45deg, #405DE6, #5851DB, #833AB4, #C13584, #E1306C, #FD1D1D); height: 20px; border-radius: 10px; width: 0%; transition: width 0.3s;"></div>
+        </div>
+    </div>
+</div>
+
+<div id="generationResult" style="display: none;"></div>
+
+<a href="/" class="back-link">← Back to Dashboard</a>
+
+<script>
+let authToken = localStorage.getItem('authToken');
+
+if (!authToken) {
+    alert('Please login first');
+    window.location.href = '/';
+}
+
+document.getElementById('generateForm').addEventListener('submit', async function(event) {
+    event.preventDefault();
+    
+    if (!authToken) {
+        alert('Please login first');
+        return;
+    }
+    
+    const formData = new FormData(this);
+    
+    // Show progress
+    document.getElementById('generationProgress').style.display = 'block';
+    document.getElementById('generateBtn').disabled = true;
+    document.getElementById('generateBtn').textContent = '🔄 Generating...';
+    
+    // Simulate progress steps
+    const steps = [
+        'Analyzing topic with Gemini AI...',
+        'Creating optimized image prompt...',
+        'Generating image with Ideogram...',
+        'Analyzing image quality...',
+        'Applying improvements...',
+        'Finalizing advertisement...'
+    ];
+    
+    let currentStep = 0;
+    const progressInterval = setInterval(() => {
+        if (currentStep < steps.length) {
+            document.getElementById('progressSteps').innerHTML = `
+                <p><strong>Step ${currentStep + 1}/${steps.length}:</strong> ${steps[currentStep]}</p>
+            `;
+            document.getElementById('progressFill').style.width = `${((currentStep + 1) / steps.length) * 100}%`;
+            currentStep++;
+        }
+    }, 2000);
+    
+    try {
+        const response = await fetch('/generate-ad', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: formData
+        });
+        
+        if (response.ok) {
+            // Clear progress
+            clearInterval(progressInterval);
+            document.getElementById('generationProgress').style.display = 'none';
+            
+            // Show result page and execute its scripts
+            const resultHtml = await response.text();
+            document.open();
+            document.write(resultHtml);
+            document.close();
+        } else {
+            throw new Error('Generation failed');
+        }
+    } catch (error) {
+        clearInterval(progressInterval);
+        document.getElementById('generationProgress').style.display = 'none';
+        document.getElementById('generationResult').innerHTML = `
+            <div class="error">
+                <h3>❌ Generation Failed</h3>
+                <p>Error: ${error.message}</p>
+                <p>Please check your API keys and try again.</p>
+            </div>
+        `;
+        document.getElementById('generationResult').style.display = 'block';
+    } finally {
+        document.getElementById('generateBtn').disabled = false;
+        document.getElementById('generateBtn').textContent = '🚀 Generate Advertisement';
+    }
+});
+</script>
+{% endblock %}
