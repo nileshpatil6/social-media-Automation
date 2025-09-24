@@ -83,89 +83,240 @@
     
     <!-- Post to Instagram Section -->
     {% if result.final_image_filename %}
-    <div style="background: linear-gradient(135deg, #405DE6, #5851DB, #833AB4, #C13584, #E1306C, #FD1D1D); color: white; padding: 25px; border-radius: 10px; margin: 30px 0;">
-        <h3 style="color: white; margin-top: 0;">📱 Post to Instagram</h3>
-        
-        <!-- Direct Post Button (New Working Method) -->
-        <div style="background: rgba(255,255,255,0.15); padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-            <h4 style="color: white; margin: 0 0 10px 0;">✨ Direct Post (Recommended)</h4>
-            <p style="color: white; margin: 0 0 15px 0; font-size: 14px;">Uses the same reliable posting method as the Auto-Post feature</p>
-            
+    <div class="card card--accent">
+        <div class="stack">
+            <div>
+                <h3>Post to Instagram</h3>
+                <p>Publish this creative directly to Instagram using the same reliable workflow as Auto Post.</p>
+            </div>
             <div class="form-group">
-                <label for="directCaption" style="color: white;">Instagram Caption:</label>
-                <textarea 
-                    id="directCaption" 
-                    style="width: 100%; height: 80px; padding: 10px; border: none; border-radius: 5px; margin-top: 5px;"
-                    placeholder="Write an engaging caption for your advertisement..."
-                >{{ topic }} 🚀
-
-Generated with AI-powered advertisement system! 
-✨ High-quality visuals
-🎯 Brand-optimized content
-📊 Quality analyzed
-
-#advertisement #ai #marketing #brand #{{ topic.lower().replace(' ', '') }}</textarea>
+                <label for="postCaption">Instagram Caption</label>
+                <textarea id="postCaption" rows="5" placeholder="Add a caption for your post..."></textarea>
+                <small>You can edit the caption before posting.</small>
             </div>
-            
-            <button onclick="directPost()" id="directPostBtn" style="background: #28a745; color: white; padding: 12px 25px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; margin-right: 10px;">🚀 Direct Post</button>
-            <span id="directPostStatus" style="color: white; font-weight: bold;"></span>
+            <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                <button type="button" class="btn btn--primary" id="postToInstagramBtn">Post to Instagram</button>
+                <span id="postStatus" style="font-weight: 600;"></span>
+            </div>
+            <div id="postResult" class="stack" style="display: none;"></div>
         </div>
-        
-        <!-- Original Post Button (For Reference) -->
-        <details style="margin-top: 15px;">
-            <summary style="color: white; cursor: pointer; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 5px;">🔧 Advanced: Original Post Method</summary>
-            <div style="margin-top: 15px; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 5px;">
-                <form id="postForm" method="post" action="/post-to-instagram">
-                    <input type="hidden" name="image_filename" value="{{ result.final_image_filename }}">
-                    <input type="hidden" name="topic_id" value="{{ topic_id }}">
-                    
-                    <div class="form-group">
-                        <label for="caption" style="color: white;">Instagram Caption:</label>
-                        <textarea 
-                            id="caption" 
-                            name="caption" 
-                            style="width: 100%; height: 80px; padding: 10px; border: none; border-radius: 5px; margin-top: 5px;"
-                            placeholder="Write an engaging caption for your advertisement..."
-                        >{{ topic }} 🚀
-
-Generated with AI-powered advertisement system! 
-✨ High-quality visuals
-🎯 Brand-optimized content
-📊 Quality analyzed
-
-#advertisement #ai #marketing #brand #{{ topic.lower().replace(' ', '') }}</textarea>
-                    </div>
-                    
-                    <button type="submit" style="background: white; color: #E1306C; padding: 12px 25px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;">📤 Post via Upload</button>
-                </form>
-            </div>
-        </details>
-        
-        <div id="postResult" style="margin-top: 20px;"></div>
     </div>
     {% endif %}
-    
-{% else %}
-    <div class="error">
-        <h3>❌ Advertisement Generation Failed</h3>
-        <p>{{ result.error }}</p>
-        
-        {% if result.steps %}
-        <details style="margin: 20px 0;">
-            <summary style="cursor: pointer;">🔍 View Error Details</summary>
-            <div style="margin-top: 15px;">
-                {% for step in result.steps %}
-                <div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-left: 4px solid {% if step.status == 'completed' %}#28a745{% elif step.status == 'failed' %}#dc3545{% else %}#ffc107{% endif %};">
-                    <strong>{{ step.step }}:</strong> {{ step.status }}
-                    {% if step.get('error') %}
-                    <br><small style="color: #dc3545;">{{ step.error }}</small>
-                    {% endif %}
+
+<script>
+(function () {
+    const workflowContext = {
+        topic: {{ topic | tojson }},
+        workflowId: {{ result.workflow_id | tojson }},
+        imageFilename: {{ result.final_image_filename | tojson }}
+    };
+
+    window.generatedAd = workflowContext;
+
+    function resolveAuthToken() {
+        if (window.authToken) {
+            return window.authToken;
+        }
+
+        let token = null;
+
+        try {
+            token = localStorage.getItem('authToken');
+        } catch (err) {
+            console.warn('Unable to access localStorage:', err);
+        }
+
+        if (!token) {
+            const cookieMatch = document.cookie.match(/(?:^|; )(?:authToken|sb-access-token)=([^;]+)/);
+            if (cookieMatch) {
+                token = decodeURIComponent(cookieMatch[1]);
+            }
+        }
+
+        if (token) {
+            window.authToken = token;
+        }
+
+        return token;
+    }
+
+    function setStatus(message, color) {
+        const statusEl = document.getElementById('postStatus');
+        if (!statusEl) {
+            return;
+        }
+        statusEl.textContent = message || '';
+        statusEl.style.color = color || 'inherit';
+    }
+
+    function generateCaption(topic) {
+
+        const base = (topic || 'Our latest campaign').trim();
+
+        const hashtag = base.toLowerCase().replace(/[^a-z0-9]+/g, '');
+
+        const lines = [
+
+            `${base} - created with Visionary Ads Studio.`,
+
+            '',
+
+            'Highlights:',
+
+            '- AI-tailored visuals',
+
+            '- Brand-consistent messaging',
+
+            '- Ready for Instagram engagement',
+
+            '',
+
+            `#${hashtag || 'visionaryads'} #VisionaryAds #AIMarketing`
+
+        ];
+
+        return lines.join('\n');
+
+    }
+
+    async function fetchWorkflowImageUrl(token) {
+        if (!workflowContext.workflowId) {
+            return null;
+        }
+
+        const response = await fetch('/ideogram-urls?limit=50', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Could not fetch image information.');
+        }
+
+        const payload = await response.json();
+        if (!payload.urls || !Array.isArray(payload.urls)) {
+            return null;
+        }
+
+        const match = payload.urls.find((entry) => entry.workflow_id === workflowContext.workflowId);
+        return match ? match.image_url : null;
+    }
+
+    async function markWorkflowAsPosted(token) {
+        if (!workflowContext.workflowId) {
+            return;
+        }
+
+        try {
+            await fetch('/mark-as-posted', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ workflow_id: workflowContext.workflowId })
+            });
+        } catch (err) {
+            console.warn('Unable to mark workflow as posted:', err);
+        }
+    }
+
+    async function postGeneratedImage() {
+        const button = document.getElementById('postToInstagramBtn');
+        const captionField = document.getElementById('postCaption');
+        const resultContainer = document.getElementById('postResult');
+
+        if (!button || !captionField || !resultContainer) {
+            return;
+        }
+
+        const token = resolveAuthToken();
+        if (!token) {
+            alert('Please log in before posting.');
+            return;
+        }
+
+        const caption = (captionField.value || '').trim() || generateCaption(workflowContext.topic);
+
+        button.disabled = true;
+        setStatus('Preparing to publish...', '#475569');
+        resultContainer.style.display = 'none';
+        resultContainer.innerHTML = '';
+
+        try {
+            const imageUrl = await fetchWorkflowImageUrl(token);
+
+            if (!imageUrl) {
+                throw new Error('Unable to locate the generated image URL. Try refreshing the page.');
+            }
+
+            setStatus('Posting to Instagram...', '#475569');
+
+            const formData = new FormData();
+            formData.append('image_url', imageUrl);
+            formData.append('caption', caption);
+
+            const response = await fetch('/post-direct-image', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                const errorMessage = result.error || 'Instagram posting failed.';
+                throw new Error(errorMessage);
+            }
+
+            await markWorkflowAsPosted(token);
+
+            setStatus('Posted successfully.', '#16a34a');
+
+            resultContainer.style.display = 'block';
+            resultContainer.innerHTML = `
+                <div class="alert alert--success">
+                    <div>
+                        <strong>Instagram post created.</strong><br>
+                        ${result.post_url ? 'View it here: <a href="${result.post_url}" target="_blank">Instagram Link</a>' : 'Check your Instagram account to confirm.'}
+                    </div>
                 </div>
-                {% endfor %}
-            </div>
-        </details>
-        {% endif %}
-    </div>
+            `;
+        } catch (error) {
+            console.error('Direct post error:', error);
+            setStatus(error.message || 'Posting failed.', '#dc2626');
+
+            resultContainer.style.display = 'block';
+            resultContainer.innerHTML = `
+                <div class="alert alert--error">
+                    <div>
+                        <strong>Unable to post to Instagram.</strong><br>
+                        ${error.message || 'An unexpected error occurred. Please try again.'}
+                    </div>
+                </div>
+            `;
+        } finally {
+            button.disabled = false;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const button = document.getElementById('postToInstagramBtn');
+        const captionField = document.getElementById('postCaption');
+
+        if (!button || !captionField) {
+            return;
+        }
+
+        captionField.value = generateCaption(workflowContext.topic);
+        button.addEventListener('click', postGeneratedImage);
+    });
+})();
+</script>
+
 {% endif %}
 
 <div style="margin-top: 30px; display: flex; gap: 15px;">
@@ -173,277 +324,4 @@ Generated with AI-powered advertisement system!
     <a href="/" class="back-link">← Back to Dashboard</a>
 </div>
 
-<script>
-// Store the current workflow info for direct posting
-window.currentWorkflow = {
-    topic: "{{ topic }}",
-    workflowId: "{{ result.workflow_id }}",
-    imageFilename: "{{ result.final_image_filename }}"
-};
-
-// Function to get the latest Ideogram URL for this workflow
-function getIdeogramUrl() {
-    // Try to get from the latest log entry for this workflow
-    return fetch('/ideogram-urls?limit=50', {
-        headers: {
-            'Authorization': `Bearer ${window.authToken}`
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        // Find the URL for our workflow ID
-        const urlEntry = data.urls.find(entry => entry.workflow_id === window.currentWorkflow.workflowId);
-        return urlEntry ? urlEntry.image_url : null;
-    })
-    .catch(error => {
-        console.error('Failed to get Ideogram URL:', error);
-        return null;
-    });
-}
-
-// Direct posting function using the same logic as auto-post
-window.directPost = async function() {
-    const btn = document.getElementById('directPostBtn');
-    const status = document.getElementById('directPostStatus');
-    const caption = document.getElementById('directCaption').value.trim();
-    
-    if (!window.authToken) {
-        alert('Please login first');
-        return;
-    }
-    
-    if (!caption) {
-        alert('Please enter a caption');
-        return;
-    }
-    
-    // Disable button and show loading
-    btn.disabled = true;
-    btn.textContent = '⏳ Getting Image URL...';
-    status.textContent = 'Fetching Ideogram URL...';
-    status.style.color = '#ffc107';
-    
-    try {
-        // Get the Ideogram URL
-        const imageUrl = await getIdeogramUrl();
-        
-        if (!imageUrl) {
-            throw new Error('Could not find Ideogram URL for this image');
-        }
-        
-        console.log('🔗 Found Ideogram URL:', imageUrl);
-        
-        // Update status
-        btn.textContent = '📤 Posting to Instagram...';
-        status.textContent = 'Posting to Instagram...';
-        
-        // Use the same direct posting logic as auto-post
-        const formData = new FormData();
-        formData.append('image_url', imageUrl);
-        formData.append('caption', caption);
-        
-        const response = await fetch('/post-direct-image', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${window.authToken}`
-            },
-            body: formData
-        });
-        
-        const result = await response.json();
-        
-        if (response.ok && result.success) {
-            status.textContent = '✅ Posted successfully!';
-            status.style.color = '#28a745';
-            
-            // Show success in the result area
-            document.getElementById('postResult').innerHTML = `
-                <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 5px;">
-                    <h4 style="color: white; margin: 0;">✅ Direct Post Successful!</h4>
-                    <p style="color: white; margin: 10px 0 0 0;">
-                        Image posted directly to Instagram using Ideogram URL<br>
-                        ${result.post_url ? `<a href="${result.post_url}" target="_blank" style="color: white;">View Post</a>` : ''}
-                    </p>
-                </div>
-            `;
-            
-            // Mark as posted in the logs
-            try {
-                await fetch('/mark-as-posted', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${window.authToken}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ workflow_id: window.currentWorkflow.workflowId })
-                });
-                console.log('✅ Marked as posted in logs');
-            } catch (error) {
-                console.log('⚠️ Failed to mark as posted:', error);
-            }
-            
-        } else {
-            throw new Error(result.error || 'Unknown error occurred');
-        }
-        
-    } catch (error) {
-        console.error('❌ Direct posting error:', error);
-        status.textContent = '❌ Failed to post';
-        status.style.color = '#dc3545';
-        
-        document.getElementById('postResult').innerHTML = `
-            <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 5px;">
-                <h4 style="color: white; margin: 0;">❌ Direct Post Failed</h4>
-                <p style="color: white; margin: 10px 0 0 0;">${error.message}</p>
-            </div>
-        `;
-    } finally {
-        btn.disabled = false;
-        btn.textContent = '🚀 Direct Post';
-    }
-}
-
-// Try multiple sources for auth token (avoid redeclaration)
-if (typeof authToken === 'undefined') {
-    var authToken = localStorage.getItem('authToken');
-}
-
-// Store globally to avoid conflicts
-window.authToken = authToken;
-
-// If no token in localStorage, try to get from cookies
-if (!authToken) {
-    // Helper function to get cookie value
-    function getCookie(name) {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop().split(';').shift();
-        return null;
-    }
-    
-    // Try different cookie names
-    authToken = getCookie('authToken') || getCookie('sb-access-token') || getCookie('access_token');
-    
-    if (authToken) {
-        console.log('🍪 Found auth token in cookies');
-        window.authToken = authToken;
-    }
-}
-
-console.log('🔍 Auth token source check:', {
-    localStorage: localStorage.getItem('authToken') ? 'found' : 'missing',
-    cookies: document.cookie.includes('authToken') || document.cookie.includes('sb-access-token') ? 'found' : 'missing',
-    finalToken: window.authToken ? `${window.authToken.substring(0, 20)}...` : 'MISSING'
-});
-
-// Wait for DOM to be fully loaded
-document.addEventListener('DOMContentLoaded', function() {
-    const postForm = document.getElementById('postForm');
-    
-    if (!postForm) {
-        console.error('❌ Post form not found');
-        return;
-    }
-    
-    console.log('✅ Post form found, adding event listener');
-    
-    // Also add event listener to the button directly as backup
-    const submitBtn = postForm.querySelector('button[type="submit"]');
-    if (submitBtn) {
-        submitBtn.addEventListener('click', function(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            console.log('🔘 Button click intercepted');
-            handleFormSubmission();
-        });
-    }
-    
-    postForm.addEventListener('submit', async function(event) {
-        event.preventDefault();
-        event.stopPropagation();
-        event.stopImmediatePropagation();
-        console.log('📤 Form submission intercepted');
-        handleFormSubmission();
-    });
-    
-    async function handleFormSubmission() {
-        console.log('🎯 Handling form submission');
-        
-        if (!window.authToken) {
-            alert('Please login first');
-            return;
-        }
-        
-        const formData = new FormData(postForm);
-        const submitBtn = postForm.querySelector('button[type="submit"]');
-        
-        // Debug: Log form data
-        console.log('📋 Form data:');
-        for (let [key, value] of formData.entries()) {
-            console.log(`  ${key}: ${value}`);
-        }
-        
-        if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.textContent = '📤 Posting...';
-        }
-        
-        try {
-            console.log('🌐 Sending request to /post-to-instagram');
-            console.log('🔑 Auth token:', window.authToken ? `${window.authToken.substring(0, 20)}...` : 'MISSING');
-            
-            const response = await fetch('/post-to-instagram', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${window.authToken}`,
-                    'X-Auth-Token': window.authToken
-                },
-                body: formData,
-                credentials: 'include'  // Include cookies in request
-            });
-            
-            console.log(`📊 Response status: ${response.status}`);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            
-            const result = await response.json();
-            console.log('📋 Instagram API result:', result);
-            
-            if (result.success) {
-                document.getElementById('postResult').innerHTML = `
-                    <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 5px;">
-                        <h4 style="color: white; margin: 0;">✅ Posted Successfully!</h4>
-                        <p style="color: white; margin: 10px 0 0 0;">
-                            Container ID: ${result.container_id || 'N/A'}<br>
-                            Media ID: ${result.media_id || 'N/A'}
-                        </p>
-                    </div>
-                `;
-            } else {
-                document.getElementById('postResult').innerHTML = `
-                    <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 5px;">
-                        <h4 style="color: white; margin: 0;">❌ Posting Failed</h4>
-                        <p style="color: white; margin: 10px 0 0 0;">${result.error || 'Unknown error'}</p>
-                    </div>
-                `;
-            }
-        } catch (error) {
-            console.error('❌ Instagram posting error:', error);
-            document.getElementById('postResult').innerHTML = `
-                <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 5px;">
-                    <h4 style="color: white; margin: 0;">❌ Error</h4>
-                    <p style="color: white; margin: 10px 0 0 0;">${error.message}</p>
-                </div>
-            `;
-        } finally {
-            if (submitBtn) {
-                submitBtn.disabled = false;
-                submitBtn.textContent = '📤 Post to Instagram';
-            }
-        }
-    }
-});
-</script>
 {% endblock %}
