@@ -94,6 +94,31 @@
                 <textarea id="postCaption" rows="5" placeholder="Add a caption for your post..."></textarea>
                 <small>You can edit the caption before posting.</small>
             </div>
+            <div class="form-group" style="margin-top: 1rem;">
+                <label style="display:flex; gap:8px; align-items:center;">
+                    <input type="checkbox" id="generatedScheduleToggle"> Schedule this post
+                </label>
+                <small>Enable to publish at a specific future time rather than immediately.</small>
+            </div>
+            <div id="generatedScheduleFields" style="display:none; border:1px solid #e2e8f0; background:#f8fafc; padding:12px; border-radius:8px; margin-bottom:1rem;">
+                <div class="form-group">
+                    <label for="generatedScheduleTime">Scheduled date &amp; time</label>
+                    <input type="datetime-local" id="generatedScheduleTime" style="width:100%; padding:8px; border:1px solid #cbd5f5; border-radius:5px;">
+                </div>
+                <div class="form-group">
+                    <label for="generatedScheduleTimezone">Timezone</label>
+                    <select id="generatedScheduleTimezone" style="width:100%; padding:8px; border:1px solid #cbd5f5; border-radius:5px;">
+                        <option value="UTC">UTC</option>
+                        <option value="America/New_York">America/New_York</option>
+                        <option value="America/Los_Angeles">America/Los_Angeles</option>
+                        <option value="Europe/London">Europe/London</option>
+                        <option value="Europe/Paris">Europe/Paris</option>
+                        <option value="Asia/Kolkata">Asia/Kolkata</option>
+                        <option value="Australia/Sydney">Australia/Sydney</option>
+                    </select>
+                    <small>Your local timezone is selected automatically when possible.</small>
+                </div>
+            </div>
             <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
                 <button type="button" class="btn btn--primary" id="postToInstagramBtn">Post to Instagram</button>
                 <span id="postStatus" style="font-weight: 600;"></span>
@@ -108,8 +133,45 @@
     const workflowContext = {
         topic: {{ topic | tojson }},
         workflowId: {{ result.workflow_id | tojson }},
+        topicId: {{ topic_id | tojson }},
         imageFilename: {{ result.final_image_filename | tojson }}
     };
+
+    let generatedLocalTimezone = 'UTC';
+    const generatedScheduleToggle = document.getElementById('generatedScheduleToggle');
+    const generatedScheduleFields = document.getElementById('generatedScheduleFields');
+    const generatedScheduleTime = document.getElementById('generatedScheduleTime');
+    const generatedScheduleTimezone = document.getElementById('generatedScheduleTimezone');
+    const generatedSubmitButton = document.getElementById('postToInstagramBtn');
+
+    try {
+        const resolvedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (resolvedTimezone) {
+            generatedLocalTimezone = resolvedTimezone;
+        }
+    } catch (err) {
+        console.warn('Unable to detect local timezone:', err);
+    }
+
+    if (generatedScheduleTimezone) {
+        const tzOptions = Array.from(generatedScheduleTimezone.options || []);
+        if (generatedLocalTimezone && !tzOptions.some(opt => opt.value === generatedLocalTimezone)) {
+            const option = document.createElement('option');
+            option.value = generatedLocalTimezone;
+            option.textContent = generatedLocalTimezone;
+            generatedScheduleTimezone.insertBefore(option, generatedScheduleTimezone.firstChild);
+        }
+        generatedScheduleTimezone.value = generatedLocalTimezone || generatedScheduleTimezone.value || 'UTC';
+    }
+
+    if (generatedScheduleToggle && generatedScheduleFields && generatedSubmitButton) {
+        generatedScheduleToggle.addEventListener('change', () => {
+            const enabled = generatedScheduleToggle.checked;
+            generatedScheduleFields.style.display = enabled ? 'block' : 'none';
+            generatedSubmitButton.textContent = enabled ? 'Schedule Post' : 'Post to Instagram';
+            setStatus('', '#475569');
+        });
+    }
 
     window.generatedAd = workflowContext;
 
@@ -176,31 +238,6 @@
         ];
 
         return lines.join('\n');
-
-    }
-
-    async function fetchWorkflowImageUrl(token) {
-        if (!workflowContext.workflowId) {
-            return null;
-        }
-
-        const response = await fetch('/ideogram-urls?limit=50', {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error('Could not fetch image information.');
-        }
-
-        const payload = await response.json();
-        if (!payload.urls || !Array.isArray(payload.urls)) {
-            return null;
-        }
-
-        const match = payload.urls.find((entry) => entry.workflow_id === workflowContext.workflowId);
-        return match ? match.image_url : null;
     }
 
     async function markWorkflowAsPosted(token) {
@@ -226,6 +263,9 @@
         const button = document.getElementById('postToInstagramBtn');
         const captionField = document.getElementById('postCaption');
         const resultContainer = document.getElementById('postResult');
+        const scheduleToggle = document.getElementById('generatedScheduleToggle');
+        const scheduleTimeInput = document.getElementById('generatedScheduleTime');
+        const timezoneSelect = document.getElementById('generatedScheduleTimezone');
 
         if (!button || !captionField || !resultContainer) {
             return;
@@ -238,26 +278,35 @@
         }
 
         const caption = (captionField.value || '').trim() || generateCaption(workflowContext.topic);
+        const scheduleEnabled = scheduleToggle && scheduleToggle.checked;
+
+        if (scheduleEnabled && (!scheduleTimeInput || !scheduleTimeInput.value)) {
+            setStatus('Select a scheduled date and time.', '#dc2626');
+            return;
+        }
+
+        if (!workflowContext.imageFilename || !workflowContext.topicId) {
+            setStatus('Missing image information. Regenerate the ad or contact support.', '#dc2626');
+            return;
+        }
 
         button.disabled = true;
-        setStatus('Preparing to publish...', '#475569');
+        setStatus(scheduleEnabled ? 'Scheduling post...' : 'Posting to Instagram...', '#475569');
         resultContainer.style.display = 'none';
         resultContainer.innerHTML = '';
 
         try {
-            const imageUrl = await fetchWorkflowImageUrl(token);
+            const formData = new FormData();
+            formData.append('image_filename', workflowContext.imageFilename);
+            formData.append('caption', caption);
+            formData.append('topic_id', workflowContext.topicId);
 
-            if (!imageUrl) {
-                throw new Error('Unable to locate the generated image URL. Try refreshing the page.');
+            if (scheduleEnabled) {
+                formData.append('scheduled_time', scheduleTimeInput.value);
+                formData.append('schedule_timezone', (timezoneSelect && timezoneSelect.value) || generatedLocalTimezone || 'UTC');
             }
 
-            setStatus('Posting to Instagram...', '#475569');
-
-            const formData = new FormData();
-            formData.append('image_url', imageUrl);
-            formData.append('caption', caption);
-
-            const response = await fetch('/post-direct-image', {
+            const response = await fetch('/post-to-instagram', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -267,28 +316,87 @@
 
             const result = await response.json();
 
-            if (!response.ok || !result.success) {
-                const errorMessage = result.error || 'Instagram posting failed.';
+            if (response.ok && result.scheduled) {
+                const scheduled = result.scheduled_post || {};
+                const scheduledIso = scheduled.schedule_time;
+                const tz = scheduled.timezone || ((timezoneSelect && timezoneSelect.value) || 'UTC');
+                
+                // Format datetime in the user's chosen timezone
+                let readable = '';
+                if (scheduledIso) {
+                    try {
+                        const date = new Date(scheduledIso);
+                        
+                        // Try modern approach with timeZone support
+                        if (Intl && Intl.DateTimeFormat) {
+                            try {
+                                readable = new Intl.DateTimeFormat('en-US', {
+                                    timeZone: tz,
+                                    year: 'numeric',
+                                    month: '2-digit', 
+                                    day: '2-digit',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    second: '2-digit',
+                                    hour12: true
+                                }).format(date);
+                            } catch (e) {
+                                console.log('Intl.DateTimeFormat failed, trying toLocaleString:', e);
+                                readable = date.toLocaleString('en-US', {
+                                    timeZone: tz,
+                                    year: 'numeric',
+                                    month: '2-digit', 
+                                    day: '2-digit',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    second: '2-digit',
+                                    hour12: true
+                                });
+                            }
+                        } else {
+                            // Fallback for older browsers - just use the basic toLocaleString
+                            readable = date.toLocaleString();
+                        }
+                    } catch (e) {
+                        console.error('Date formatting error:', e);
+                        readable = scheduledIso; // Show raw ISO string as last resort
+                    }
+                } else if (scheduleTimeInput) {
+                    readable = scheduleTimeInput.value;
+                }
+                
+                setStatus(`Scheduled for ${readable} (${tz})`, '#16a34a');
+                resultContainer.style.display = 'block';
+                resultContainer.innerHTML = `
+                    <div class="alert alert--info">
+                        <div>
+                            <strong>Post scheduled.</strong><br>
+                            It will publish automatically at ${readable} (${tz}).
+                        </div>
+                    </div>
+                `;
+                if (typeof loadScheduledPosts === 'function') {
+                    loadScheduledPosts();
+                }
+            } else if (response.ok && result.success) {
+                await markWorkflowAsPosted(token);
+                setStatus('Posted successfully.', '#16a34a');
+                resultContainer.style.display = 'block';
+                resultContainer.innerHTML = `
+                    <div class="alert alert--success">
+                        <div>
+                            <strong>Instagram post created.</strong><br>
+                            ${result.post_url ? `View it here: <a href="${result.post_url}" target="_blank">Instagram Link</a>` : 'Check your Instagram account to confirm.'}
+                        </div>
+                    </div>
+                `;
+            } else {
+                const errorMessage = result.error || result.detail || 'Instagram posting failed.';
                 throw new Error(errorMessage);
             }
-
-            await markWorkflowAsPosted(token);
-
-            setStatus('Posted successfully.', '#16a34a');
-
-            resultContainer.style.display = 'block';
-            resultContainer.innerHTML = `
-                <div class="alert alert--success">
-                    <div>
-                        <strong>Instagram post created.</strong><br>
-                        ${result.post_url ? 'View it here: <a href="${result.post_url}" target="_blank">Instagram Link</a>' : 'Check your Instagram account to confirm.'}
-                    </div>
-                </div>
-            `;
         } catch (error) {
-            console.error('Direct post error:', error);
+            console.error('Instagram posting error:', error);
             setStatus(error.message || 'Posting failed.', '#dc2626');
-
             resultContainer.style.display = 'block';
             resultContainer.innerHTML = `
                 <div class="alert alert--error">

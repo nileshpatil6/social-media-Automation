@@ -32,6 +32,7 @@ class User(Base):
     # Relationships
     schedules = relationship("Schedule", back_populates="user")
     topics = relationship("Topic", back_populates="user")
+    scheduled_posts = relationship("ScheduledPost", back_populates="user")
 
 class Schedule(Base):
     __tablename__ = "schedules"
@@ -77,6 +78,7 @@ class Topic(Base):
     # Relationships
     user = relationship("User", back_populates="topics")
     schedule = relationship("Schedule", back_populates="topics")
+    scheduled_posts = relationship("ScheduledPost", back_populates="topic")
     prompts = relationship("Prompt", back_populates="topic")
     images = relationship("Image", back_populates="topic")
 
@@ -163,6 +165,37 @@ class ImageReview(Base):
     
     # Relationships
     image = relationship("Image", back_populates="reviews")
+
+class ScheduledPost(Base):
+    __tablename__ = "scheduled_posts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    topic_id = Column(Integer, ForeignKey("topics.id"), nullable=True)
+    workflow_id = Column(String)
+    image_url = Column(String)
+    image_filename = Column(String)
+    job_metadata = Column("metadata", JSON)  # Use column mapping to avoid reserved keyword
+    caption = Column(Text, nullable=False)
+    schedule_time = Column(DateTime(timezone=True), nullable=False)
+    scheduled_for = Column(DateTime(timezone=True))  # Alternative column name from actual DB
+    timezone = Column(String, default="UTC")
+    status = Column(String, default="pending")  # pending, processing, completed, failed, retry, cancelled
+    attempts = Column(Integer, default=0)
+    max_attempts = Column(Integer, default=3)
+    last_error = Column(Text)
+    error_message = Column(Text)  # Alternative column name from actual DB
+    last_error_details = Column(JSON)
+    last_attempt_at = Column(DateTime(timezone=True))
+    next_attempt_after = Column(DateTime(timezone=True))
+    posted_at = Column(DateTime(timezone=True))
+    result_payload = Column(JSON)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    user = relationship("User", back_populates="scheduled_posts")
+    topic = relationship("Topic", back_populates="scheduled_posts")
+
 
 class PostRecord(Base):
     __tablename__ = "post_records"

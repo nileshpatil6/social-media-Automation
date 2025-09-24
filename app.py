@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request, Form, HTTPException, Depends, UploadFile, File, Response
+from typing import Optional, Dict, Any
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -6,11 +7,11 @@ from sqlalchemy.orm import Session
 import uvicorn
 import os
 import tempfile
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
 # Import our services and models
 from instagram_agent import InstagramAgent
-from models.database import get_db, create_tables, User, Topic
+from models.database import get_db, create_tables, User, Topic, ScheduledPost
 from auth.auth import (
     AuthService, get_current_active_user, UserCreate, UserLogin, 
     Token, UserResponse
@@ -18,6 +19,7 @@ from auth.auth import (
 from services.ad_generation_service import AdGenerationService
 from services.excel_service import ExcelService
 from services.image_upload_service import ImageUploadService
+from services.scheduling_service import SchedulingService, ScheduledPostRunner
 
 # Create tables on startup
 create_tables()
@@ -33,11 +35,46 @@ templates = Jinja2Templates(directory="templates")
 images_dir = os.path.abspath("generated_images")
 os.makedirs(images_dir, exist_ok=True)
 
-print(f"📁 Images directory: {images_dir}")
-print(f"📋 Directory exists: {os.path.exists(images_dir)}")
+print(f"[startup] Images directory: {images_dir}")
+print(f"[startup] Directory exists: {os.path.exists(images_dir)}")
 
 app.mount("/images", StaticFiles(directory=images_dir), name="images")
 app.mount("/generated_images", StaticFiles(directory=images_dir), name="generated_images")
+
+# Scheduling setup
+scheduler_runner = ScheduledPostRunner()
+scheduling_service = scheduler_runner.service
+
+def serialize_scheduled_post(post: ScheduledPost) -> Dict[str, Any]:
+    return {
+        "id": post.id,
+        "topic_id": post.topic_id,
+        "image_filename": post.image_filename,
+        "image_url": post.image_url,
+        "caption": post.caption,
+        "schedule_time": post.schedule_time.replace(tzinfo=timezone.utc).isoformat() if post.schedule_time else None,
+        "timezone": post.timezone,
+        "status": post.status,
+        "attempts": post.attempts,
+        "max_attempts": post.max_attempts,
+        "next_attempt_after": post.next_attempt_after.replace(tzinfo=timezone.utc).isoformat() if post.next_attempt_after else None,
+        "last_error": post.last_error,
+        "last_error_details": post.last_error_details,
+        "posted_at": post.posted_at.replace(tzinfo=timezone.utc).isoformat() if post.posted_at else None,
+        "result": post.result_payload,
+        "created_at": post.created_at.replace(tzinfo=timezone.utc).isoformat() if post.created_at else None,
+        "updated_at": post.updated_at.replace(tzinfo=timezone.utc).isoformat() if getattr(post, "updated_at", None) else None,
+        "metadata": post.job_metadata,
+    }
+
+@app.on_event("startup")
+async def start_scheduler():
+    await scheduler_runner.start()
+
+
+@app.on_event("shutdown")
+async def stop_scheduler():
+    await scheduler_runner.stop()
 
 # Authentication endpoints
 @app.post("/auth/register", response_model=Token)
@@ -219,92 +256,188 @@ async def post_to_instagram(
     image_filename: str = Form(...),
     caption: str = Form(...),
     topic_id: int = Form(...),
+    scheduled_time: Optional[str] = Form(None),
+    schedule_timezone: Optional[str] = Form("UTC"),
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """Post generated image to Instagram"""
-    print(f"🎯 Instagram posting request from user: {current_user.email}")
-    print(f"📋 Request details: image={image_filename}, caption={caption[:50]}..., topic_id={topic_id}")
+    """Post generated image immediately or schedule it for later."""
+
     try:
-        # Verify topic belongs to user
         topic = db.query(Topic).filter(
-            Topic.id == topic_id, 
+            Topic.id == topic_id,
             Topic.user_id == current_user.id
         ).first()
-        
+
         if not topic:
             raise HTTPException(status_code=404, detail="Topic not found")
-        
-        # Verify image file exists
+
         image_path = os.path.join(os.path.abspath("generated_images"), image_filename)
         if not os.path.exists(image_path):
             raise HTTPException(status_code=404, detail=f"Image file not found: {image_filename}")
-        
-        # Upload image to IMGBB for public access
-        print(f"🌐 Uploading image to IMGBB: {image_filename}")
+
+        scheduled_time_value = (scheduled_time or "").strip() or None
+        timezone_value = (schedule_timezone or "").strip() or None
+
+        print(
+            f"[post-to-instagram] user={current_user.email} image={image_filename} "
+            f"caption_preview={caption[:50]}... topic_id={topic_id} "
+            f"scheduled_time={scheduled_time_value} timezone={timezone_value}"
+        )
+
+        if scheduled_time_value:
+            try:
+                schedule_dt, tz_name = scheduling_service.parse_scheduled_datetime(scheduled_time_value, timezone_value)
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail=str(exc))
+
+            preview_url = ImageUploadService.get_public_url(image_path)
+            metadata = {
+                "source": "generated_image",
+                "topic_id": topic_id,
+                "preview_url": preview_url,
+                "requested_by": current_user.email,
+                "requested_at": datetime.now(timezone.utc).isoformat(),
+            }
+
+            scheduled = scheduling_service.schedule_post(
+                db=db,
+                user_id=current_user.id,
+                caption=caption,
+                schedule_time=schedule_dt,
+                timezone_name=tz_name,
+                image_url=preview_url,
+                image_filename=image_filename,
+                topic_id=topic_id,
+                metadata=metadata,
+            )
+
+            return JSONResponse(
+                status_code=201,
+                content={
+                    "success": True,
+                    "scheduled": True,
+                    "scheduled_post": serialize_scheduled_post(scheduled)
+                }
+            )
+
+        print(f"[post-to-instagram] Uploading image to public host: {image_filename}")
         image_url = ImageUploadService.get_public_url(image_path)
-        
+
         if not image_url:
             raise HTTPException(
-                status_code=500, 
+                status_code=500,
                 detail="Failed to upload image to public service. Please check your IMGBB_API_KEY."
             )
-        
-        print(f"📤 Posting to Instagram:")
+
+        print("[post-to-instagram] Publishing immediately via Graph API")
         print(f"   Image file: {image_filename}")
         print(f"   Image path: {image_path}")
         print(f"   Public image URL: {image_url}")
         print(f"   Caption: {caption[:50]}...")
-        
-        # Post to Instagram using public image URL
+
         agent = InstagramAgent()
         result = agent.post_to_instagram(image_url, caption)
-        
-        print(f"📊 Instagram result: {result}")
-        # Augment result with helpful diagnostics
+
+        print(f"[post-to-instagram] Instagram response: {result}")
         if isinstance(result, dict):
-            result.setdefault('requested_image_filename', image_filename)
-            result.setdefault('public_image_url', image_url)
-            result.setdefault('local_image_path', image_path)
+            result.setdefault("requested_image_filename", image_filename)
+            result.setdefault("public_image_url", image_url)
+            result.setdefault("local_image_path", image_path)
+            result.setdefault("scheduled", False)
         return JSONResponse(content=result)
-        
+
+    except HTTPException:
+        raise
     except Exception as e:
-        print(f"❌ Instagram posting error: {e}")
+        print(f"[error] Instagram posting error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/post-direct-image")
 async def post_direct_image(
     image_url: str = Form(...),
     caption: str = Form(...),
-    current_user: User = Depends(get_current_active_user)
+    scheduled_time: Optional[str] = Form(None),
+    schedule_timezone: Optional[str] = Form("UTC"),
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
 ):
-    """Post image directly to Instagram using URL"""
-    try:        
-        print(f"🎯 Direct Instagram posting request from user: {current_user.email}")
-        print(f"📋 Request details: image_url={image_url}, caption={caption[:50]}...")
-        
+    """Post image directly to Instagram using URL or schedule it."""
+    try:
+
+        scheduled_time_value = (scheduled_time or "").strip() or None
+        timezone_value = (schedule_timezone or "").strip() or None
+
+        print(
+            f"[post-direct-image] user={current_user.email} image_url={image_url} "
+            f"caption_preview={caption[:50]}... scheduled_time={scheduled_time_value} "
+            f"timezone={timezone_value}"
+        )
+
         # Validate URL format
         try:
             from urllib.parse import urlparse
             parsed = urlparse(image_url)
             if not parsed.scheme or not parsed.netloc:
                 raise HTTPException(status_code=400, detail="Invalid image URL format")
+        except HTTPException:
+            raise
         except Exception:
             raise HTTPException(status_code=400, detail="Invalid image URL format")
-        
-        # Post to Instagram directly with the provided URL - same logic as existing endpoint
+
+        if scheduled_time_value:
+            try:
+                schedule_dt, tz_name = scheduling_service.parse_scheduled_datetime(scheduled_time_value, timezone_value)
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail=str(exc))
+
+            metadata = {
+                "source": "direct_url",
+                "requested_by": current_user.email,
+                "requested_at": datetime.now(timezone.utc).isoformat(),
+            }
+
+            scheduled = scheduling_service.schedule_post(
+                db=db,
+                user_id=current_user.id,
+                caption=caption,
+                schedule_time=schedule_dt,
+                timezone_name=tz_name,
+                image_url=image_url,
+                image_filename=None,
+                topic_id=None,
+                metadata=metadata,
+            )
+
+            return JSONResponse(
+                status_code=201,
+                content={
+                    "success": True,
+                    "scheduled": True,
+                    "scheduled_post": serialize_scheduled_post(scheduled)
+                }
+            )
+
+        if not ImageUploadService._is_public_image_url(image_url):
+            raise HTTPException(status_code=400, detail="Image URL must be publicly accessible")
+
         agent = InstagramAgent()
         result = agent.post_to_instagram(image_url, caption)
-        
-        print(f"📊 Direct Instagram result: {result}")
-        
+
+        print(f"[post-direct-image] Instagram response: {result}")
+
+        if isinstance(result, dict):
+            result.setdefault("scheduled", False)
+            result.setdefault("public_image_url", image_url)
         return JSONResponse(content=result)
-        
+
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ Direct Instagram posting error: {e}")
+        print(f"[error] Direct Instagram posting error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/topics")
 async def get_user_topics(
@@ -325,12 +458,90 @@ async def get_user_topics(
         for topic in topics
     ]
 
+
+@app.get("/scheduled-posts")
+async def list_scheduled_posts(
+    status: Optional[str] = None,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """List scheduled Instagram posts for the current user."""
+    query = db.query(ScheduledPost).filter(ScheduledPost.user_id == current_user.id)
+
+    if status:
+        status_value = status.lower()
+        if status_value == "upcoming":
+            query = query.filter(ScheduledPost.status.in_(["pending", "retry"]))
+        else:
+            query = query.filter(ScheduledPost.status == status_value)
+
+    posts = query.order_by(ScheduledPost.schedule_time.asc(), ScheduledPost.id.asc()).limit(100).all()
+    return {
+        "count": len(posts),
+        "scheduled_posts": [serialize_scheduled_post(post) for post in posts]
+    }
+
+
+@app.delete("/scheduled-posts/{post_id}")
+async def cancel_scheduled_post(
+    post_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Cancel a scheduled Instagram post."""
+    post = db.query(ScheduledPost).filter(
+        ScheduledPost.id == post_id,
+        ScheduledPost.user_id == current_user.id
+    ).first()
+
+    if not post:
+        raise HTTPException(status_code=404, detail="Scheduled post not found")
+
+    if post.status == "completed":
+        raise HTTPException(status_code=400, detail="Post already completed")
+
+    post.status = "cancelled"
+    post.next_attempt_after = None
+    db.commit()
+    db.refresh(post)
+    return {"success": True, "scheduled_post": serialize_scheduled_post(post)}
+
+
+@app.post("/scheduled-posts/{post_id}/retry")
+async def retry_scheduled_post(
+    post_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Retry a failed or cancelled scheduled post."""
+    post = db.query(ScheduledPost).filter(
+        ScheduledPost.id == post_id,
+        ScheduledPost.user_id == current_user.id
+    ).first()
+
+    if not post:
+        raise HTTPException(status_code=404, detail="Scheduled post not found")
+
+    now_utc = datetime.now(timezone.utc)
+    if post.schedule_time and post.schedule_time < now_utc:
+        post.schedule_time = now_utc + timedelta(seconds=5)
+
+    post.status = "pending"
+    post.next_attempt_after = None
+    post.last_error = None
+    post.last_error_details = None
+    post.attempts = 0
+    db.commit()
+    db.refresh(post)
+    return {"success": True, "scheduled_post": serialize_scheduled_post(post)}
+
 @app.get("/serve-image/{filename}")
 async def serve_image(filename: str):
     """Serve generated images directly"""
     image_path = os.path.join(os.path.abspath("generated_images"), filename)
     
-    print(f"🔍 Looking for image: {image_path}")
+    print(f"[serve-image] Lookup: {image_path}")
+    print(f"[serve-image] Exists: {os.path.exists(image_path)}")
     print(f"📋 File exists: {os.path.exists(image_path)}")
     
     if os.path.exists(image_path):

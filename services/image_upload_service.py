@@ -80,6 +80,47 @@ class ImageUploadService:
             return None
     
     @staticmethod
+    def upload_to_imgur(image_path: str, client_id: str = None) -> Optional[str]:
+        """
+        Upload image to Imgur (better Instagram compatibility)
+        Get client ID from https://api.imgur.com/oauth2/addclient
+        """
+        if not client_id:
+            client_id = os.getenv('IMGUR_CLIENT_ID')
+        
+        if not client_id:
+            print("⚠️  No Imgur client ID provided. Cannot upload to Imgur.")
+            return None
+        
+        try:
+            url = "https://api.imgur.com/3/upload"
+            
+            with open(image_path, 'rb') as image_file:
+                files = {'image': image_file}
+                headers = {
+                    'Authorization': f'Client-ID {client_id}'
+                }
+                
+                response = requests.post(url, files=files, headers=headers)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data['success']:
+                    public_url = data['data']['link']
+                    print(f"✅ Image uploaded to Imgur: {public_url}")
+                    return public_url
+                else:
+                    print(f"❌ Imgur upload failed: {data}")
+                    return None
+            else:
+                print(f"❌ Imgur API error: {response.status_code} - {response.text}")
+                return None
+                
+        except Exception as e:
+            print(f"❌ Error uploading to Imgur: {e}")
+            return None
+
+    @staticmethod
     def upload_to_postimg(image_path: str) -> Optional[str]:
         """
         Upload image to postimg.cc (no API key required)
@@ -126,25 +167,70 @@ class ImageUploadService:
     def get_public_url(image_path: str) -> Optional[str]:
         """
         Try multiple services to get a public URL for the image
+        Order: Imgur (best for Instagram) > imgbb > postimg
         """
         print(f"🌐 Attempting to get public URL for: {image_path}")
         
-        # Prefer imgbb first if API key is available to get a clean direct URL
+        # Try Imgur first (best Instagram compatibility)
+        imgur_client_id = os.getenv('IMGUR_CLIENT_ID')
+        if imgur_client_id:
+            public_url = ImageUploadService.upload_to_imgur(image_path, imgur_client_id)
+            if public_url:
+                return public_url
+        
+        # Try imgbb if API key is available
         imgbb_key = os.getenv('IMGBB_API_KEY')
         if imgbb_key:
             public_url = ImageUploadService.upload_to_imgbb(image_path, imgbb_key)
             if public_url:
                 return public_url
         
-        # Fallback to postimg (no API key required)
+        # Fallback to postimg (no API key required, but less reliable for Instagram)
         public_url = ImageUploadService.upload_to_postimg(image_path)
         if public_url:
             return public_url
         
         print("❌ Failed to upload image to any public service")
-        print("💡 Suggestions:")
-        print("   1. Add IMGBB_API_KEY to your .env file (free at https://api.imgbb.com/)")
-        print("   2. Use ngrok to expose localhost publicly")
-        print("   3. Deploy the app to a public server")
+        print("💡 Suggestions to fix Instagram posting issues:")
+        print("   1. Add IMGUR_CLIENT_ID to your .env file (best for Instagram, free at https://api.imgur.com/oauth2/addclient)")
+        print("   2. Add IMGBB_API_KEY to your .env file (free at https://api.imgbb.com/)")
+        print("   3. Use ngrok to expose localhost publicly")
+        print("   4. Deploy the app to a public server with direct image URLs")
+        print("   5. Instagram is picky about image hosts - some free services may not work")
         
         return None
+
+    @staticmethod
+    def validate_image_url_for_instagram(url: str) -> bool:
+        """
+        Test if an image URL is accessible and meets Instagram requirements
+        """
+        try:
+            print(f"🔍 Validating image URL for Instagram: {url}")
+            response = requests.head(url, timeout=10)
+            
+            # Check if accessible
+            if response.status_code != 200:
+                print(f"⚠️ Image URL not accessible: {response.status_code}")
+                return False
+            
+            # Check content type
+            content_type = response.headers.get('content-type', '').lower()
+            if not any(ct in content_type for ct in ['image/jpeg', 'image/png', 'image/jpg']):
+                print(f"⚠️ Invalid content type for Instagram: {content_type}")
+                return False
+            
+            # Check content length (Instagram has size limits)
+            content_length = response.headers.get('content-length')
+            if content_length:
+                size_mb = int(content_length) / (1024 * 1024)
+                if size_mb > 8:  # Instagram limit is 8MB
+                    print(f"⚠️ Image too large for Instagram: {size_mb:.1f}MB (max 8MB)")
+                    return False
+            
+            print(f"✅ Image URL validated for Instagram")
+            return True
+            
+        except Exception as e:
+            print(f"⚠️ Error validating image URL: {e}")
+            return False

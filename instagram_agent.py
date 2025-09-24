@@ -20,6 +20,17 @@ class InstagramAgent:
         Create a media container for Instagram post
         Returns the container ID if successful
         """
+        # Validate image URL first
+        from services.image_upload_service import ImageUploadService
+        if not ImageUploadService.validate_image_url_for_instagram(image_url):
+            print(f"❌ Image URL failed Instagram validation: {image_url}")
+            self.last_error = {
+                'stage': 'validate_url', 
+                'status': 400, 
+                'error': {'message': 'Image URL does not meet Instagram requirements'}
+            }
+            return None
+        
         url = f"{self.base_url}/{self.instagram_account_id}/media"
         
         # Graph API for Instagram requires image_url accessible publicly

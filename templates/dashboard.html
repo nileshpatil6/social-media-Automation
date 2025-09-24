@@ -122,9 +122,36 @@
                     </div>
                 </div>
             </div>
+
+            <div class="form-group" style="margin: 15px 0;">
+                <label style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="directScheduleToggle"> Schedule this post
+                </label>
+                <small>Enable to publish at a specific future time.</small>
+            </div>
+
+            <div id="directScheduleFields" style="display: none; border: 1px solid #ddd; padding: 12px; border-radius: 6px; background: #f8f9ff; margin-bottom: 15px;">
+                <div class="form-group">
+                    <label for="directScheduleTime">Scheduled date &amp; time</label>
+                    <input type="datetime-local" id="directScheduleTime" name="scheduled_time" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+                <div class="form-group">
+                    <label for="directScheduleTimezone">Timezone</label>
+                    <select id="directScheduleTimezone" name="schedule_timezone" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                        <option value="UTC">UTC</option>
+                        <option value="America/New_York">America/New_York</option>
+                        <option value="America/Los_Angeles">America/Los_Angeles</option>
+                        <option value="Europe/London">Europe/London</option>
+                        <option value="Europe/Paris">Europe/Paris</option>
+                        <option value="Asia/Kolkata">Asia/Kolkata</option>
+                        <option value="Australia/Sydney">Australia/Sydney</option>
+                    </select>
+                    <small>Your local timezone is preselected when available.</small>
+                </div>
+            </div>
             
             <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button type="submit" style="flex: 1; background: #ff9a9e; color: white; padding: 12px; border: none; border-radius: 5px; font-weight: bold;">Post to Instagram</button>
+                <button type="submit" id="directSubmitButton" style="flex: 1; background: #ff9a9e; color: white; padding: 12px; border: none; border-radius: 5px; font-weight: bold;">Post to Instagram</button>
                 <button type="button" onclick="hideDirectPostModal()" style="flex: 1; background: #ddd; color: #333; padding: 12px; border: none; border-radius: 5px;">Cancel</button>
             </div>
         </form>
@@ -166,6 +193,27 @@
     </div>
 </div>
 
+<!-- Scheduled Posts Section -->
+<div id="scheduledPostsSection" style="margin-top: 40px; padding: 20px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 10px; box-shadow: 0 10px 30px rgba(15,23,42,0.05);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <h3 style="margin: 0;">Scheduled Posts</h3>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <label for="scheduledStatusFilter" style="font-weight: 600;">Status:</label>
+            <select id="scheduledStatusFilter" style="padding: 6px 10px; border: 1px solid #cbd5f5; border-radius: 5px; min-width: 150px;">
+                <option value="upcoming" selected>Upcoming</option>
+                <option value="failed">Failed</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+                <option value="">All</option>
+            </select>
+            <button type="button" onclick="loadScheduledPosts()" style="background: #4facfe; color: white; padding: 8px 16px; border: none; border-radius: 5px; font-weight: bold;">Refresh</button>
+        </div>
+    </div>
+    <div id="scheduledPostsList" style="margin-top: 16px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; min-height: 80px; background: #f8fafc;">
+        <p style="color: #64748b; margin: 0;">Login to view scheduled posts.</p>
+    </div>
+</div>
+
 <!-- Authentication Section -->
 <div style="margin-top: 40px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
     <h3>🔐 Authentication</h3>
@@ -181,6 +229,7 @@
 
 <script>
 let authToken = localStorage.getItem('authToken');
+let directLocalTimezone = 'UTC';
 
 // Authentication functions
 function showLoginForm() {
@@ -237,6 +286,9 @@ async function login(event) {
             // Also store token in cookie for compatibility
             document.cookie = `authToken=${authToken}; path=/; samesite=lax`;
             document.cookie = `sb-access-token=${authToken}; path=/; samesite=lax`;
+            if (typeof loadScheduledPosts === 'function') {
+                loadScheduledPosts();
+            }
             alert('Login successful!');
             document.getElementById('authForms').innerHTML = '<p style="color: green;">✅ Logged in successfully!</p>';
         } else {
@@ -269,6 +321,9 @@ async function register(event) {
             // Also store token in cookie for compatibility
             document.cookie = `authToken=${authToken}; path=/; samesite=lax`;
             document.cookie = `sb-access-token=${authToken}; path=/; samesite=lax`;
+            if (typeof loadScheduledPosts === 'function') {
+                loadScheduledPosts();
+            }
             alert('Registration successful!');
             document.getElementById('authForms').innerHTML = '<p style="color: green;">✅ Registered and logged in successfully!</p>';
         } else {
@@ -306,9 +361,35 @@ function showDirectPostModal() {
 
 function hideDirectPostModal() {
     document.getElementById('directPostModal').style.display = 'none';
-    document.getElementById('directPostForm').reset();
-    document.getElementById('imagePreview').innerHTML = 'Enter an image URL to see preview';
-    document.getElementById('directPostResult').innerHTML = '';
+    const form = document.getElementById('directPostForm');
+    if (form) {
+        form.reset();
+    }
+    const preview = document.getElementById('imagePreview');
+    if (preview) {
+        preview.innerHTML = 'Enter an image URL to see preview';
+    }
+    const result = document.getElementById('directPostResult');
+    if (result) {
+        result.innerHTML = '';
+    }
+    const toggle = document.getElementById('directScheduleToggle');
+    const fields = document.getElementById('directScheduleFields');
+    const button = document.getElementById('directSubmitButton');
+    const timezoneSelect = document.getElementById('directScheduleTimezone');
+    if (toggle) {
+        toggle.checked = false;
+    }
+    if (fields) {
+        fields.style.display = 'none';
+    }
+    if (button) {
+        button.textContent = 'Post to Instagram';
+        button.disabled = false;
+    }
+    if (timezoneSelect && directLocalTimezone) {
+        timezoneSelect.value = directLocalTimezone;
+    }
 }
 
 function showAutoPostModal() {
@@ -422,6 +503,40 @@ function showImageError() {
     document.getElementById('imagePreview').innerHTML = '<p style="color: red;">❌ Could not load image. Please check the URL.</p>';
 }
 
+const directScheduleToggle = document.getElementById('directScheduleToggle');
+const directScheduleFields = document.getElementById('directScheduleFields');
+const directScheduleTime = document.getElementById('directScheduleTime');
+const directScheduleTimezone = document.getElementById('directScheduleTimezone');
+const directSubmitButton = document.getElementById('directSubmitButton');
+
+try {
+    const resolvedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (resolvedTimezone) {
+        directLocalTimezone = resolvedTimezone;
+    }
+} catch (err) {
+    console.warn('Could not detect local timezone:', err);
+}
+
+if (directScheduleTimezone) {
+    const options = Array.from(directScheduleTimezone.options || []);
+    if (directLocalTimezone && !options.some(opt => opt.value === directLocalTimezone)) {
+        const option = document.createElement('option');
+        option.value = directLocalTimezone;
+        option.textContent = directLocalTimezone;
+        directScheduleTimezone.insertBefore(option, directScheduleTimezone.firstChild);
+    }
+    directScheduleTimezone.value = directLocalTimezone || directScheduleTimezone.value || 'UTC';
+}
+
+if (directScheduleToggle && directScheduleFields && directSubmitButton) {
+    directScheduleToggle.addEventListener('change', () => {
+        const enabled = directScheduleToggle.checked;
+        directScheduleFields.style.display = enabled ? 'block' : 'none';
+        directSubmitButton.textContent = enabled ? 'Schedule Post' : 'Post to Instagram';
+    });
+}
+
 // Direct post form handling
 document.getElementById('directPostForm').addEventListener('submit', async function(event) {
     event.preventDefault();
@@ -429,24 +544,49 @@ document.getElementById('directPostForm').addEventListener('submit', async funct
     const imageUrl = document.getElementById('imageUrl').value.trim();
     const caption = document.getElementById('directCaption').value.trim();
     const resultDiv = document.getElementById('directPostResult');
+    const scheduleToggle = document.getElementById('directScheduleToggle');
+    
+    if (!authToken) {
+        resultDiv.innerHTML = '<div style="color: red;">Please login before posting.</div>';
+        return;
+    }
+    const scheduleTimeInput = document.getElementById('directScheduleTime');
+    const timezoneSelect = document.getElementById('directScheduleTimezone');
+    const submitButton = document.getElementById('directSubmitButton');
     
     if (!imageUrl || !caption) {
-        resultDiv.innerHTML = '<div style="color: red;">❌ Please fill in both image URL and caption</div>';
+        resultDiv.innerHTML = '<div style="color: red;">??O Please fill in both image URL and caption</div>';
         return;
     }
     
     if (!isValidImageUrl(imageUrl)) {
-        resultDiv.innerHTML = '<div style="color: red;">❌ Please enter a valid image URL</div>';
+        resultDiv.innerHTML = '<div style="color: red;">??O Please enter a valid image URL</div>';
         return;
     }
     
-    resultDiv.innerHTML = '<div style="color: blue;">⏳ Posting to Instagram...</div>';
+    const scheduleEnabled = scheduleToggle && scheduleToggle.checked;
+    if (scheduleEnabled && (!scheduleTimeInput || !scheduleTimeInput.value)) {
+        resultDiv.innerHTML = '<div style="color: red;">??O Please choose a scheduled date and time</div>';
+        return;
+    }
+    
+    if (submitButton) {
+        submitButton.disabled = true;
+    }
+    
+    resultDiv.innerHTML = scheduleEnabled
+        ? '<div style="color: blue;">??3 Scheduling post...</div>'
+        : '<div style="color: blue;">??3 Posting to Instagram...</div>';
     
     try {
-        // Use FormData like the existing Instagram posting logic
         const formData = new FormData();
         formData.append('image_url', imageUrl);
         formData.append('caption', caption);
+        
+        if (scheduleEnabled) {
+            formData.append('scheduled_time', scheduleTimeInput.value);
+            formData.append('schedule_timezone', (timezoneSelect && timezoneSelect.value) || directLocalTimezone || 'UTC');
+        }
         
         const response = await fetch('/post-direct-image', {
             method: 'POST',
@@ -458,10 +598,66 @@ document.getElementById('directPostForm').addEventListener('submit', async funct
         
         const result = await response.json();
         
-        if (response.ok && result.success) {
+        if (response.ok && result.scheduled) {
+            const scheduled = result.scheduled_post || {};
+            const scheduledIso = scheduled.schedule_time;
+            const tz = scheduled.timezone || ((timezoneSelect && timezoneSelect.value) || 'UTC');
+            
+            // Format datetime in the user's chosen timezone
+            let readable = '';
+            if (scheduledIso) {
+                try {
+                    const date = new Date(scheduledIso);
+                    
+                    // Try modern approach with timeZone support
+                    if (Intl && Intl.DateTimeFormat) {
+                        try {
+                            readable = new Intl.DateTimeFormat('en-US', {
+                                timeZone: tz,
+                                year: 'numeric',
+                                month: '2-digit', 
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit',
+                                hour12: true
+                            }).format(date);
+                        } catch (e) {
+                            console.log('Intl.DateTimeFormat failed, trying toLocaleString:', e);
+                            readable = date.toLocaleString('en-US', {
+                                timeZone: tz,
+                                year: 'numeric',
+                                month: '2-digit', 
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit',
+                                hour12: true
+                            });
+                        }
+                    } else {
+                        // Fallback for older browsers - just use the basic toLocaleString
+                        readable = date.toLocaleString();
+                    }
+                } catch (e) {
+                    console.error('Date formatting error:', e);
+                    readable = scheduledIso; // Show raw ISO string as last resort
+                }
+            } else if (scheduleTimeInput) {
+                readable = scheduleTimeInput.value;
+            }
+            
+            resultDiv.innerHTML = `<div style="color: green;">✅ Post scheduled.<br><br>It will publish automatically at ${readable} (${tz}).</div>`;
+            if (typeof loadScheduledPosts === 'function') {
+                loadScheduledPosts();
+            }
+            setTimeout(() => {
+                hideDirectPostModal();
+            }, 2500);
+        } else if (response.ok && result.success) {
             resultDiv.innerHTML = `
                 <div style="color: green;">
-                    ✅ Successfully posted to Instagram!
+                    ?o. Successfully posted to Instagram!
                     ${result.post_url ? `<br><a href="${result.post_url}" target="_blank">View Post</a>` : ''}
                 </div>
             `;
@@ -469,12 +665,204 @@ document.getElementById('directPostForm').addEventListener('submit', async funct
                 hideDirectPostModal();
             }, 3000);
         } else {
-            resultDiv.innerHTML = `<div style="color: red;">❌ Failed to post: ${result.error || 'Unknown error'}</div>`;
+            const errorMessage = result.error || result.detail || 'Unknown error';
+            resultDiv.innerHTML = `<div style="color: red;">??O Failed: ${errorMessage}</div>`;
         }
     } catch (error) {
-        resultDiv.innerHTML = `<div style="color: red;">❌ Error: ${error.message}</div>`;
+        resultDiv.innerHTML = `<div style="color: red;">??O Error: ${error.message}</div>`;
+    } finally {
+        if (submitButton) {
+            submitButton.disabled = false;
+        }
     }
 });
+
+async function loadScheduledPosts(statusOverride) {
+    const listEl = document.getElementById('scheduledPostsList');
+    if (!listEl) {
+        return;
+    }
+    if (!authToken) {
+        listEl.innerHTML = '<p style="color: #64748b; margin: 0;">Login to view scheduled posts.</p>';
+        return;
+    }
+    const filterSelect = document.getElementById('scheduledStatusFilter');
+    const status = typeof statusOverride === 'string' ? statusOverride : (filterSelect ? filterSelect.value : 'upcoming');
+    listEl.innerHTML = '<div style="color: #2563eb;">[info] Loading scheduled posts...</div>';
+    try {
+        let url = '/scheduled-posts';
+        if (status) {
+            const params = new URLSearchParams({ status });
+            url += `?${params.toString()}`;
+        }
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+        if (!response.ok) {
+            const payload = await response.json().catch(() => ({}));
+            throw new Error(payload.detail || `Request failed (${response.status})`);
+        }
+        const data = await response.json();
+        renderScheduledPosts(Array.isArray(data.scheduled_posts) ? data.scheduled_posts : []);
+    } catch (error) {
+        listEl.innerHTML = `<div style="color: #dc2626;">[error] Unable to load scheduled posts: ${error.message}</div>`;
+    }
+}
+
+function renderScheduledPosts(posts) {
+    const listEl = document.getElementById('scheduledPostsList');
+    if (!listEl) {
+        return;
+    }
+    if (!posts.length) {
+        listEl.innerHTML = '<p style="color: #64748b; margin: 0;">No posts found for this filter.</p>';
+        return;
+    }
+    const statusColors = {
+        pending: '#2563eb',
+        retry: '#f97316',
+        completed: '#16a34a',
+        failed: '#dc2626',
+        cancelled: '#64748b'
+    };
+    const cards = posts.map((post) => {
+        const caption = (post.caption || '').trim();
+        const shortCaption = caption.length > 120 ? `${caption.slice(0, 117)}...` : (caption || '(No caption)');
+        const scheduleIso = post.schedule_time;
+        const tz = post.timezone || 'UTC';
+        
+        // Format datetime in the user's chosen timezone
+        let readableTime = 'Not set';
+        if (scheduleIso) {
+            try {
+                const date = new Date(scheduleIso);
+                
+                // Try modern approach with timeZone support
+                if (Intl && Intl.DateTimeFormat) {
+                    try {
+                        readableTime = new Intl.DateTimeFormat('en-US', {
+                            timeZone: tz,
+                            year: 'numeric',
+                            month: '2-digit', 
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit',
+                            hour12: true
+                        }).format(date);
+                    } catch (e) {
+                        readableTime = date.toLocaleString('en-US', {
+                            timeZone: tz,
+                            year: 'numeric',
+                            month: '2-digit', 
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit',
+                            hour12: true
+                        });
+                    }
+                } else {
+                    // Fallback for older browsers
+                    readableTime = date.toLocaleString();
+                }
+            } catch (e) {
+                console.error('Date formatting error:', e);
+                readableTime = scheduleIso;
+            }
+        }
+        
+        const status = (post.status || 'pending');
+        const statusColor = statusColors[status] || '#334155';
+        const metadata = post.metadata || {};
+        const source = metadata.source || 'unknown';
+        const actions = [];
+        if (status === 'pending' || status === 'retry') {
+            actions.push(`<button type="button" onclick="cancelScheduledPost(${post.id})" style="background:#dc2626;color:white;padding:6px 12px;border:none;border-radius:4px;">Cancel</button>`);
+        }
+        if (status === 'failed' || status === 'cancelled') {
+            actions.push(`<button type="button" onclick="retryScheduledPost(${post.id})" style="background:#2563eb;color:white;padding:6px 12px;border:none;border-radius:4px;">Retry</button>`);
+        }
+        if (post.image_url) {
+            actions.push(`<a href="${post.image_url}" target="_blank" rel="noopener" style="padding:6px 12px;border:1px solid #94a3b8;border-radius:4px;color:#475569;text-decoration:none;">View Image</a>`);
+        }
+        const errorBlock = post.last_error ? `<div style="color:#dc2626;font-size:13px;margin-top:6px;">Last error: ${post.last_error}</div>` : '';
+        const errorDetails = post.last_error_details ? `<pre style="margin-top:6px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:4px;padding:8px;font-size:12px;color:#475569;white-space:pre-wrap;">${JSON.stringify(post.last_error_details, null, 2)}</pre>` : '';
+        return `
+            <div style="border:1px solid #e2e8f0; border-radius:8px; padding:12px; background:#ffffff; margin-bottom:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+                    <div style="max-width:600px;">
+                        <div style="font-weight:600; color:#0f172a;">${shortCaption}</div>
+                        <div style="color:#475569; font-size:14px; margin-top:4px;">Scheduled: <strong>${readableTime}</strong> (${tz})</div>
+                        <div style="color:#475569; font-size:13px; margin-top:4px;">Source: ${source}</div>
+                        <div style="color:${statusColor}; font-weight:600; font-size:13px; margin-top:6px; text-transform:capitalize;">Status: ${status}</div>
+                        ${errorBlock}
+                        ${errorDetails}
+                    </div>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">${actions.join('')}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    listEl.innerHTML = cards;
+}
+
+async function cancelScheduledPost(postId) {
+    if (!authToken) {
+        alert('Please login first.');
+        return;
+    }
+    try {
+        const response = await fetch(`/scheduled-posts/${postId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+        const result = await response.json();
+        if (!response.ok) {
+            throw new Error(result.detail || result.error || 'Unable to cancel');
+        }
+        loadScheduledPosts();
+    } catch (error) {
+        alert('Unable to cancel scheduled post: ' + error.message);
+    }
+}
+
+async function retryScheduledPost(postId) {
+    if (!authToken) {
+        alert('Please login first.');
+        return;
+    }
+    try {
+        const response = await fetch(`/scheduled-posts/${postId}/retry`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+        const result = await response.json();
+        if (!response.ok) {
+            throw new Error(result.detail || result.error || 'Unable to retry');
+        }
+        loadScheduledPosts();
+    } catch (error) {
+        alert('Unable to retry scheduled post: ' + error.message);
+    }
+}
+
+const scheduledStatusFilter = document.getElementById('scheduledStatusFilter');
+if (scheduledStatusFilter) {
+    scheduledStatusFilter.addEventListener('change', () => {
+        loadScheduledPosts(scheduledStatusFilter.value);
+    });
+}
+
+if (authToken) {
+    loadScheduledPosts();
+}
 
 // Auto-posting functionality
 let autoPostingInterval = null;
