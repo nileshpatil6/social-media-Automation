@@ -439,6 +439,117 @@
                 border-radius: 18px;
             }
         }
+        /* Advertisement result metrics */
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .score-card {
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .score-card-high {
+            background: #d4edda;
+        }
+
+        .score-card-medium {
+            background: #fff3cd;
+        }
+
+        .score-card-low {
+            background: #f8d7da;
+        }
+
+        .score-card__title {
+            margin: 0;
+            text-transform: capitalize;
+        }
+
+        .score-card__value {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .score-bar {
+            background: #f0f0f0;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .score-bar__fill {
+            height: 100%;
+            border-radius: 4px;
+            width: 0;
+        }
+
+        .score-bar__fill-high {
+            background: #28a745;
+        }
+
+        .score-bar__fill-medium {
+            background: #ffc107;
+        }
+
+        .score-bar__fill-low {
+            background: #dc3545;
+        }
+
+        .overall-score {
+            background: #f0f0f0;
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .overall-score__fill {
+            background: linear-gradient(45deg, #405DE6, #5851DB, #833AB4, #C13584, #E1306C, #FD1D1D);
+            height: 100%;
+            border-radius: 10px;
+            width: 0;
+        }
+
+        .step-list {
+            margin-top: 15px;
+        }
+
+        .step-card {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-left: 4px solid #ffc107;
+            border-radius: 0 5px 5px 0;
+        }
+
+        .step-card-completed {
+            border-left-color: #28a745;
+        }
+
+        .step-card-failed {
+            border-left-color: #dc3545;
+        }
+
+        .step-card__status {
+            color: #ffc107;
+        }
+
+        .step-card__status-completed {
+            color: #28a745;
+        }
+
+        .step-card__status-failed {
+            color: #dc3545;
+        }
+
+        .step-card__error {
+            color: #dc3545;
+        }
     </style>
 </head>
 <body>
@@ -470,3 +581,4 @@
     </div>
 </body>
 </html>
+

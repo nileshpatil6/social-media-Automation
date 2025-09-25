@@ -3,8 +3,49 @@ import requests
 import base64
 from typing import Optional
 import requests
+import json
 
 class ImageUploadService:
+    @staticmethod
+    def get_ideogram_url_for_image(image_path: str) -> Optional[str]:
+        """
+        Get the logged Ideogram URL for an image file by extracting workflow_id from filename
+        """
+        try:
+            # Extract workflow_id from filename (e.g., "dae7fa76-d9b2-4b6d-a899-d783bfd770a1_attempt_1.png")
+            filename = os.path.basename(image_path)
+            if '_attempt_' in filename:
+                workflow_id = filename.split('_attempt_')[0]
+                
+                # Check the URL log file
+                url_log_file = os.path.join(os.path.dirname(image_path), 'ideogram_urls.log')
+                if os.path.exists(url_log_file):
+                    with open(url_log_file, 'r', encoding='utf-8') as f:
+                        for line in f:
+                            try:
+                                log_entry = json.loads(line.strip())
+                                if log_entry.get('workflow_id') == workflow_id:
+                                    ideogram_url = log_entry.get('image_url')
+                                    if ideogram_url:
+                                        print(f"🎯 Found logged Ideogram URL for {filename}: {ideogram_url}")
+                                        # Validate the URL is still accessible
+                                        if ImageUploadService._is_public_image_url(ideogram_url):
+                                            print(f"✅ Ideogram URL validated and accessible")
+                                            return ideogram_url
+                                        else:
+                                            print(f"⚠️ Ideogram URL no longer accessible: {ideogram_url}")
+                            except json.JSONDecodeError:
+                                continue
+                
+                print(f"🔍 No logged Ideogram URL found for workflow: {workflow_id}")
+            else:
+                print(f"🔍 Image filename doesn't match workflow pattern: {filename}")
+                
+        except Exception as e:
+            print(f"⚠️ Error checking for Ideogram URL: {e}")
+        
+        return None
+    
     @staticmethod
     def _is_public_image_url(url: str) -> bool:
         """Return True if URL is publicly accessible and is an image/* content-type."""
@@ -166,12 +207,24 @@ class ImageUploadService:
     @staticmethod
     def get_public_url(image_path: str) -> Optional[str]:
         """
-        Try multiple services to get a public URL for the image
-        Order: Imgur (best for Instagram) > imgbb > postimg
+        Get a public URL for the image file.
+        First tries to use logged Ideogram URL, then falls back to re-uploading
         """
+        if not os.path.exists(image_path):
+            print(f"❌ Image file not found: {image_path}")
+            return None
+            
         print(f"🌐 Attempting to get public URL for: {image_path}")
         
-        # Try Imgur first (best Instagram compatibility)
+        # First, try to get the original Ideogram URL
+        ideogram_url = ImageUploadService.get_ideogram_url_for_image(image_path)
+        if ideogram_url:
+            print(f"🚀 Using original Ideogram URL directly: {ideogram_url}")
+            return ideogram_url
+        
+        print(f"💡 No Ideogram URL available, trying image upload services...")
+        
+        # Try Imgur first (best for Instagram)
         imgur_client_id = os.getenv('IMGUR_CLIENT_ID')
         if imgur_client_id:
             public_url = ImageUploadService.upload_to_imgur(image_path, imgur_client_id)
