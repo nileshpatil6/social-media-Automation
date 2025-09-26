@@ -50,6 +50,10 @@ The original n8n workflow has been transformed into a comprehensive system:
    - `IDEOGRAM_API_KEY` - Ideogram API  
    - `FACEBOOK_ACCESS_TOKEN` - Facebook Graph API
    - `INSTAGRAM_BUSINESS_ACCOUNT_ID` - Instagram Business Account
+   - `TWITTER_API_KEY` - Twitter API (for Twitter posting)
+   - `TWITTER_API_SECRET_KEY` - Twitter API (for Twitter posting)
+   - `TWITTER_ACCESS_TOKEN` - Twitter API (for Twitter posting)
+   - `TWITTER_ACCESS_TOKEN_SECRET` - Twitter API (for Twitter posting)
 
 2. **System Requirements:**
    - Python 3.8+
@@ -249,7 +253,7 @@ Your original n8n workflow data can be preserved:
 ## 🚀 Future Enhancements
 
 - **Video Generation**: Support for video advertisements
-- **Multi-Platform**: Post to Facebook, Twitter, TikTok
+- **Multi-Platform**: Post to Facebook, TikTok (Twitter now supported!)
 - **A/B Testing**: Generate multiple variants for testing
 - **Analytics Integration**: Track engagement metrics
 - **Custom Models**: Train brand-specific AI models

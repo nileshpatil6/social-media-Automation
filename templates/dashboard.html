@@ -49,6 +49,13 @@
         <button onclick="showDirectPostModal()" style="background: white; color: #ff9a9e; padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;">Post Image</button>
     </div>
     
+    <!-- Direct Twitter Posting -->
+    <div style="border: 1px solid #ddd; border-radius: 10px; padding: 20px; background: linear-gradient(135deg, #1da1f2 0%, #147bc9 100%); color: white;">
+        <h3 style="color: white; margin-top: 0;">🐦 Post to Twitter</h3>
+        <p>Post an image directly to Twitter using URL</p>
+        <button onclick="showDirectTwitterPostModal()" style="background: white; color: #1da1f2; padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;">Post to Twitter</button>
+    </div>
+    
     <!-- Auto Post from Logs -->
     <div style="border: 1px solid #ddd; border-radius: 10px; padding: 20px; background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: white;">
         <h3 style="color: white; margin-top: 0;">🤖 Auto Post from Logs</h3>
@@ -157,6 +164,69 @@
         </form>
         
         <div id="directPostResult" style="margin-top: 20px;"></div>
+    </div>
+</div>
+
+<!-- Direct Twitter Post Modal -->
+<div id="directTwitterPostModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; max-width: 600px; width: 90%;">
+        <h3>🐦 Post Image Directly to Twitter</h3>
+        
+        <form id="directTwitterPostForm">
+            <div class="form-group">
+                <label for="twitterImageUrl">Image URL:</label>
+                <input type="url" id="twitterImageUrl" name="image_url" placeholder="https://example.com/image.jpg" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                <small>Enter a publicly accessible image URL</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="twitterCaption">Caption:</label>
+                <textarea id="twitterCaption" name="caption" placeholder="Write your Twitter caption here..." required style="width: 100%; height: 120px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <div style="border: 1px solid #ddd; padding: 10px; border-radius: 4px; background: #f9f9f9; margin: 10px 0;">
+                    <label>Image Preview:</label>
+                    <div id="twitterImagePreview" style="margin-top: 10px; text-align: center; min-height: 100px; display: flex; align-items: center; justify-content: center; color: #666;">
+                        Enter an image URL to see preview
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin: 15px 0;">
+                <label style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="twitterScheduleToggle"> Schedule this post
+                </label>
+                <small>Enable to publish at a specific future time.</small>
+            </div>
+
+            <div id="twitterScheduleFields" style="display: none; border: 1px solid #ddd; padding: 12px; border-radius: 6px; background: #f8f9ff; margin-bottom: 15px;">
+                <div class="form-group">
+                    <label for="twitterScheduleTime">Scheduled date & time</label>
+                    <input type="datetime-local" id="twitterScheduleTime" name="scheduled_time" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+                <div class="form-group">
+                    <label for="twitterScheduleTimezone">Timezone</label>
+                    <select id="twitterScheduleTimezone" name="schedule_timezone" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                        <option value="UTC">UTC</option>
+                        <option value="America/New_York">America/New_York</option>
+                        <option value="America/Los_Angeles">America/Los_Angeles</option>
+                        <option value="Europe/London">Europe/London</option>
+                        <option value="Europe/Paris">Europe/Paris</option>
+                        <option value="Asia/Kolkata">Asia/Kolkata</option>
+                        <option value="Australia/Sydney">Australia/Sydney</option>
+                    </select>
+                    <small>Your local timezone is preselected when available.</small>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button type="submit" id="twitterSubmitButton" style="flex: 1; background: #1da1f2; color: white; padding: 12px; border: none; border-radius: 5px; font-weight: bold;">Post to Twitter</button>
+                <button type="button" onclick="hideDirectTwitterPostModal()" style="flex: 1; background: #ddd; color: #333; padding: 12px; border: none; border-radius: 5px;">Cancel</button>
+            </div>
+        </form>
+        
+        <div id="directTwitterPostResult" style="margin-top: 20px;"></div>
     </div>
 </div>
 
@@ -392,6 +462,47 @@ function hideDirectPostModal() {
     }
 }
 
+function showDirectTwitterPostModal() {
+    if (!authToken) {
+        alert('Please login first');
+        return;
+    }
+    document.getElementById('directTwitterPostModal').style.display = 'block';
+}
+
+function hideDirectTwitterPostModal() {
+    document.getElementById('directTwitterPostModal').style.display = 'none';
+    const form = document.getElementById('directTwitterPostForm');
+    if (form) {
+        form.reset();
+    }
+    const preview = document.getElementById('twitterImagePreview');
+    if (preview) {
+        preview.innerHTML = 'Enter an image URL to see preview';
+    }
+    const result = document.getElementById('directTwitterPostResult');
+    if (result) {
+        result.innerHTML = '';
+    }
+    const toggle = document.getElementById('twitterScheduleToggle');
+    const fields = document.getElementById('twitterScheduleFields');
+    const button = document.getElementById('twitterSubmitButton');
+    const timezoneSelect = document.getElementById('twitterScheduleTimezone');
+    if (toggle) {
+        toggle.checked = false;
+    }
+    if (fields) {
+        fields.style.display = 'none';
+    }
+    if (button) {
+        button.textContent = 'Post to Twitter';
+        button.disabled = false;
+    }
+    if (timezoneSelect && directLocalTimezone) {
+        timezoneSelect.value = directLocalTimezone;
+    }
+}
+
 function showAutoPostModal() {
     if (!authToken) {
         alert('Please login first');
@@ -440,6 +551,182 @@ document.getElementById('uploadForm').addEventListener('submit', async function(
         document.getElementById('uploadResult').innerHTML = `
             <div class="error">❌ Error: ${error}</div>
         `;
+    }
+});
+
+// Twitter image preview functionality
+document.getElementById('twitterImageUrl').addEventListener('input', function() {
+    const url = this.value.trim();
+    const preview = document.getElementById('twitterImagePreview');
+    
+    if (url && isValidImageUrl(url)) {
+        preview.innerHTML = `<img src="${url}" style="max-width: 100%; max-height: 200px; border-radius: 4px;" onload="this.style.display='block'" onerror="showTwitterImageError()" />`;
+    } else {
+        preview.innerHTML = 'Enter a valid image URL to see preview';
+    }
+});
+
+function showTwitterImageError() {
+    document.getElementById('twitterImagePreview').innerHTML = '<p style="color: red;">❌ Could not load image. Please check the URL.</p>';
+}
+
+const twitterScheduleToggle = document.getElementById('twitterScheduleToggle');
+const twitterScheduleFields = document.getElementById('twitterScheduleFields');
+const twitterScheduleTime = document.getElementById('twitterScheduleTime');
+const twitterScheduleTimezone = document.getElementById('twitterScheduleTimezone');
+const twitterSubmitButton = document.getElementById('twitterSubmitButton');
+
+if (twitterScheduleTimezone) {
+    const options = Array.from(twitterScheduleTimezone.options || []);
+    if (directLocalTimezone && !options.some(opt => opt.value === directLocalTimezone)) {
+        const option = document.createElement('option');
+        option.value = directLocalTimezone;
+        option.textContent = directLocalTimezone;
+        twitterScheduleTimezone.insertBefore(option, twitterScheduleTimezone.firstChild);
+    }
+    twitterScheduleTimezone.value = directLocalTimezone || twitterScheduleTimezone.value || 'UTC';
+}
+
+if (twitterScheduleToggle && twitterScheduleFields && twitterSubmitButton) {
+    twitterScheduleToggle.addEventListener('change', () => {
+        const enabled = twitterScheduleToggle.checked;
+        twitterScheduleFields.style.display = enabled ? 'block' : 'none';
+        twitterSubmitButton.textContent = enabled ? 'Schedule Post' : 'Post to Twitter';
+    });
+}
+
+// Twitter direct post form handling
+document.getElementById('directTwitterPostForm').addEventListener('submit', async function(event) {
+    event.preventDefault();
+    
+    const imageUrl = document.getElementById('twitterImageUrl').value.trim();
+    const caption = document.getElementById('twitterCaption').value.trim();
+    const resultDiv = document.getElementById('directTwitterPostResult');
+    const scheduleToggle = document.getElementById('twitterScheduleToggle');
+    
+    if (!authToken) {
+        resultDiv.innerHTML = '<div style="color: red;">Please login before posting.</div>';
+        return;
+    }
+    const scheduleTimeInput = document.getElementById('twitterScheduleTime');
+    const timezoneSelect = document.getElementById('twitterScheduleTimezone');
+    const submitButton = document.getElementById('twitterSubmitButton');
+    
+    if (!imageUrl || !caption) {
+        resultDiv.innerHTML = '<div style="color: red;">⚠️ Please fill in both image URL and caption</div>';
+        return;
+    }
+    
+    if (!isValidImageUrl(imageUrl)) {
+        resultDiv.innerHTML = '<div style="color: red;">⚠️ Please enter a valid image URL</div>';
+        return;
+    }
+    
+    const scheduleEnabled = scheduleToggle && scheduleToggle.checked;
+    if (scheduleEnabled && (!scheduleTimeInput || !scheduleTimeInput.value)) {
+        resultDiv.innerHTML = '<div style="color: red;">⚠️ Please choose a scheduled date and time</div>';
+        return;
+    }
+    
+    if (submitButton) {
+        submitButton.disabled = true;
+    }
+    
+    resultDiv.innerHTML = scheduleEnabled
+        ? '<div style="color: blue;">⏳ Scheduling post...</div>'
+        : '<div style="color: blue;">⏳ Posting to Twitter...</div>';
+    
+    try {
+        const formData = new FormData();
+        formData.append('image_url', imageUrl);
+        formData.append('caption', caption);
+        
+        if (scheduleEnabled) {
+            formData.append('scheduled_time', scheduleTimeInput.value);
+            formData.append('schedule_timezone', (timezoneSelect && timezoneSelect.value) || directLocalTimezone || 'UTC');
+        }
+        
+        const response = await fetch('/post-direct-twitter', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.scheduled) {
+            const scheduled = result.scheduled_post || {};
+            const scheduledIso = scheduled.schedule_time;
+            const tz = scheduled.timezone || ((timezoneSelect && timezoneSelect.value) || 'UTC');
+            
+            // Format datetime in the user's chosen timezone
+            let readable = '';
+            if (scheduledIso) {
+                try {
+                    const date = new Date(scheduledIso);
+                    
+                    // Try modern approach with timeZone support
+                    if (Intl && Intl.DateTimeFormat) {
+                        try {
+                            readable = new Intl.DateTimeFormat('en-US', {
+                                timeZone: tz,
+                                year: 'numeric',
+                                month: '2-digit', 
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit',
+                                hour12: true
+                            }).format(date);
+                        } catch (e) {
+                            console.log('Intl.DateTimeFormat failed, trying toLocaleString:', e);
+                            readable = date.toLocaleString('en-US', {
+                                timeZone: tz,
+                                year: 'numeric',
+                                month: '2-digit', 
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit',
+                                hour12: true
+                            });
+                        }
+                    } else {
+                        // Fallback for older browsers - just use the basic toLocaleString
+                        readable = date.toLocaleString();
+                    }
+                } catch (e) {
+                    console.error('Date formatting error:', e);
+                    readable = scheduledIso; // Show raw ISO string as last resort
+                }
+            } else if (scheduleTimeInput) {
+                readable = scheduleTimeInput.value;
+            }
+            
+            resultDiv.innerHTML = `<div style="color: green;">✅ Post scheduled.<br><br>It will publish automatically at ${readable} (${tz}).</div>`;
+            if (typeof loadScheduledPosts === 'function') {
+                loadScheduledPosts();
+            }
+            setTimeout(() => {
+                hideDirectTwitterPostModal();
+            }, 2500);
+        } else if (response.ok && result.success) {
+            resultDiv.innerHTML = `<div style="color: green;">✅ Successfully posted to Twitter!</div>`;
+            setTimeout(() => {
+                hideDirectTwitterPostModal();
+            }, 3000);
+        } else {
+            const errorMessage = result.error || result.detail || 'Unknown error';
+            resultDiv.innerHTML = `<div style="color: red;">❌ Failed: ${errorMessage}</div>`;
+        }
+    } catch (error) {
+        resultDiv.innerHTML = `<div style="color: red;">❌ Error: ${error.message}</div>`;
+    } finally {
+        if (submitButton) {
+            submitButton.disabled = false;
+        }
     }
 });
 
@@ -778,6 +1065,9 @@ function renderScheduledPosts(posts) {
         const statusColor = statusColors[status] || '#334155';
         const metadata = post.metadata || {};
         const source = metadata.source || 'unknown';
+        const platform = post.platform || 'instagram'; // default to instagram if not specified
+        const platformName = platform === 'twitter' ? 'Twitter' : platform === 'instagram' ? 'Instagram' : platform;
+        const platformColor = platform === 'twitter' ? '#1da1f2' : platform === 'instagram' ? '#ff9a9e' : '#6b7280';
         const actions = [];
         if (status === 'pending' || status === 'retry') {
             actions.push(`<button type="button" onclick="cancelScheduledPost(${post.id})" style="background:#dc2626;color:white;padding:6px 12px;border:none;border-radius:4px;">Cancel</button>`);
@@ -796,7 +1086,7 @@ function renderScheduledPosts(posts) {
                     <div style="max-width:600px;">
                         <div style="font-weight:600; color:#0f172a;">${shortCaption}</div>
                         <div style="color:#475569; font-size:14px; margin-top:4px;">Scheduled: <strong>${readableTime}</strong> (${tz})</div>
-                        <div style="color:#475569; font-size:13px; margin-top:4px;">Source: ${source}</div>
+                        <div style="color:#475569; font-size:13px; margin-top:4px;">Source: ${source} | Platform: <span style="color:${platformColor};font-weight:bold;">${platformName}</span></div>
                         <div style="color:${statusColor}; font-weight:600; font-size:13px; margin-top:6px; text-transform:capitalize;">Status: ${status}</div>
                         ${errorBlock}
                         ${errorDetails}

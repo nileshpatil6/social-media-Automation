@@ -10,6 +10,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from instagram_agent import InstagramAgent
+from twitter_agent import TwitterAgent
 from models.database import ScheduledPost, SessionLocal, Topic
 from services.image_upload_service import ImageUploadService
 
@@ -21,10 +22,19 @@ class SchedulingError(Exception):
 
 
 class SchedulingService:
-    """Manage creation and execution of scheduled Instagram posts."""
+    """Manage creation and execution of scheduled social posts."""
 
+    SUPPORTED_PLATFORMS = {"instagram", "twitter"}
     DEFAULT_TIMEZONE = "UTC"
     MAX_ATTEMPTS = 3
+    def _get_agent(self, platform: str):
+        platform_name = (platform or "instagram").strip().lower()
+        if platform_name == "instagram":
+            return InstagramAgent()
+        if platform_name == "twitter":
+            return TwitterAgent()
+        raise ValueError(f"Unsupported platform: {platform}")
+
     BACKOFF_SECONDS = (60, 300, 900)
 
     def __init__(self, images_dir: Optional[str] = None) -> None:
@@ -78,9 +88,14 @@ class SchedulingService:
         image_url: Optional[str] = None,
         image_filename: Optional[str] = None,
         topic_id: Optional[int] = None,
+        platform: str = "instagram",
         metadata: Optional[Dict[str, Any]] = None,
     ) -> ScheduledPost:
         self.ensure_future(schedule_time)
+
+        platform_name = (platform or "instagram").strip().lower()
+        if platform_name not in self.SUPPORTED_PLATFORMS:
+            raise ValueError(f"Unsupported platform: {platform}")
 
         if not caption:
             raise ValueError("caption is required")
@@ -88,15 +103,19 @@ class SchedulingService:
         if not image_url and not image_filename:
             raise ValueError("Either image_url or image_filename is required")
 
+        metadata_payload = dict(metadata or {})
+        metadata_payload.setdefault("platform", platform_name)
+
         scheduled = ScheduledPost(
             user_id=user_id,
             topic_id=topic_id,
             image_url=image_url,
             image_filename=image_filename,
-            job_metadata=metadata or {},
+            job_metadata=metadata_payload,
             caption=caption,
             schedule_time=schedule_time,
             timezone=timezone_name,
+            platform=platform_name,
             status="pending",
             attempts=0,
             max_attempts=self.MAX_ATTEMPTS,
@@ -212,7 +231,9 @@ class SchedulingService:
             second_attempt.setdefault("error_details", error_payload)
         return None
 
-    def _process_single_post(self, db: Session, scheduled_post: ScheduledPost, agent: InstagramAgent) -> None:
+    def _process_single_post(self, db: Session, scheduled_post: ScheduledPost, agent: Any) -> None:
+        platform = (scheduled_post.platform or "instagram").strip().lower()
+
         scheduled_post.status = "processing"
         scheduled_post.last_attempt_at = datetime.now(timezone.utc)
         scheduled_post.attempts += 1
@@ -220,33 +241,53 @@ class SchedulingService:
         db.refresh(scheduled_post)
 
         local_path, image_url = self._resolve_image_url(scheduled_post)
-        result = agent.post_to_instagram(image_url, scheduled_post.caption)
 
-        if not isinstance(result, dict):
-            raise SchedulingError("Instagram post returned unexpected payload", {"raw": result})
+        if platform == "instagram":
+            result = agent.post_to_instagram(image_url, scheduled_post.caption)
 
-        if not result.get("success"):
-            fallback_result = self._retry_with_alternate_host(
-                db,
-                scheduled_post,
-                agent,
+            if not isinstance(result, dict):
+                raise SchedulingError("Instagram post returned unexpected payload", {"raw": result})
+
+            if not result.get("success"):
+                fallback_result = self._retry_with_alternate_host(
+                    db,
+                    scheduled_post,
+                    agent,
+                    scheduled_post.caption,
+                    local_path,
+                    result,
+                )
+                if fallback_result:
+                    result = fallback_result
+                else:
+                    raise SchedulingError("Instagram post failed", result)
+        elif platform == "twitter":
+            result = agent.post_to_twitter(
                 scheduled_post.caption,
-                local_path,
-                result,
+                image_path=local_path if local_path else None,
+                image_url=image_url if not local_path else (scheduled_post.image_url or image_url),
             )
-            if fallback_result:
-                result = fallback_result
-            else:
-                raise SchedulingError("Instagram post failed", result)
+
+            if not isinstance(result, dict):
+                raise SchedulingError("Twitter post returned unexpected payload", {"raw": result})
+
+            if not result.get("success"):
+                raise SchedulingError("Twitter post failed", result)
+        else:
+            raise SchedulingError("Unsupported platform", {"platform": platform})
 
         scheduled_post.status = "completed"
         scheduled_post.posted_at = datetime.now(timezone.utc)
-        result.setdefault("public_image_url", scheduled_post.image_url)
+        if platform == "instagram":
+            result.setdefault("public_image_url", scheduled_post.image_url)
+            scheduled_post.image_url = result.get("public_image_url", scheduled_post.image_url)
+        elif platform == "twitter" and scheduled_post.image_url is None:
+            scheduled_post.image_url = image_url
+
         scheduled_post.result_payload = result
         scheduled_post.last_error = None
         scheduled_post.last_error_details = None
         scheduled_post.next_attempt_after = None
-        scheduled_post.image_url = result.get("public_image_url", scheduled_post.image_url)
         db.commit()
 
     def run_due_posts(self, limit: int = 5) -> Dict[str, Any]:
@@ -267,12 +308,19 @@ class SchedulingService:
             if not due_posts:
                 return summary
 
-            agent = InstagramAgent()
+            agent_cache: Dict[str, Any] = {}
 
             for scheduled_post in due_posts:
                 summary["processed"] += 1
+                platform = (scheduled_post.platform or "instagram").strip().lower()
                 try:
-                    self._process_single_post(db, scheduled_post, agent)
+                    if platform not in self.SUPPORTED_PLATFORMS:
+                        raise SchedulingError("Unsupported platform", {"platform": platform})
+
+                    if platform not in agent_cache:
+                        agent_cache[platform] = self._get_agent(platform)
+
+                    self._process_single_post(db, scheduled_post, agent_cache[platform])
                     summary["completed"] += 1
                 except SchedulingError as exc:
                     summary["failed"] += 1
@@ -325,3 +373,15 @@ class ScheduledPostRunner:
     @property
     def service(self) -> SchedulingService:
         return self._service
+
+
+
+
+
+
+
+
+
+
+
+

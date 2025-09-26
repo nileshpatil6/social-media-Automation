@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Text, Boolean, Float, ForeignKey, JSON
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Text, Boolean, Float, ForeignKey, JSON, inspect, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.sql import func
@@ -181,6 +181,7 @@ class ScheduledPost(Base):
     scheduled_for = Column(DateTime(timezone=True))  # Alternative column name from actual DB
     timezone = Column(String, default="UTC")
     status = Column(String, default="pending")  # pending, processing, completed, failed, retry, cancelled
+    platform = Column(String, default="instagram", server_default="instagram", nullable=False)
     attempts = Column(Integer, default=0)
     max_attempts = Column(Integer, default=3)
     last_error = Column(Text)
@@ -221,6 +222,18 @@ class PostRecord(Base):
 def create_tables():
     Base.metadata.create_all(bind=engine)
 
+    try:
+        inspector = inspect(engine)
+        columns = {col['name'] for col in inspector.get_columns('scheduled_posts')}
+        if 'platform' not in columns:
+            with engine.begin() as conn:
+                if engine.dialect.name == 'sqlite':
+                    conn.execute(text("ALTER TABLE scheduled_posts ADD COLUMN platform VARCHAR DEFAULT 'instagram'"))
+                else:
+                    conn.execute(text("ALTER TABLE scheduled_posts ADD COLUMN platform VARCHAR(32) DEFAULT 'instagram' NOT NULL"))
+    except Exception as exc:
+        print(f"[database] warning: unable to ensure platform column on scheduled_posts: {exc}")
+
 # Dependency to get DB session
 def get_db():
     db = SessionLocal()
@@ -228,3 +241,5 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
