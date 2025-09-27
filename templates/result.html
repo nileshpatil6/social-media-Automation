@@ -3,6 +3,101 @@
 {% block title %}Post Result - Instagram Posting Agent{% endblock %}
 
 {% block content %}
+<style>
+/* --- General Styling --- */
+body {
+    font-family: 'Inter', sans-serif;
+    background: #ffffff;
+    color: #111;
+    margin: 0;
+    padding: 0;
+    margin-left: 1rem; /* optional left margin for dashboard alignment */
+}
+
+h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: #1D4ED8;
+}
+
+/* --- Info Boxes & Messages --- */
+.info, .success, .error {
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.05);
+}
+
+.info {
+    background: #f0f4f8;
+    border-left: 4px solid #4facfe;
+}
+
+.success {
+    background: #e6ffed;
+    border-left: 4px solid #22c55e;
+    color: #166534;
+}
+
+.error {
+    background: #ffe6e6;
+    border-left: 4px solid #ef4444;
+    color: #991b1b;
+}
+
+h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+/* --- Links --- */
+a {
+    color: #4facfe;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+a:hover {
+    color: #1D4ED8;
+}
+
+/* --- Code/Caption Blocks --- */
+pre, code, p[style*="white-space"] {
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 0.95rem;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* --- Back link button --- */
+.back-link {
+    display: inline-block;
+    margin-top: 15px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
+    color: #fff;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.back-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+    .info, .success, .error {
+        padding: 12px 16px;
+    }
+}
+</style>
+
 <h1>📊 Posting Result</h1>
 
 {% if result.success %}
@@ -29,7 +124,7 @@
     <h4>📝 Post Details:</h4>
     <p><strong>Image URL:</strong> <a href="{{ image_url }}" target="_blank">{{ image_url }}</a></p>
     <p><strong>Caption:</strong></p>
-    <p style="white-space: pre-wrap; background: #f8f9fa; padding: 10px; border-radius: 4px;">{{ caption }}</p>
+    <p style="white-space: pre-wrap;">{{ caption }}</p>
 </div>
 
 <a href="/" class="back-link">← Post Another Image</a>
