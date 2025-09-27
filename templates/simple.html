@@ -3,9 +3,171 @@
 {% block title %}Generate Single Advertisement{% endblock %}
 
 {% block content %}
-<h1>🎨 AI Advertisement Generator</h1>
+<style>
+/* --- General Dashboard Styling --- */
+body {
+    font-family: 'Inter', sans-serif;
+    background: #ffffff;
+    color: #111;
+    margin: 0;
+    padding: 0;
+    margin-left:1rem;
+}
 
-<div class="info">
+h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: #1D4ED8;
+}
+
+.info {
+    background: #f0f4f8;
+    border-left: 4px solid #4facfe;
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+}
+
+.info strong {
+    font-weight: 700;
+}
+
+.info ol, .info ul {
+    margin-top: 10px;
+    padding-left: 20px;
+}
+
+/* --- Form Styling --- */
+form {
+    background: #f9f9fb;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    max-width: 700px;
+    margin-bottom: 30px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+input[type="text"],
+input[type="url"],
+textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    font-size: 0.95rem;
+    transition: all 0.2s ease-in-out;
+    font-family: 'Inter', sans-serif;
+}
+
+input[type="text"]:focus,
+input[type="url"]:focus,
+textarea:focus {
+    outline: none;
+    border-color: #4facfe;
+    box-shadow: 0 0 5px rgba(79,172,254,0.4);
+}
+
+small {
+    color: #6b7280;
+    display: block;
+    margin-top: 4px;
+    font-size: 0.85rem;
+}
+
+/* --- Buttons --- */
+button, .back-link {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+button#generateBtn {
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
+    color: #fff;
+    font-size: 1rem;
+}
+
+button#generateBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+}
+
+.back-link {
+    display: inline-block;
+    margin-top: 15px;
+    color: #2563EB;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}
+
+/* --- Progress Bar --- */
+#generationProgress {
+    margin-top: 25px;
+    background: #f3f4f6;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.05);
+}
+
+#progressSteps p {
+    margin: 8px 0;
+}
+
+#progressBar {
+    width: 100%;
+    background: #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 15px;
+}
+
+#progressFill {
+    height: 20px;
+    width: 0%;
+    border-radius: 10px;
+    background: linear-gradient(45deg, #405DE6, #5851DB, #833AB4, #C13584, #E1306C, #FD1D1D);
+    transition: width 0.3s ease-in-out;
+}
+
+/* --- Generation Result --- */
+#error {
+    background: #fee2e2;
+    border-left: 4px solid #f87171;
+    padding: 15px 20px;
+    border-radius: 8px;
+    color: #b91c1c;
+    margin-top: 20px;
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+    form {
+        padding: 20px;
+    }
+}
+</style>
+<body>
+
+<h1 style="margin-left:1rem"> AI Advertisement Generator</h1>
+
+<div class="info" style="margin-left:1rem">
     <strong>🤖 How it works:</strong>
     <ol>
         <li>Gemini analyzes your topic and creates optimized image prompt</li>
@@ -16,7 +178,7 @@
     </ol>
 </div>
 
-<form id="generateForm">
+<form id="generateForm" style="margin-left:1rem">
     <div class="form-group">
         <label for="topic">Advertisement Topic *</label>
         <input 
@@ -25,17 +187,17 @@
             name="topic" 
             placeholder="e.g., Summer Sale - 50% off fashion items"
             required
-        >
+        style="font-style:sans-serif">
         <small>Describe what you want to advertise</small>
     </div>
     
-    <div class="form-group">
+    <div class="form-group"   >
         <label for="brand_context">Brand Context</label>
         <textarea 
             id="brand_context" 
             name="brand_context" 
             placeholder="e.g., Modern fashion brand targeting young professionals, minimalist aesthetic, premium quality"
-        ></textarea>
+           style="font-style:sans-serif"></textarea>
         <small>Describe your brand's style, target audience, and positioning</small>
     </div>
     
@@ -49,15 +211,15 @@
         <small>Specific requirements for the generated image</small>
     </div>
     
-    <button type="submit" id="generateBtn">🚀 Generate Advertisement</button>
+    <button type="submit" id="generateBtn" style="background: linear-gradient(135deg,#9C5AF5,#2563EB);">🚀 Generate Advertisement</button>
 </form>
 
 <div id="generationProgress" style="display: none;">
     <div class="info">
         <h3>🔄 Generating Your Advertisement...</h3>
         <div id="progressSteps"></div>
-        <div id="progressBar" style="background: #f0f0f0; border-radius: 10px; margin: 20px 0;">
-            <div id="progressFill" style="background: linear-gradient(45deg, #405DE6, #5851DB, #833AB4, #C13584, #E1306C, #FD1D1D); height: 20px; border-radius: 10px; width: 0%; transition: width 0.3s;"></div>
+        <div id="progressBar">
+            <div id="progressFill"></div>
         </div>
     </div>
 </div>
@@ -65,7 +227,7 @@
 <div id="generationResult" style="display: none;"></div>
 
 <a href="/" class="back-link">← Back to Dashboard</a>
-
+</body>
 <script>
 let authToken = localStorage.getItem('authToken');
 
@@ -84,12 +246,10 @@ document.getElementById('generateForm').addEventListener('submit', async functio
     
     const formData = new FormData(this);
     
-    // Show progress
     document.getElementById('generationProgress').style.display = 'block';
     document.getElementById('generateBtn').disabled = true;
     document.getElementById('generateBtn').textContent = '🔄 Generating...';
     
-    // Simulate progress steps
     const steps = [
         'Analyzing topic with Gemini AI...',
         'Creating optimized image prompt...',
@@ -120,11 +280,9 @@ document.getElementById('generateForm').addEventListener('submit', async functio
         });
         
         if (response.ok) {
-            // Clear progress
             clearInterval(progressInterval);
             document.getElementById('generationProgress').style.display = 'none';
             
-            // Show result page and execute its scripts
             const resultHtml = await response.text();
             document.open();
             document.write(resultHtml);
@@ -136,7 +294,7 @@ document.getElementById('generateForm').addEventListener('submit', async functio
         clearInterval(progressInterval);
         document.getElementById('generationProgress').style.display = 'none';
         document.getElementById('generationResult').innerHTML = `
-            <div class="error">
+            <div id="error">
                 <h3>❌ Generation Failed</h3>
                 <p>Error: ${error.message}</p>
                 <p>Please check your API keys and try again.</p>
