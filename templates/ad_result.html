@@ -4,7 +4,6 @@
 
 {% block content %}
 <h1>🎨 Advertisement Generation Result</h1>
-
 {% if result.success %}
     <div class="success">
         <h3>✅ Advertisement Generated Successfully!</h3>
@@ -33,22 +32,54 @@
     {% if result.final_analysis %}
     <div class="info">
         <h3>📊 Quality Analysis</h3>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0;">
+        <div class="score-grid">
             {% for score_name, score_value in result.final_analysis.scores.items() %}
-            <div style="background: {% if score_value >= 8 %}#d4edda{% elif score_value >= 6 %}#fff3cd{% else %}#f8d7da{% endif %}; padding: 15px; border-radius: 8px; text-align: center;">
-                <h4 style="margin: 0; text-transform: capitalize;">{{ score_name.replace('_', ' ') }}</h4>
-                <div style="font-size: 24px; font-weight: bold; margin: 10px 0;">{{ "%.1f"|format(score_value) }}/10</div>
-                <div style="background: #f0f0f0; height: 8px; border-radius: 4px;">
-                    <div style="background: {% if score_value >= 8 %}#28a745{% elif score_value >= 6 %}#ffc107{% else %}#dc3545{% endif %}; height: 100%; width: {{ score_value * 10 }}%; border-radius: 4px;"></div>
+            {% if score_value >= 8 %}
+            <div class="score-card score-card-high">
+                <h4 class="score-card__title">{{ score_name.replace('_', ' ') }}</h4>
+                <div class="score-card__value">{{ "%.1f"|format(score_value) }}/10</div>
+                <div class="score-bar">
+                    <div class="score-bar__fill score-bar__fill-high" data-percent="{{ (score_value * 10)|round(1) }}"></div>
                 </div>
             </div>
+            {% elif score_value >= 6 %}
+            <div class="score-card score-card-medium">
+                <h4 class="score-card__title">{{ score_name.replace('_', ' ') }}</h4>
+                <div class="score-card__value">{{ "%.1f"|format(score_value) }}/10</div>
+                <div class="score-bar">
+                    <div class="score-bar__fill score-bar__fill-medium" data-percent="{{ (score_value * 10)|round(1) }}"></div>
+                </div>
+            </div>
+            {% else %}
+            <div class="score-card score-card-low">
+                <h4 class="score-card__title">{{ score_name.replace('_', ' ') }}</h4>
+                <div class="score-card__value">{{ "%.1f"|format(score_value) }}/10</div>
+                <div class="score-bar">
+                    <div class="score-bar__fill score-bar__fill-low" data-percent="{{ (score_value * 10)|round(1) }}"></div>
+                </div>
+            </div>
+            {% endif %}
             {% endfor %}
         </div>
         
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var fills = document.querySelectorAll('[data-percent]');
+                Array.prototype.forEach.call(fills, function (fill) {
+                    var percent = parseFloat(fill.dataset.percent);
+                    if (isNaN(percent)) {
+                        return;
+                    }
+                    var clamped = Math.max(0, Math.min(percent, 100));
+                    fill.style.width = clamped + '%';
+                });
+            });
+        </script>
+
         <div style="margin: 20px 0;">
             <h4>Overall Score: {{ "%.1f"|format(result.final_analysis.overall_score) }}/10</h4>
-            <div style="background: #f0f0f0; height: 20px; border-radius: 10px;">
-                <div style="background: linear-gradient(45deg, #405DE6, #5851DB, #833AB4, #C13584, #E1306C, #FD1D1D); height: 100%; width: {{ result.final_analysis.overall_score * 10 }}%; border-radius: 10px;"></div>
+            <div class="overall-score">
+                <div class="overall-score__fill" data-percent="{{ (result.final_analysis.overall_score * 10)|round(1) }}"></div>
             </div>
         </div>
         
@@ -67,15 +98,33 @@
         
         <details style="margin: 15px 0;">
             <summary style="cursor: pointer; font-weight: bold;">🔍 View Detailed Steps</summary>
-            <div style="margin-top: 15px;">
+            <div class="step-list">
                 {% for step in result.steps %}
-                <div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-left: 4px solid {% if step.status == 'completed' %}#28a745{% elif step.status == 'failed' %}#dc3545{% else %}#ffc107{% endif %}; border-radius: 0 5px 5px 0;">
+                {% if step.status == 'completed' %}
+                <div class="step-card step-card-completed">
                     <strong>{{ step.step|title }}:</strong> 
-                    <span style="color: {% if step.status == 'completed' %}#28a745{% elif step.status == 'failed' %}#dc3545{% else %}#ffc107{% endif %};">{{ step.status|title }}</span>
+                    <span class="step-card__status step-card__status-completed">{{ step.status|title }}</span>
                     {% if step.get('error') %}
-                    <br><small style="color: #dc3545;">Error: {{ step.error }}</small>
+                    <br><small class="step-card__error">Error: {{ step.error }}</small>
                     {% endif %}
                 </div>
+                {% elif step.status == 'failed' %}
+                <div class="step-card step-card-failed">
+                    <strong>{{ step.step|title }}:</strong> 
+                    <span class="step-card__status step-card__status-failed">{{ step.status|title }}</span>
+                    {% if step.get('error') %}
+                    <br><small class="step-card__error">Error: {{ step.error }}</small>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="step-card">
+                    <strong>{{ step.step|title }}:</strong> 
+                    <span class="step-card__status">{{ step.status|title }}</span>
+                    {% if step.get('error') %}
+                    <br><small class="step-card__error">Error: {{ step.error }}</small>
+                    {% endif %}
+                </div>
+                {% endif %}
                 {% endfor %}
             </div>
         </details>
@@ -128,15 +177,26 @@
     </div>
     {% endif %}
 
+{% set workflow_context = {
+    "topic": topic,
+    "workflowId": result.workflow_id,
+    "topicId": topic_id,
+    "imageFilename": result.final_image_filename
+} %}
+<script type="application/json" id="workflowContextData">
+    {{ workflow_context | tojson(indent=2) }}
+</script>
 <script>
 (function () {
-    const workflowContext = {
-        topic: {{ topic | tojson }},
-        workflowId: {{ result.workflow_id | tojson }},
-        topicId: {{ topic_id | tojson }},
-        imageFilename: {{ result.final_image_filename | tojson }}
-    };
-
+    let workflowContext = {};
+    const workflowContextScript = document.getElementById('workflowContextData');
+    if (workflowContextScript) {
+        try {
+            workflowContext = JSON.parse(workflowContextScript.textContent);
+        } catch (err) {
+            console.warn('Unable to parse workflow context JSON:', err);
+        }
+    }
     let generatedLocalTimezone = 'UTC';
     const generatedScheduleToggle = document.getElementById('generatedScheduleToggle');
     const generatedScheduleFields = document.getElementById('generatedScheduleFields');

@@ -123,6 +123,16 @@ class SchedulingService:
             if not os.path.exists(local_path):
                 raise FileNotFoundError(f"Local image not found: {local_path}")
 
+            public_base = os.getenv('PUBLIC_BASE_URL')
+            if public_base:
+                candidate = f"{public_base.rstrip('/')}/serve-image/{scheduled_post.image_filename}"
+                try:
+                    if ImageUploadService._is_public_image_url(candidate):
+                        scheduled_post.image_url = candidate
+                        return local_path, candidate
+                except Exception as exc:
+                    print(f"[scheduler] PUBLIC_BASE_URL check failed: {exc}")
+
             refreshed_url = ImageUploadService.get_public_url(local_path)
             if refreshed_url:
                 scheduled_post.image_url = refreshed_url
@@ -185,8 +195,10 @@ class SchedulingService:
 
         alt_url = ImageUploadService.upload_to_postimg(local_path)
         if not alt_url:
+            print('[scheduler] Alternate hosting (postimg) failed')
             return None
 
+        print(f'[scheduler] Retrying with alternate image host: {alt_url}')
         scheduled_post.image_url = alt_url
         db.commit()
 
@@ -195,6 +207,7 @@ class SchedulingService:
             second_attempt.setdefault("public_image_url", alt_url)
             return second_attempt
 
+        print(f'[scheduler] Alternate host attempt still failed: {second_attempt}')
         if isinstance(second_attempt, dict):
             second_attempt.setdefault("error_details", error_payload)
         return None
