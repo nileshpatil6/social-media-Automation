@@ -54,6 +54,9 @@ The original n8n workflow has been transformed into a comprehensive system:
    - `TWITTER_API_SECRET_KEY` - Twitter API (for Twitter posting)
    - `TWITTER_ACCESS_TOKEN` - Twitter API (for Twitter posting)
    - `TWITTER_ACCESS_TOKEN_SECRET` - Twitter API (for Twitter posting)
+   - `LINKEDIN_ACCESS_TOKEN` - LinkedIn API (for LinkedIn posting)
+   - `LINKEDIN_ORGANIZATION_ID` - LinkedIn API (for LinkedIn posting)
+   - `YOUTUBE_CLIENT_SECRETS_FILE` and `YOUTUBE_CREDENTIALS_FILE` - OAuth-based YouTube access (required for uploads)
 
 2. **System Requirements:**
    - Python 3.8+
@@ -100,6 +103,12 @@ http://localhost:8000
 - `POST /generate-ad` - Generate single advertisement
 - `POST /upload-excel` - Batch upload topics
 - `POST /post-to-instagram` - Post to Instagram
+- `POST /post-to-twitter` - Post to Twitter
+- `POST /post-direct-twitter` - Post to Twitter with direct image URL
+- `POST /post-to-linkedin` - Post to LinkedIn
+- `POST /post-direct-linkedin` - Post to LinkedIn with direct image URL
+- `POST /post-to-youtube` - Post to YouTube
+- `POST /post-direct-youtube` - Post to YouTube with direct video URL
 
 ### Data Management
 - `GET /topics` - Get user's topics
@@ -252,8 +261,8 @@ Your original n8n workflow data can be preserved:
 
 ## 🚀 Future Enhancements
 
-- **Video Generation**: Support for video advertisements
-- **Multi-Platform**: Post to Facebook, TikTok (Twitter now supported!)
+- **Video Generation**: Support for video advertisements  
+- **Multi-Platform**: Post to Facebook, TikTok (Twitter, LinkedIn, & YouTube now supported!)
 - **A/B Testing**: Generate multiple variants for testing
 - **Analytics Integration**: Track engagement metrics
 - **Custom Models**: Train brand-specific AI models

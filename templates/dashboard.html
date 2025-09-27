@@ -56,6 +56,20 @@
         <button onclick="showDirectTwitterPostModal()" style="background: white; color: #1da1f2; padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;">Post to Twitter</button>
     </div>
     
+    <!-- Direct LinkedIn Posting -->
+    <div style="border: 1px solid #ddd; border-radius: 10px; padding: 20px; background: linear-gradient(135deg, #0077b5 0%, #005a87 100%); color: white;">
+        <h3 style="color: white; margin-top: 0;">💼 Post to LinkedIn</h3>
+        <p>Post an image directly to LinkedIn using URL</p>
+        <button onclick="showDirectLinkedInPostModal()" style="background: white; color: #0077b5; padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;">Post to LinkedIn</button>
+    </div>
+    
+    <!-- Direct YouTube Posting -->
+    <div style="border: 1px solid #ddd; border-radius: 10px; padding: 20px; background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%); color: white;">
+        <h3 style="color: white; margin-top: 0;">📺 Post to YouTube</h3>
+        <p>Post a video directly to YouTube using URL</p>
+        <button onclick="showDirectYouTubePostModal()" style="background: white; color: #ff0000; padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;">Post to YouTube</button>
+    </div>
+    
     <!-- Auto Post from Logs -->
     <div style="border: 1px solid #ddd; border-radius: 10px; padding: 20px; background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: white;">
         <h3 style="color: white; margin-top: 0;">🤖 Auto Post from Logs</h3>
@@ -227,6 +241,137 @@
         </form>
         
         <div id="directTwitterPostResult" style="margin-top: 20px;"></div>
+    </div>
+</div>
+
+<!-- Direct LinkedIn Post Modal -->
+<div id="directLinkedInPostModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; max-width: 600px; width: 90%;">
+        <h3>💼 Post Image Directly to LinkedIn</h3>
+        
+        <form id="directLinkedInPostForm">
+            <div class="form-group">
+                <label for="linkedinImageUrl">Image URL:</label>
+                <input type="url" id="linkedinImageUrl" name="image_url" placeholder="https://example.com/image.jpg" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                <small>Enter a publicly accessible image URL</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="linkedinText">Text:</label>
+                <textarea id="linkedinText" name="text" placeholder="Write your LinkedIn post here..." required style="width: 100%; height: 120px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <div style="border: 1px solid #ddd; padding: 10px; border-radius: 4px; background: #f9f9f9; margin: 10px 0;">
+                    <label>Image Preview:</label>
+                    <div id="linkedinImagePreview" style="margin-top: 10px; text-align: center; min-height: 100px; display: flex; align-items: center; justify-content: center; color: #666;">
+                        Enter an image URL to see preview
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin: 15px 0;">
+                <label style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="linkedinScheduleToggle"> Schedule this post
+                </label>
+                <small>Enable to publish at a specific future time.</small>
+            </div>
+
+            <div id="linkedinScheduleFields" style="display: none; border: 1px solid #ddd; padding: 12px; border-radius: 6px; background: #f8f9ff; margin-bottom: 15px;">
+                <div class="form-group">
+                    <label for="linkedinScheduleTime">Scheduled date & time</label>
+                    <input type="datetime-local" id="linkedinScheduleTime" name="scheduled_time" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+                <div class="form-group">
+                    <label for="linkedinScheduleTimezone">Timezone</label>
+                    <select id="linkedinScheduleTimezone" name="schedule_timezone" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                        <option value="UTC">UTC</option>
+                        <option value="America/New_York">America/New_York</option>
+                        <option value="America/Los_Angeles">America/Los_Angeles</option>
+                        <option value="Europe/London">Europe/London</option>
+                        <option value="Europe/Paris">Europe/Paris</option>
+                        <option value="Asia/Kolkata">Asia/Kolkata</option>
+                        <option value="Australia/Sydney">Australia/Sydney</option>
+                    </select>
+                    <small>Your local timezone is preselected when available.</small>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button type="submit" id="linkedinSubmitButton" style="flex: 1; background: #0077b5; color: white; padding: 12px; border: none; border-radius: 5px; font-weight: bold;">Post to LinkedIn</button>
+                <button type="button" onclick="hideDirectLinkedInPostModal()" style="flex: 1; background: #ddd; color: #333; padding: 12px; border: none; border-radius: 5px;">Cancel</button>
+            </div>
+        </form>
+        
+        <div id="directLinkedInPostResult" style="margin-top: 20px;"></div>
+    </div>
+</div>
+
+<!-- Direct YouTube Post Modal -->
+<div id="directYouTubePostModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; max-width: 600px; width: 90%;">
+        <h3>📺 Post Video Directly to YouTube</h3>
+        
+        <form id="directYouTubePostForm">
+            <div class="form-group">
+                <label for="youtubeVideoUrl">Video URL:</label>
+                <input type="url" id="youtubeVideoUrl" name="video_url" placeholder="https://example.com/video.mp4" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                <small>Enter a publicly accessible video URL (MP4, MOV, AVI, etc.)</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="youtubeTitle">Title:</label>
+                <input type="text" id="youtubeTitle" name="title" placeholder="Video title..." required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            
+            <div class="form-group">
+                <label for="youtubeDescription">Description:</label>
+                <textarea id="youtubeDescription" name="description" placeholder="Video description..." style="width: 100%; height: 120px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <div style="border: 1px solid #ddd; padding: 10px; border-radius: 4px; background: #f9f9f9; margin: 10px 0;">
+                    <label>Video Preview:</label>
+                    <div id="youtubeVideoPreview" style="margin-top: 10px; text-align: center; min-height: 100px; display: flex; align-items: center; justify-content: center; color: #666;">
+                        Enter a video URL to see preview
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin: 15px 0;">
+                <label style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="youtubeScheduleToggle"> Schedule this post
+                </label>
+                <small>Enable to publish at a specific future time (scheduling handled by system).</small>
+            </div>
+
+            <div id="youtubeScheduleFields" style="display: none; border: 1px solid #ddd; padding: 12px; border-radius: 6px; background: #fff0f0; margin-bottom: 15px;">
+                <div class="form-group">
+                    <label for="youtubeScheduleTime">Scheduled date & time</label>
+                    <input type="datetime-local" id="youtubeScheduleTime" name="scheduled_time" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+                <div class="form-group">
+                    <label for="youtubeScheduleTimezone">Timezone</label>
+                    <select id="youtubeScheduleTimezone" name="schedule_timezone" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                        <option value="UTC">UTC</option>
+                        <option value="America/New_York">America/New_York</option>
+                        <option value="America/Los_Angeles">America/Los_Angeles</option>
+                        <option value="Europe/London">Europe/London</option>
+                        <option value="Europe/Paris">Europe/Paris</option>
+                        <option value="Asia/Kolkata">Asia/Kolkata</option>
+                        <option value="Australia/Sydney">Australia/Sydney</option>
+                    </select>
+                    <small>Your local timezone is preselected when available.</small>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button type="submit" id="youtubeSubmitButton" style="flex: 1; background: #ff0000; color: white; padding: 12px; border: none; border-radius: 5px; font-weight: bold;">Post to YouTube</button>
+                <button type="button" onclick="hideDirectYouTubePostModal()" style="flex: 1; background: #ddd; color: #333; padding: 12px; border: none; border-radius: 5px;">Cancel</button>
+            </div>
+        </form>
+        
+        <div id="directYouTubePostResult" style="margin-top: 20px;"></div>
     </div>
 </div>
 
@@ -503,6 +648,88 @@ function hideDirectTwitterPostModal() {
     }
 }
 
+function showDirectLinkedInPostModal() {
+    if (!authToken) {
+        alert('Please login first');
+        return;
+    }
+    document.getElementById('directLinkedInPostModal').style.display = 'block';
+}
+
+function hideDirectLinkedInPostModal() {
+    document.getElementById('directLinkedInPostModal').style.display = 'none';
+    const form = document.getElementById('directLinkedInPostForm');
+    if (form) {
+        form.reset();
+    }
+    const preview = document.getElementById('linkedinImagePreview');
+    if (preview) {
+        preview.innerHTML = 'Enter an image URL to see preview';
+    }
+    const result = document.getElementById('directLinkedInPostResult');
+    if (result) {
+        result.innerHTML = '';
+    }
+    const toggle = document.getElementById('linkedinScheduleToggle');
+    const fields = document.getElementById('linkedinScheduleFields');
+    const button = document.getElementById('linkedinSubmitButton');
+    const timezoneSelect = document.getElementById('linkedinScheduleTimezone');
+    if (toggle) {
+        toggle.checked = false;
+    }
+    if (fields) {
+        fields.style.display = 'none';
+    }
+    if (button) {
+        button.textContent = 'Post to LinkedIn';
+        button.disabled = false;
+    }
+    if (timezoneSelect && directLocalTimezone) {
+        timezoneSelect.value = directLocalTimezone;
+    }
+}
+
+function showDirectYouTubePostModal() {
+    if (!authToken) {
+        alert('Please login first');
+        return;
+    }
+    document.getElementById('directYouTubePostModal').style.display = 'block';
+}
+
+function hideDirectYouTubePostModal() {
+    document.getElementById('directYouTubePostModal').style.display = 'none';
+    const form = document.getElementById('directYouTubePostForm');
+    if (form) {
+        form.reset();
+    }
+    const preview = document.getElementById('youtubeVideoPreview');
+    if (preview) {
+        preview.innerHTML = 'Enter a video URL to see preview';
+    }
+    const result = document.getElementById('directYouTubePostResult');
+    if (result) {
+        result.innerHTML = '';
+    }
+    const toggle = document.getElementById('youtubeScheduleToggle');
+    const fields = document.getElementById('youtubeScheduleFields');
+    const button = document.getElementById('youtubeSubmitButton');
+    const timezoneSelect = document.getElementById('youtubeScheduleTimezone');
+    if (toggle) {
+        toggle.checked = false;
+    }
+    if (fields) {
+        fields.style.display = 'none';
+    }
+    if (button) {
+        button.textContent = 'Post to YouTube';
+        button.disabled = false;
+    }
+    if (timezoneSelect && directLocalTimezone) {
+        timezoneSelect.value = directLocalTimezone;
+    }
+}
+
 function showAutoPostModal() {
     if (!authToken) {
         alert('Please login first');
@@ -716,6 +943,374 @@ document.getElementById('directTwitterPostForm').addEventListener('submit', asyn
             resultDiv.innerHTML = `<div style="color: green;">✅ Successfully posted to Twitter!</div>`;
             setTimeout(() => {
                 hideDirectTwitterPostModal();
+            }, 3000);
+        } else {
+            const errorMessage = result.error || result.detail || 'Unknown error';
+            resultDiv.innerHTML = `<div style="color: red;">❌ Failed: ${errorMessage}</div>`;
+        }
+    } catch (error) {
+        resultDiv.innerHTML = `<div style="color: red;">❌ Error: ${error.message}</div>`;
+    } finally {
+        if (submitButton) {
+            submitButton.disabled = false;
+        }
+    }
+});
+
+// LinkedIn image preview functionality
+document.getElementById('linkedinImageUrl').addEventListener('input', function() {
+    const url = this.value.trim();
+    const preview = document.getElementById('linkedinImagePreview');
+    
+    if (url && isValidImageUrl(url)) {
+        preview.innerHTML = `<img src="${url}" style="max-width: 100%; max-height: 200px; border-radius: 4px;" onload="this.style.display='block'" onerror="showLinkedInImageError()" />`;
+    } else {
+        preview.innerHTML = 'Enter a valid image URL to see preview';
+    }
+});
+
+function showLinkedInImageError() {
+    document.getElementById('linkedinImagePreview').innerHTML = '<p style="color: red;">❌ Could not load image. Please check the URL.</p>';
+}
+
+const linkedinScheduleToggle = document.getElementById('linkedinScheduleToggle');
+const linkedinScheduleFields = document.getElementById('linkedinScheduleFields');
+const linkedinScheduleTime = document.getElementById('linkedinScheduleTime');
+const linkedinScheduleTimezone = document.getElementById('linkedinScheduleTimezone');
+const linkedinSubmitButton = document.getElementById('linkedinSubmitButton');
+
+if (linkedinScheduleTimezone) {
+    const options = Array.from(linkedinScheduleTimezone.options || []);
+    if (directLocalTimezone && !options.some(opt => opt.value === directLocalTimezone)) {
+        const option = document.createElement('option');
+        option.value = directLocalTimezone;
+        option.textContent = directLocalTimezone;
+        linkedinScheduleTimezone.insertBefore(option, linkedinScheduleTimezone.firstChild);
+    }
+    linkedinScheduleTimezone.value = directLocalTimezone || linkedinScheduleTimezone.value || 'UTC';
+}
+
+if (linkedinScheduleToggle && linkedinScheduleFields && linkedinSubmitButton) {
+    linkedinScheduleToggle.addEventListener('change', () => {
+        const enabled = linkedinScheduleToggle.checked;
+        linkedinScheduleFields.style.display = enabled ? 'block' : 'none';
+        linkedinSubmitButton.textContent = enabled ? 'Schedule Post' : 'Post to LinkedIn';
+    });
+}
+
+// LinkedIn direct post form handling
+document.getElementById('directLinkedInPostForm').addEventListener('submit', async function(event) {
+    event.preventDefault();
+    
+    const imageUrl = document.getElementById('linkedinImageUrl').value.trim();
+    const text = document.getElementById('linkedinText').value.trim();
+    const resultDiv = document.getElementById('directLinkedInPostResult');
+    const scheduleToggle = document.getElementById('linkedinScheduleToggle');
+    
+    if (!authToken) {
+        resultDiv.innerHTML = '<div style="color: red;">Please login before posting.</div>';
+        return;
+    }
+    const scheduleTimeInput = document.getElementById('linkedinScheduleTime');
+    const timezoneSelect = document.getElementById('linkedinScheduleTimezone');
+    const submitButton = document.getElementById('linkedinSubmitButton');
+    
+    if (!imageUrl || !text) {
+        resultDiv.innerHTML = '<div style="color: red;">⚠️ Please fill in both image URL and text</div>';
+        return;
+    }
+    
+    if (!isValidImageUrl(imageUrl)) {
+        resultDiv.innerHTML = '<div style="color: red;">⚠️ Please enter a valid image URL</div>';
+        return;
+    }
+    
+    const scheduleEnabled = scheduleToggle && scheduleToggle.checked;
+    if (scheduleEnabled && (!scheduleTimeInput || !scheduleTimeInput.value)) {
+        resultDiv.innerHTML = '<div style="color: red;">⚠️ Please choose a scheduled date and time</div>';
+        return;
+    }
+    
+    if (submitButton) {
+        submitButton.disabled = true;
+    }
+    
+    resultDiv.innerHTML = scheduleEnabled
+        ? '<div style="color: blue;">⏳ Scheduling post...</div>'
+        : '<div style="color: blue;">⏳ Posting to LinkedIn...</div>';
+    
+    try {
+        const formData = new FormData();
+        formData.append('image_url', imageUrl);
+        formData.append('text', text);
+        
+        if (scheduleEnabled) {
+            formData.append('scheduled_time', scheduleTimeInput.value);
+            formData.append('schedule_timezone', (timezoneSelect && timezoneSelect.value) || directLocalTimezone || 'UTC');
+        }
+        
+        const response = await fetch('/post-direct-linkedin', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.scheduled) {
+            const scheduled = result.scheduled_post || {};
+            const scheduledIso = scheduled.schedule_time;
+            const tz = scheduled.timezone || ((timezoneSelect && timezoneSelect.value) || 'UTC');
+            
+            // Format datetime in the user's chosen timezone
+            let readable = '';
+            if (scheduledIso) {
+                try {
+                    const date = new Date(scheduledIso);
+                    
+                    // Try modern approach with timeZone support
+                    if (Intl && Intl.DateTimeFormat) {
+                        try {
+                            readable = new Intl.DateTimeFormat('en-US', {
+                                timeZone: tz,
+                                year: 'numeric',
+                                month: '2-digit', 
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit',
+                                hour12: true
+                            }).format(date);
+                        } catch (e) {
+                            console.log('Intl.DateTimeFormat failed, trying toLocaleString:', e);
+                            readable = date.toLocaleString('en-US', {
+                                timeZone: tz,
+                                year: 'numeric',
+                                month: '2-digit', 
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit',
+                                hour12: true
+                            });
+                        }
+                    } else {
+                        // Fallback for older browsers - just use the basic toLocaleString
+                        readable = date.toLocaleString();
+                    }
+                } catch (e) {
+                    console.error('Date formatting error:', e);
+                    readable = scheduledIso; // Show raw ISO string as last resort
+                }
+            } else if (scheduleTimeInput) {
+                readable = scheduleTimeInput.value;
+            }
+            
+            resultDiv.innerHTML = `<div style="color: green;">✅ Post scheduled.<br><br>It will publish automatically at ${readable} (${tz}).</div>`;
+            if (typeof loadScheduledPosts === 'function') {
+                loadScheduledPosts();
+            }
+            setTimeout(() => {
+                hideDirectLinkedInPostModal();
+            }, 2500);
+        } else if (response.ok && result.success) {
+            resultDiv.innerHTML = `<div style="color: green;">✅ Successfully posted to LinkedIn!</div>`;
+            setTimeout(() => {
+                hideDirectLinkedInPostModal();
+            }, 3000);
+        } else {
+            const errorMessage = result.error || result.detail || 'Unknown error';
+            resultDiv.innerHTML = `<div style="color: red;">❌ Failed: ${errorMessage}</div>`;
+        }
+    } catch (error) {
+        resultDiv.innerHTML = `<div style="color: red;">❌ Error: ${error.message}</div>`;
+    } finally {
+        if (submitButton) {
+            submitButton.disabled = false;
+        }
+    }
+});
+
+// YouTube video preview functionality
+document.getElementById('youtubeVideoUrl').addEventListener('input', function() {
+    const url = this.value.trim();
+    const preview = document.getElementById('youtubeVideoPreview');
+    
+    if (url && isValidVideoUrl(url)) {
+        preview.innerHTML = `<video controls style="max-width: 100%; max-height: 200px; border-radius: 4px;"><source src="${url}" type="video/mp4">Your browser does not support the video tag.</video>`;
+    } else if (url) {
+        preview.innerHTML = 'Enter a valid video URL to see preview';
+    } else {
+        preview.innerHTML = 'Enter a video URL to see preview';
+    }
+});
+
+function isValidVideoUrl(url) {
+    try {
+        new URL(url);
+        return /\.(mp4|mov|avi|wmv|flv|webm|mkv|mpg|mpeg|3gp|m4v)$/i.test(url);
+    } catch {
+        return false;
+    }
+}
+
+function showYouTubeVideoError() {
+    document.getElementById('youtubeVideoPreview').innerHTML = '<p style="color: red;">❌ Could not load video. Please check the URL.</p>';
+}
+
+const youtubeScheduleToggle = document.getElementById('youtubeScheduleToggle');
+const youtubeScheduleFields = document.getElementById('youtubeScheduleFields');
+const youtubeScheduleTime = document.getElementById('youtubeScheduleTime');
+const youtubeScheduleTimezone = document.getElementById('youtubeScheduleTimezone');
+const youtubeSubmitButton = document.getElementById('youtubeSubmitButton');
+
+if (youtubeScheduleTimezone) {
+    const options = Array.from(youtubeScheduleTimezone.options || []);
+    if (directLocalTimezone && !options.some(opt => opt.value === directLocalTimezone)) {
+        const option = document.createElement('option');
+        option.value = directLocalTimezone;
+        option.textContent = directLocalTimezone;
+        youtubeScheduleTimezone.insertBefore(option, youtubeScheduleTimezone.firstChild);
+    }
+    youtubeScheduleTimezone.value = directLocalTimezone || youtubeScheduleTimezone.value || 'UTC';
+}
+
+if (youtubeScheduleToggle && youtubeScheduleFields && youtubeSubmitButton) {
+    youtubeScheduleToggle.addEventListener('change', () => {
+        const enabled = youtubeScheduleToggle.checked;
+        youtubeScheduleFields.style.display = enabled ? 'block' : 'none';
+        youtubeSubmitButton.textContent = enabled ? 'Schedule Post' : 'Post to YouTube';
+    });
+}
+
+// YouTube direct post form handling
+document.getElementById('directYouTubePostForm').addEventListener('submit', async function(event) {
+    event.preventDefault();
+    
+    const videoUrl = document.getElementById('youtubeVideoUrl').value.trim();
+    const title = document.getElementById('youtubeTitle').value.trim();
+    const description = document.getElementById('youtubeDescription').value.trim();
+    const resultDiv = document.getElementById('directYouTubePostResult');
+    const scheduleToggle = document.getElementById('youtubeScheduleToggle');
+    
+    if (!authToken) {
+        resultDiv.innerHTML = '<div style="color: red;">Please login before posting.</div>';
+        return;
+    }
+    const scheduleTimeInput = document.getElementById('youtubeScheduleTime');
+    const timezoneSelect = document.getElementById('youtubeScheduleTimezone');
+    const submitButton = document.getElementById('youtubeSubmitButton');
+    
+    if (!videoUrl || !title) {
+        resultDiv.innerHTML = '<div style="color: red;">⚠️ Please fill in both video URL and title</div>';
+        return;
+    }
+    
+    if (!isValidVideoUrl(videoUrl)) {
+        resultDiv.innerHTML = '<div style="color: red;">⚠️ Please enter a valid video URL (MP4, MOV, etc.)</div>';
+        return;
+    }
+    
+    const scheduleEnabled = scheduleToggle && scheduleToggle.checked;
+    if (scheduleEnabled && (!scheduleTimeInput || !scheduleTimeInput.value)) {
+        resultDiv.innerHTML = '<div style="color: red;">⚠️ Please choose a scheduled date and time</div>';
+        return;
+    }
+    
+    if (submitButton) {
+        submitButton.disabled = true;
+    }
+    
+    resultDiv.innerHTML = scheduleEnabled
+        ? '<div style="color: blue;">⏳ Scheduling post...</div>'
+        : '<div style="color: blue;">⏳ Posting to YouTube...</div>';
+    
+    try {
+        const formData = new FormData();
+        formData.append('video_url', videoUrl);
+        formData.append('title', title);
+        formData.append('description', description || '');
+        
+        if (scheduleEnabled) {
+            formData.append('scheduled_time', scheduleTimeInput.value);
+            formData.append('schedule_timezone', (timezoneSelect && timezoneSelect.value) || directLocalTimezone || 'UTC');
+        }
+        
+        const response = await fetch('/post-direct-youtube', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.scheduled) {
+            const scheduled = result.scheduled_post || {};
+            const scheduledIso = scheduled.schedule_time;
+            const tz = scheduled.timezone || ((timezoneSelect && timezoneSelect.value) || 'UTC');
+            
+            // Format datetime in the user's chosen timezone
+            let readable = '';
+            if (scheduledIso) {
+                try {
+                    const date = new Date(scheduledIso);
+                    
+                    // Try modern approach with timeZone support
+                    if (Intl && Intl.DateTimeFormat) {
+                        try {
+                            readable = new Intl.DateTimeFormat('en-US', {
+                                timeZone: tz,
+                                year: 'numeric',
+                                month: '2-digit', 
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit',
+                                hour12: true
+                            }).format(date);
+                        } catch (e) {
+                            console.log('Intl.DateTimeFormat failed, trying toLocaleString:', e);
+                            readable = date.toLocaleString('en-US', {
+                                timeZone: tz,
+                                year: 'numeric',
+                                month: '2-digit', 
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit',
+                                hour12: true
+                            });
+                        }
+                    } else {
+                        // Fallback for older browsers - just use the basic toLocaleString
+                        readable = date.toLocaleString();
+                    }
+                } catch (e) {
+                    console.error('Date formatting error:', e);
+                    readable = scheduledIso; // Show raw ISO string as last resort
+                }
+            } else if (scheduleTimeInput) {
+                readable = scheduleTimeInput.value;
+            }
+            
+            resultDiv.innerHTML = `<div style="color: green;">✅ Post scheduled.<br><br>It will publish automatically at ${readable} (${tz}).</div>`;
+            if (typeof loadScheduledPosts === 'function') {
+                loadScheduledPosts();
+            }
+            setTimeout(() => {
+                hideDirectYouTubePostModal();
+            }, 2500);
+        } else if (response.ok && result.success) {
+            resultDiv.innerHTML = `<div style="color: green;">✅ Successfully posted to YouTube!</div>`;
+            if (result.video && result.video.video_url) {
+                resultDiv.innerHTML += `<br><a href="${result.video.video_url}" target="_blank">View Video</a>`;
+            }
+            setTimeout(() => {
+                hideDirectYouTubePostModal();
             }, 3000);
         } else {
             const errorMessage = result.error || result.detail || 'Unknown error';
