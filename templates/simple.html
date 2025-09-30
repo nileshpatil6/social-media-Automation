@@ -1,310 +1,461 @@
-{% extends "base.html" %}
-
-{% block title %}Generate Single Advertisement{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Generate Single Advertisement{%
+endblock %} {% block content %}
 <style>
-/* --- General Dashboard Styling --- */
-body {
-    font-family: 'Inter', sans-serif;
-    background: #ffffff;
+  body {
+    font-family: "Inter", sans-serif;
+    background: linear-gradient(120deg, #f7fafd 60%, #e3eafc 100%);
     color: #111;
     margin: 0;
     padding: 0;
-    margin-left:1rem;
-}
+    margin-left: 1rem;
+    min-height: 100vh;
+    animation: fadeInBg 1.2s cubic-bezier(0.23, 1, 0.32, 1);
+  }
 
-h1 {
-    font-size: 2rem;
-    font-weight: 700;
-    margin-bottom: 20px;
-    color: #1D4ED8;
-}
+  h1 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin-bottom: 22px;
+    color: #1d4ed8;
+    letter-spacing: 0.5px;
+    text-shadow: 0 2px 12px rgba(46, 91, 255, 0.08);
+    animation: fadeInDown 1s cubic-bezier(0.23, 1, 0.32, 1);
+  }
 
-.info {
-    background: #f0f4f8;
+  .info {
+    background: linear-gradient(90deg, #f0f4f8 80%, #e3eafc 100%);
     border-left: 4px solid #4facfe;
     padding: 15px 20px;
-    border-radius: 8px;
-    margin-bottom: 25px;
-}
+    border-radius: 12px;
+    margin-bottom: 28px;
+    box-shadow: 0 2px 12px rgba(30, 60, 114, 0.07);
+    animation: fadeInUp 1.1s cubic-bezier(0.23, 1, 0.32, 1);
+  }
 
-.info strong {
+  .info strong {
     font-weight: 700;
-}
+  }
 
-.info ol, .info ul {
+  .info ol,
+  .info ul {
     margin-top: 10px;
     padding-left: 20px;
-}
+  }
 
-/* --- Form Styling --- */
-form {
-    background: #f9f9fb;
-    padding: 25px;
-    border-radius: 12px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+  form {
+    background: linear-gradient(120deg, #f9f9fb 80%, #e3eafc 100%);
+    padding: 32px 28px 28px 28px;
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(30, 60, 114, 0.13),
+      0 1.5px 6px rgba(30, 60, 114, 0.07);
     max-width: 700px;
-    margin-bottom: 30px;
-}
+    margin-bottom: 34px;
+    border: 1.5px solid #e3eafc;
+    animation: popIn 0.9s cubic-bezier(0.23, 1, 0.32, 1);
+    position: relative;
+    overflow: hidden;
+  }
 
-.form-group {
-    margin-bottom: 20px;
-}
+  form::before {
+    content: "";
+    position: absolute;
+    left: -60px;
+    top: -60px;
+    width: 180px;
+    height: 180px;
+    background: radial-gradient(circle, #4facfe33 0%, transparent 80%);
+    z-index: 0;
+    pointer-events: none;
+    animation: floatGlow 4s ease-in-out infinite alternate;
+  }
 
-label {
+  .form-group {
+    margin-bottom: 22px;
+    position: relative;
+    z-index: 1;
+    animation: fadeInCard 1.1s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  label {
     display: block;
-    font-weight: 600;
-    margin-bottom: 6px;
-}
+    font-weight: 700;
+    margin-bottom: 7px;
+    color: #1d4ed8;
+    letter-spacing: 0.2px;
+  }
 
-input[type="text"],
-input[type="url"],
-textarea {
+  input[type="text"],
+  input[type="url"],
+  textarea {
     width: 100%;
-    padding: 10px 12px;
-    border-radius: 6px;
-    border: 1px solid #d1d5db;
-    font-size: 0.95rem;
-    transition: all 0.2s ease-in-out;
-    font-family: 'Inter', sans-serif;
-}
+    padding: 12px 14px;
+    border-radius: 8px;
+    border: 1.5px solid #d1d5db;
+    font-size: 1rem;
+    transition: all 0.22s cubic-bezier(0.23, 1, 0.32, 1);
+    font-family: "Inter", sans-serif;
+    background: #f7fafd;
+    box-shadow: 0 1.5px 6px rgba(30, 60, 114, 0.04);
+  }
 
-input[type="text"]:focus,
-input[type="url"]:focus,
-textarea:focus {
+  input[type="text"]:focus,
+  input[type="url"]:focus,
+  textarea:focus {
     outline: none;
     border-color: #4facfe;
-    box-shadow: 0 0 5px rgba(79,172,254,0.4);
-}
+    box-shadow: 0 0 8px rgba(79, 172, 254, 0.18);
+    background: #e3eafc;
+  }
 
-small {
+  small {
     color: #6b7280;
     display: block;
     margin-top: 4px;
-    font-size: 0.85rem;
-}
+    font-size: 0.89rem;
+  }
 
-/* --- Buttons --- */
-button, .back-link {
-    padding: 12px 20px;
+  button,
+  .back-link {
+    padding: 13px 24px;
     border: none;
-    border-radius: 8px;
-    font-weight: 600;
+    border-radius: 10px;
+    font-weight: 700;
     cursor: pointer;
     text-decoration: none;
-    transition: all 0.3s ease;
-}
+    transition: all 0.22s cubic-bezier(0.23, 1, 0.32, 1);
+    font-size: 1.08rem;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+  }
 
-button#generateBtn {
-    background: linear-gradient(135deg, #4facfe, #00f2fe);
+  button#generateBtn {
+    background: linear-gradient(135deg, #9c5af5 0%, #2563eb 100%);
     color: #fff;
-    font-size: 1rem;
-}
+    box-shadow: 0 2px 8px rgba(46, 91, 255, 0.1);
+    letter-spacing: 0.2px;
+    animation: fadeInUp 1.2s cubic-bezier(0.23, 1, 0.32, 1);
+  }
 
-button#generateBtn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(0,0,0,0.1);
-}
+  button#generateBtn::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.4s cubic-bezier(0.23, 1, 0.32, 1),
+      height 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+    z-index: 0;
+  }
+  button#generateBtn:active::after {
+    width: 200%;
+    height: 200%;
+  }
 
-.back-link {
+  button#generateBtn:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #9c5af5 100%);
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 8px 24px rgba(46, 91, 255, 0.13);
+  }
+
+  .back-link {
     display: inline-block;
-    margin-top: 15px;
-    color: #2563EB;
-}
+    margin-top: 18px;
+    color: #2563eb;
+    background: #f7fafd;
+    border: 1.2px solid #e3eafc;
+    font-size: 1rem;
+    box-shadow: 0 1.5px 6px rgba(30, 60, 114, 0.04);
+  }
 
-.back-link:hover {
+  .back-link:hover {
     text-decoration: underline;
-}
+    background: #e3eafc;
+    color: #1d4ed8;
+  }
 
-/* --- Progress Bar --- */
-#generationProgress {
-    margin-top: 25px;
-    background: #f3f4f6;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 6px 15px rgba(0,0,0,0.05);
-}
+  #generationProgress {
+    margin-top: 28px;
+    background: linear-gradient(90deg, #f3f4f6 80%, #e3eafc 100%);
+    padding: 24px;
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(30, 60, 114, 0.07);
+    animation: fadeInUp 1.2s cubic-bezier(0.23, 1, 0.32, 1);
+  }
 
-#progressSteps p {
+  #progressSteps p {
     margin: 8px 0;
-}
+    font-weight: 600;
+    color: #2563eb;
+    letter-spacing: 0.1px;
+  }
 
-#progressBar {
+  #progressBar {
     width: 100%;
     background: #e5e7eb;
-    border-radius: 10px;
+    border-radius: 12px;
     overflow: hidden;
     margin-top: 15px;
-}
+    box-shadow: 0 1.5px 6px rgba(30, 60, 114, 0.04);
+  }
 
-#progressFill {
+  #progressFill {
     height: 20px;
     width: 0%;
-    border-radius: 10px;
-    background: linear-gradient(45deg, #405DE6, #5851DB, #833AB4, #C13584, #E1306C, #FD1D1D);
-    transition: width 0.3s ease-in-out;
-}
+    border-radius: 12px;
+    background: linear-gradient(90deg, #405de6, #2563eb, #4facfe, #00f2fe);
+    transition: width 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  }
 
-/* --- Generation Result --- */
-#error {
+  #error {
     background: #fee2e2;
     border-left: 4px solid #f87171;
     padding: 15px 20px;
-    border-radius: 8px;
+    border-radius: 10px;
     color: #b91c1c;
-    margin-top: 20px;
-}
+    margin-top: 22px;
+    box-shadow: 0 2px 12px rgba(255, 0, 0, 0.07);
+    animation: fadeInDown 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+  }
 
-/* --- Responsive --- */
-@media (max-width: 768px) {
+  @media (max-width: 768px) {
     form {
-        padding: 20px;
+      padding: 18px 6px 18px 6px;
+      border-radius: 10px;
     }
-}
+    .info {
+      border-radius: 8px;
+      padding: 10px 8px;
+    }
+    .form-group {
+      border-radius: 6px;
+    }
+  }
+
+  /* Animations */
+  @keyframes fadeInBg {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+  @keyframes fadeInDown {
+    0% {
+      opacity: 0;
+      transform: translateY(-40px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes fadeInUp {
+    0% {
+      opacity: 0;
+      transform: translateY(40px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes fadeInCard {
+    0% {
+      opacity: 0;
+      transform: translateY(30px) scale(0.98);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  @keyframes popIn {
+    0% {
+      opacity: 0;
+      transform: scale(0.7);
+    }
+    80% {
+      opacity: 1;
+      transform: scale(1.08);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  @keyframes floatGlow {
+    0% {
+      transform: translateY(0) scale(1);
+    }
+    100% {
+      transform: translateY(18px) scale(1.08);
+    }
+  }
 </style>
 <body>
+  <h1 style="margin-left: 1rem; color: black">AI Advertisement Generator</h1>
 
-<h1 style="margin-left:1rem"> AI Advertisement Generator</h1>
-
-<div class="info" style="margin-left:1rem">
+  <div class="info" style="margin-left: 1rem">
     <strong>🤖 How it works:</strong>
     <ol>
-        <li>Gemini analyzes your topic and creates optimized image prompt</li>
-        <li>Ideogram generates high-quality advertisement image</li>
-        <li>Gemini Vision analyzes image quality and brand suitability</li>
-        <li>System automatically edits or regenerates if needed</li>
-        <li>Final image ready for Instagram posting</li>
+      <li>Gemini analyzes your topic and creates optimized image prompt</li>
+      <li>Ideogram generates high-quality advertisement image</li>
+      <li>Gemini Vision analyzes image quality and brand suitability</li>
+      <li>System automatically edits or regenerates if needed</li>
+      <li>Final image ready for Instagram posting</li>
     </ol>
-</div>
+  </div>
 
-<form id="generateForm" style="margin-left:1rem">
+  <form id="generateForm" style="margin-left: 1rem">
     <div class="form-group">
-        <label for="topic">Advertisement Topic *</label>
-        <input 
-            type="text" 
-            id="topic" 
-            name="topic" 
-            placeholder="e.g., Summer Sale - 50% off fashion items"
-            required
-        style="font-style:sans-serif">
-        <small>Describe what you want to advertise</small>
+      <label for="topic">Advertisement Topic *</label>
+      <input
+        type="text"
+        id="topic"
+        name="topic"
+        placeholder="e.g., Summer Sale - 50% off fashion items"
+        required
+        style="font-style: sans-serif"
+      />
+      <small>Describe what you want to advertise</small>
     </div>
-    
-    <div class="form-group"   >
-        <label for="brand_context">Brand Context</label>
-        <textarea 
-            id="brand_context" 
-            name="brand_context" 
-            placeholder="e.g., Modern fashion brand targeting young professionals, minimalist aesthetic, premium quality"
-           style="font-style:sans-serif"></textarea>
-        <small>Describe your brand's style, target audience, and positioning</small>
-    </div>
-    
-    <div class="form-group">
-        <label for="constraints">Image Constraints</label>
-        <textarea 
-            id="constraints" 
-            name="constraints" 
-            placeholder="e.g., Use blue and white colors, include product photos, minimal text, square format"
-        ></textarea>
-        <small>Specific requirements for the generated image</small>
-    </div>
-    
-    <button type="submit" id="generateBtn" style="background: linear-gradient(135deg,#9C5AF5,#2563EB);">🚀 Generate Advertisement</button>
-</form>
 
-<div id="generationProgress" style="display: none;">
+    <div class="form-group">
+      <label for="brand_context">Brand Context</label>
+      <textarea
+        id="brand_context"
+        name="brand_context"
+        placeholder="e.g., Modern fashion brand targeting young professionals, minimalist aesthetic, premium quality"
+        style="font-style: sans-serif"
+      ></textarea>
+      <small
+        >Describe your brand's style, target audience, and positioning</small
+      >
+    </div>
+
+    <div class="form-group">
+      <label for="constraints">Image Constraints</label>
+      <textarea
+        id="constraints"
+        name="constraints"
+        placeholder="e.g., Use blue and white colors, include product photos, minimal text, square format"
+      ></textarea>
+      <small>Specific requirements for the generated image</small>
+    </div>
+
+    <button
+      type="submit"
+      id="generateBtn"
+      style="background: linear-gradient(135deg, #9c5af5, #2563eb)"
+    >
+      🚀 Generate Advertisement
+    </button>
+  </form>
+
+  <div id="generationProgress" style="display: none">
     <div class="info">
-        <h3>🔄 Generating Your Advertisement...</h3>
-        <div id="progressSteps"></div>
-        <div id="progressBar">
-            <div id="progressFill"></div>
-        </div>
+      <h3>🔄 Generating Your Advertisement...</h3>
+      <div id="progressSteps"></div>
+      <div id="progressBar">
+        <div id="progressFill"></div>
+      </div>
     </div>
-</div>
+  </div>
 
-<div id="generationResult" style="display: none;"></div>
+  <div id="generationResult" style="display: none"></div>
 
-<a href="/" class="back-link">← Back to Dashboard</a>
+  <a href="/" class="back-link">← Back to Dashboard</a>
 </body>
 <script>
-let authToken = localStorage.getItem('authToken');
+  let authToken = localStorage.getItem("authToken");
 
-if (!authToken) {
-    alert('Please login first');
-    window.location.href = '/';
-}
+  if (!authToken) {
+    alert("Please login first");
+    window.location.href = "/";
+  }
 
-document.getElementById('generateForm').addEventListener('submit', async function(event) {
-    event.preventDefault();
-    
-    if (!authToken) {
-        alert('Please login first');
+  document
+    .getElementById("generateForm")
+    .addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      if (!authToken) {
+        alert("Please login first");
         return;
-    }
-    
-    const formData = new FormData(this);
-    
-    document.getElementById('generationProgress').style.display = 'block';
-    document.getElementById('generateBtn').disabled = true;
-    document.getElementById('generateBtn').textContent = '🔄 Generating...';
-    
-    const steps = [
-        'Analyzing topic with Gemini AI...',
-        'Creating optimized image prompt...',
-        'Generating image with Ideogram...',
-        'Analyzing image quality...',
-        'Applying improvements...',
-        'Finalizing advertisement...'
-    ];
-    
-    let currentStep = 0;
-    const progressInterval = setInterval(() => {
+      }
+
+      const formData = new FormData(this);
+
+      document.getElementById("generationProgress").style.display = "block";
+      document.getElementById("generateBtn").disabled = true;
+      document.getElementById("generateBtn").textContent = "🔄 Generating...";
+
+      const steps = [
+        "Analyzing topic with Gemini AI...",
+        "Creating optimized image prompt...",
+        "Generating image with Ideogram...",
+        "Analyzing image quality...",
+        "Applying improvements...",
+        "Finalizing advertisement...",
+      ];
+
+      let currentStep = 0;
+      const progressInterval = setInterval(() => {
         if (currentStep < steps.length) {
-            document.getElementById('progressSteps').innerHTML = `
-                <p><strong>Step ${currentStep + 1}/${steps.length}:</strong> ${steps[currentStep]}</p>
+          document.getElementById("progressSteps").innerHTML = `
+                <p><strong>Step ${currentStep + 1}/${steps.length}:</strong> ${
+            steps[currentStep]
+          }</p>
             `;
-            document.getElementById('progressFill').style.width = `${((currentStep + 1) / steps.length) * 100}%`;
-            currentStep++;
+          document.getElementById("progressFill").style.width = `${
+            ((currentStep + 1) / steps.length) * 100
+          }%`;
+          currentStep++;
         }
-    }, 2000);
-    
-    try {
-        const response = await fetch('/generate-ad', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${authToken}`
-            },
-            body: formData
+      }, 2000);
+
+      try {
+        const response = await fetch("/generate-ad", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+          body: formData,
         });
-        
+
         if (response.ok) {
-            clearInterval(progressInterval);
-            document.getElementById('generationProgress').style.display = 'none';
-            
-            const resultHtml = await response.text();
-            document.open();
-            document.write(resultHtml);
-            document.close();
+          clearInterval(progressInterval);
+          document.getElementById("generationProgress").style.display = "none";
+
+          const resultHtml = await response.text();
+          document.open();
+          document.write(resultHtml);
+          document.close();
         } else {
-            throw new Error('Generation failed');
+          throw new Error("Generation failed");
         }
-    } catch (error) {
+      } catch (error) {
         clearInterval(progressInterval);
-        document.getElementById('generationProgress').style.display = 'none';
-        document.getElementById('generationResult').innerHTML = `
+        document.getElementById("generationProgress").style.display = "none";
+        document.getElementById("generationResult").innerHTML = `
             <div id="error">
                 <h3>❌ Generation Failed</h3>
                 <p>Error: ${error.message}</p>
                 <p>Please check your API keys and try again.</p>
             </div>
         `;
-        document.getElementById('generationResult').style.display = 'block';
-    } finally {
-        document.getElementById('generateBtn').disabled = false;
-        document.getElementById('generateBtn').textContent = '🚀 Generate Advertisement';
-    }
-});
+        document.getElementById("generationResult").style.display = "block";
+      } finally {
+        document.getElementById("generateBtn").disabled = false;
+        document.getElementById("generateBtn").textContent =
+          "🚀 Generate Advertisement";
+      }
+    });
 </script>
 {% endblock %}
