@@ -118,6 +118,13 @@
         <button onclick="showDirectYouTubePostModal()" style="background: white; color: #ff0000; padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;">Post to YouTube</button>
     </div>
     
+    <!-- Direct Facebook Posting -->
+    <div style="border: 1px solid #ddd; border-radius: 10px; padding: 20px; background: linear-gradient(135deg, #4267B2 0%, #3b5998 100%); color: white;">
+        <h3 style="color: white; margin-top: 0;">📘 Post to Facebook</h3>
+        <p>Post an image directly to Facebook using URL</p>
+        <button onclick="showDirectFacebookPostModal()" style="background: white; color: #4267B2; padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;">Post to Facebook</button>
+    </div>
+    
 
     <!-- Auto Post from Logs -->
     <div style="border-radius:14px; padding:20px; background: linear-gradient(135deg,#9C5AF5,#60A5FA); color:white; box-shadow:0 6px 20px rgba(0,0,0,0.12); transition: transform 0.3s, box-shadow 0.3s;"
@@ -361,6 +368,69 @@
         </form>
         
         <div id="directLinkedInPostResult" style="margin-top: 20px;"></div>
+    </div>
+</div>
+
+<!-- Direct Facebook Post Modal -->
+<div id="directFacebookPostModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; max-width: 600px; width: 90%;">
+        <h3>📘 Post Image Directly to Facebook</h3>
+        
+        <form id="directFacebookPostForm">
+            <div class="form-group">
+                <label for="facebookImageUrl">Image URL:</label>
+                <input type="url" id="facebookImageUrl" name="image_url" placeholder="https://example.com/image.jpg" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                <small>Enter a publicly accessible image URL</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="facebookText">Text:</label>
+                <textarea id="facebookText" name="text" placeholder="Write your Facebook post here..." required style="width: 100%; height: 120px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <div style="border: 1px solid #ddd; padding: 10px; border-radius: 4px; background: #f9f9f9; margin: 10px 0;">
+                    <label>Image Preview:</label>
+                    <div id="facebookImagePreview" style="margin-top: 10px; text-align: center; min-height: 100px; display: flex; align-items: center; justify-content: center; color: #666;">
+                        Enter an image URL to see preview
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin: 15px 0;">
+                <label style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="facebookScheduleToggle"> Schedule this post
+                </label>
+                <small>Enable to publish at a specific future time.</small>
+            </div>
+
+            <div id="facebookScheduleFields" style="display: none; border: 1px solid #ddd; padding: 12px; border-radius: 6px; background: #f8f9ff; margin-bottom: 15px;">
+                <div class="form-group">
+                    <label for="facebookScheduleTime">Scheduled date & time</label>
+                    <input type="datetime-local" id="facebookScheduleTime" name="scheduled_time" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+                <div class="form-group">
+                    <label for="facebookScheduleTimezone">Timezone</label>
+                    <select id="facebookScheduleTimezone" name="schedule_timezone" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                        <option value="UTC">UTC</option>
+                        <option value="America/New_York">America/New_York</option>
+                        <option value="America/Los_Angeles">America/Los_Angeles</option>
+                        <option value="Europe/London">Europe/London</option>
+                        <option value="Europe/Paris">Europe/Paris</option>
+                        <option value="Asia/Kolkata">Asia/Kolkata</option>
+                        <option value="Australia/Sydney">Australia/Sydney</option>
+                    </select>
+                    <small>Your local timezone is preselected when available.</small>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button type="submit" id="facebookSubmitButton" style="flex: 1; background: #4267B2; color: white; padding: 12px; border: none; border-radius: 5px; font-weight: bold;">Post to Facebook</button>
+                <button type="button" onclick="hideDirectFacebookPostModal()" style="flex: 1; background: #ddd; color: #333; padding: 12px; border: none; border-radius: 5px;">Cancel</button>
+            </div>
+        </form>
+        
+        <div id="directFacebookPostResult" style="margin-top: 20px;"></div>
     </div>
 </div>
 
@@ -830,6 +900,47 @@ function hideDirectYouTubePostModal() {
     }
 }
 
+function showDirectFacebookPostModal() {
+    if (!authToken) {
+        alert('Please login first');
+        return;
+    }
+    document.getElementById('directFacebookPostModal').style.display = 'block';
+}
+
+function hideDirectFacebookPostModal() {
+    document.getElementById('directFacebookPostModal').style.display = 'none';
+    const form = document.getElementById('directFacebookPostForm');
+    if (form) {
+        form.reset();
+    }
+    const preview = document.getElementById('facebookImagePreview');
+    if (preview) {
+        preview.innerHTML = 'Enter an image URL to see preview';
+    }
+    const result = document.getElementById('directFacebookPostResult');
+    if (result) {
+        result.innerHTML = '';
+    }
+    const toggle = document.getElementById('facebookScheduleToggle');
+    const fields = document.getElementById('facebookScheduleFields');
+    const button = document.getElementById('facebookSubmitButton');
+    const timezoneSelect = document.getElementById('facebookScheduleTimezone');
+    if (toggle) {
+        toggle.checked = false;
+    }
+    if (fields) {
+        fields.style.display = 'none';
+    }
+    if (button) {
+        button.textContent = 'Post to Facebook';
+        button.disabled = false;
+    }
+    if (timezoneSelect && directLocalTimezone) {
+        timezoneSelect.value = directLocalTimezone;
+    }
+}
+
 function showAutoPostModal() {
     if (!authToken) {
         alert('Please login first');
@@ -1233,6 +1344,139 @@ document.getElementById('directLinkedInPostForm').addEventListener('submit', asy
     }
 });
 
+// Facebook direct post form handling
+document.getElementById('directFacebookPostForm').addEventListener('submit', async function(event) {
+    event.preventDefault();
+    
+    const imageUrlInput = document.getElementById('facebookImageUrl');
+    const textInput = document.getElementById('facebookText');
+    const scheduleToggle = document.getElementById('facebookScheduleToggle');
+    const scheduleTimeInput = document.getElementById('facebookScheduleTime');
+    const timezoneSelect = document.getElementById('facebookScheduleTimezone');
+    const submitButton = document.getElementById('facebookSubmitButton');
+    const resultDiv = document.getElementById('directFacebookPostResult');
+    
+    const imageUrl = imageUrlInput.value.trim();
+    const text = textInput.value.trim();
+    const scheduleEnabled = scheduleToggle && scheduleToggle.checked;
+    
+    if (!imageUrl || !text) {
+        resultDiv.innerHTML = '<div style="color: red;">❌ Please fill in all required fields.</div>';
+        return;
+    }
+    
+    // Validate image URL
+    if (!isValidImageUrl(imageUrl)) {
+        resultDiv.innerHTML = '<div style="color: red;">❌ Please enter a valid image URL.</div>';
+        return;
+    }
+    
+    // Disable submit button during request
+    if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = scheduleEnabled 
+            ? 'Scheduling to Facebook...' 
+            : 'Posting to Facebook...';
+    }
+    
+    resultDiv.innerHTML = scheduleEnabled 
+        ? '<div style="color: blue;">⏳ Scheduling post to Facebook...</div>'
+        : '<div style="color: blue;">⏳ Posting to Facebook...</div>';
+    
+    try {
+        const formData = new FormData();
+        formData.append('image_url', imageUrl);
+        formData.append('text', text);
+        
+        if (scheduleEnabled) {
+            formData.append('scheduled_time', scheduleTimeInput.value);
+            formData.append('schedule_timezone', (timezoneSelect && timezoneSelect.value) || directLocalTimezone || 'UTC');
+        }
+        
+        const response = await fetch('/post-direct-facebook', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.scheduled) {
+            const scheduled = result.scheduled_post || {};
+            const scheduledIso = scheduled.schedule_time;
+            const tz = scheduled.timezone || ((timezoneSelect && timezoneSelect.value) || 'UTC');
+            
+            // Format datetime in the user's chosen timezone
+            let readable = '';
+            if (scheduledIso) {
+                try {
+                    const date = new Date(scheduledIso);
+                    
+                    // Try modern approach with timeZone support
+                    if (Intl && Intl.DateTimeFormat) {
+                        try {
+                            readable = new Intl.DateTimeFormat('en-US', {
+                                timeZone: tz,
+                                year: 'numeric',
+                                month: '2-digit', 
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit',
+                                hour12: true
+                            }).format(date);
+                        } catch (e) {
+                            console.log('Intl.DateTimeFormat failed, trying toLocaleString:', e);
+                            readable = date.toLocaleString('en-US', {
+                                timeZone: tz,
+                                year: 'numeric',
+                                month: '2-digit', 
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit',
+                                hour12: true
+                            });
+                        }
+                    } else {
+                        // Fallback for older browsers - just use the basic toLocaleString
+                        readable = date.toLocaleString();
+                    }
+                } catch (e) {
+                    console.error('Date formatting error:', e);
+                    readable = scheduledIso; // Show raw ISO string as last resort
+                }
+            } else if (scheduleTimeInput) {
+                readable = scheduleTimeInput.value;
+            }
+            
+            resultDiv.innerHTML = `<div style="color: green;">✅ Post scheduled.<br><br>It will publish automatically at ${readable} (${tz}).</div>`;
+            if (typeof loadScheduledPosts === 'function') {
+                loadScheduledPosts();
+            }
+            setTimeout(() => {
+                hideDirectFacebookPostModal();
+            }, 2500);
+        } else if (response.ok && result.success) {
+            resultDiv.innerHTML = `<div style="color: green;">✅ Successfully posted to Facebook!</div>`;
+            setTimeout(() => {
+                hideDirectFacebookPostModal();
+            }, 3000);
+        } else {
+            const errorMessage = result.error || result.detail || 'Unknown error';
+            resultDiv.innerHTML = `<div style="color: red;">❌ Failed: ${errorMessage}</div>`;
+        }
+    } catch (error) {
+        resultDiv.innerHTML = `<div style="color: red;">❌ Error: ${error.message}</div>`;
+    } finally {
+        if (submitButton) {
+            submitButton.disabled = false;
+        }
+    }
+});
+
 // YouTube video preview functionality
 document.getElementById('youtubeVideoUrl').addEventListener('input', function() {
     const url = this.value.trim();
@@ -1460,13 +1704,49 @@ async function loadTopics() {
     }
 }
 
-// Image preview functionality
+// Instagram image preview functionality
 document.getElementById('imageUrl').addEventListener('input', function() {
     const url = this.value.trim();
     const preview = document.getElementById('imagePreview');
     
     if (url && isValidImageUrl(url)) {
         preview.innerHTML = `<img src="${url}" style="max-width: 100%; max-height: 200px; border-radius: 4px;" onload="this.style.display='block'" onerror="showImageError()" />`;
+    } else {
+        preview.innerHTML = 'Enter a valid image URL to see preview';
+    }
+});
+
+// Twitter image preview functionality
+document.getElementById('twitterImageUrl').addEventListener('input', function() {
+    const url = this.value.trim();
+    const preview = document.getElementById('twitterImagePreview');
+    
+    if (url && isValidImageUrl(url)) {
+        preview.innerHTML = `<img src="${url}" style="max-width: 100%; max-height: 200px; border-radius: 4px;" onload="this.style.display='block'" onerror="showTwitterImageError()" />`;
+    } else {
+        preview.innerHTML = 'Enter a valid image URL to see preview';
+    }
+});
+
+// LinkedIn image preview functionality
+document.getElementById('linkedinImageUrl').addEventListener('input', function() {
+    const url = this.value.trim();
+    const preview = document.getElementById('linkedinImagePreview');
+    
+    if (url && isValidImageUrl(url)) {
+        preview.innerHTML = `<img src="${url}" style="max-width: 100%; max-height: 200px; border-radius: 4px;" onload="this.style.display='block'" onerror="showLinkedInImageError()" />`;
+    } else {
+        preview.innerHTML = 'Enter a valid image URL to see preview';
+    }
+});
+
+// Facebook image preview functionality
+document.getElementById('facebookImageUrl').addEventListener('input', function() {
+    const url = this.value.trim();
+    const preview = document.getElementById('facebookImagePreview');
+    
+    if (url && isValidImageUrl(url)) {
+        preview.innerHTML = `<img src="${url}" style="max-width: 100%; max-height: 200px; border-radius: 4px;" onload="this.style.display='block'" onerror="showFacebookImageError()" />`;
     } else {
         preview.innerHTML = 'Enter a valid image URL to see preview';
     }
@@ -1483,6 +1763,18 @@ function isValidImageUrl(url) {
 
 function showImageError() {
     document.getElementById('imagePreview').innerHTML = '<p style="color: red;">❌ Could not load image. Please check the URL.</p>';
+}
+
+function showTwitterImageError() {
+    document.getElementById('twitterImagePreview').innerHTML = '<p style="color: red;">❌ Could not load image. Please check the URL.</p>';
+}
+
+function showLinkedInImageError() {
+    document.getElementById('linkedinImagePreview').innerHTML = '<p style="color: red;">❌ Could not load image. Please check the URL.</p>';
+}
+
+function showFacebookImageError() {
+    document.getElementById('facebookImagePreview').innerHTML = '<p style="color: red;">❌ Could not load image. Please check the URL.</p>';
 }
 
 const directScheduleToggle = document.getElementById('directScheduleToggle');

@@ -14,17 +14,17 @@ class LinkedInAgent:
 
     def __init__(self) -> None:
         self.access_token = os.getenv("LINKEDIN_ACCESS_TOKEN")
-        self.organization_id = os.getenv("LINKEDIN_ORGANIZATION_ID")
+        self.person_urn = os.getenv("LINKEDIN_PERSON_URN")  # Changed to use person URN
         
         if not self.access_token:
             raise ValueError("Missing required environment variable LINKEDIN_ACCESS_TOKEN")
         
-        if not self.organization_id:
-            raise ValueError("Missing required environment variable LINKEDIN_ORGANIZATION_ID")
+        if not self.person_urn:
+            raise ValueError("Missing required environment variable LINKEDIN_PERSON_URN")
         
         self.headers = {
             "Authorization": f"Bearer {self.access_token}",
-            "X-Restli-Protocol-Version": "2.0.0"
+            "Content-Type": "application/json"
         }
         
         self.upload_url = "https://api.linkedin.com/v2/assets"
@@ -70,19 +70,18 @@ class LinkedInAgent:
 
         self.last_error = None
         try:
-            # Step 1: Register the asset
+            # Step 1: Register the asset (using working approach from your example)
             register_payload = {
                 "registerUploadRequest": {
-                    "recipes": [
-                        "urn:li:digitalmediaRecipe:(public,shareable)"
-                    ],
-                    "owner": f"urn:li:organization:{self.organization_id}",
+                    "owner": self.person_urn,
+                    "recipes": ["urn:li:digitalmediaRecipe:feedshare-image"],
                     "serviceRelationships": [
                         {
                             "relationshipType": "OWNER",
-                            "identifier": "urn:li:serviceprovider:primary"
+                            "identifier": "urn:li:userGeneratedContent"
                         }
-                    ]
+                    ],
+                    "supportedUploadMechanism": ["SYNCHRONOUS_UPLOAD"]
                 }
             }
             
@@ -102,27 +101,28 @@ class LinkedInAgent:
                 return None
             
             register_data = register_response.json()
-            asset_id = register_data.get('value', {}).get('asset')
+            upload_mechanism = register_data.get('value', {}).get('uploadMechanism', {})
+            upload_url = upload_mechanism.get('com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest', {}).get('uploadUrl')
+            asset = register_data.get('value', {}).get('asset')
             
-            # Get the upload URL
-            upload_url = register_data.get('value', {}).get('uploadMechanism', {}).get('com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest', {}).get('uploadUrl')
-            
-            if not upload_url or not asset_id:
+            if not upload_url or not asset:
                 self.last_error = {
                     "stage": "register_upload",
                     "status": register_response.status_code,
-                    "error": "Failed to get upload URL or asset ID",
+                    "error": "Failed to get upload URL or asset",
                 }
                 return None
             
             # Step 2: Upload the file
             with open(image_path, "rb") as image_file:
-                headers = {
+                upload_headers = {
                     "Authorization": f"Bearer {self.access_token}",
+                    "Content-Type": "image/jpeg",  # or appropriate image type
+                    "media-type-family": "STILLIMAGE"
                 }
                 upload_response = requests.put(
                     upload_url,
-                    headers=headers,
+                    headers=upload_headers,
                     data=image_file
                 )
             
@@ -135,7 +135,7 @@ class LinkedInAgent:
                 }
                 return None
             
-            return asset_id
+            return asset  # Return asset instead of asset_id
             
         except RequestException as exc:
             self.last_error = {
@@ -145,19 +145,19 @@ class LinkedInAgent:
             }
             return None
 
-    def create_post(self, text: str, asset_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    def create_post(self, text: str, asset: Optional[str] = None) -> Optional[Dict[str, Any]]:
         """Create a LinkedIn post"""
         
-        # Create the post entity
+        # Create the post entity (using working approach from your example)
         post_payload = {
-            "author": f"urn:li:organization:{self.organization_id}",
+            "author": self.person_urn,
             "lifecycleState": "PUBLISHED",
             "specificContent": {
                 "com.linkedin.ugc.ShareContent": {
                     "shareCommentary": {
                         "text": text
                     },
-                    "shareMediaCategory": "IMAGE" if asset_id else "NONE"
+                    "shareMediaCategory": "IMAGE" if asset else "NONE"
                 }
             },
             "visibility": {
@@ -166,14 +166,13 @@ class LinkedInAgent:
         }
         
         # Add media if provided
-        if asset_id:
+        if asset:
             post_payload["specificContent"]["com.linkedin.ugc.ShareContent"]["media"] = [
                 {
                     "status": "READY",
-                    "description": {
-                        "text": text
-                    },
-                    "media": asset_id
+                    "media": asset,
+                    "title": {"text": "Image"},
+                    "description": {"text": text}
                 }
             ]
         
@@ -239,17 +238,17 @@ class LinkedInAgent:
                 temp_path = self._download_image(image_url)
                 local_path = temp_path
 
-            asset_id: Optional[str] = None
+            asset: Optional[str] = None
             if local_path:
-                asset_id = self.upload_media(local_path)
-                if not asset_id:
+                asset = self.upload_media(local_path)
+                if not asset:
                     result["error"] = "Failed to upload media to LinkedIn"
                     if self.last_error:
                         result["error_details"] = self.last_error
                     return result
-                result["asset_id"] = asset_id
+                result["asset_id"] = asset  # Keep the name for compatibility
 
-            post_data = self.create_post(text, asset_id)
+            post_data = self.create_post(text, asset)
             if not post_data:
                 result["error"] = "Failed to publish post to LinkedIn"
                 if self.last_error:

@@ -49,13 +49,14 @@ The original n8n workflow has been transformed into a comprehensive system:
    - `GEMINI_API_KEY` - Google AI Studio
    - `IDEOGRAM_API_KEY` - Ideogram API  
    - `FACEBOOK_ACCESS_TOKEN` - Facebook Graph API
-   - `INSTAGRAM_BUSINESS_ACCOUNT_ID` - Instagram Business Account
+   - `INSTAGRAM_BUSINESS_ACCOUNT_ID` - Instagram Business Account ID
+   - `FACEBOOK_PAGE_ID` - Facebook Page ID (for Facebook posting)
    - `TWITTER_API_KEY` - Twitter API (for Twitter posting)
    - `TWITTER_API_SECRET_KEY` - Twitter API (for Twitter posting)
    - `TWITTER_ACCESS_TOKEN` - Twitter API (for Twitter posting)
    - `TWITTER_ACCESS_TOKEN_SECRET` - Twitter API (for Twitter posting)
    - `LINKEDIN_ACCESS_TOKEN` - LinkedIn API (for LinkedIn posting)
-   - `LINKEDIN_ORGANIZATION_ID` - LinkedIn API (for LinkedIn posting)
+   - `LINKEDIN_PERSON_URN` - LinkedIn API Person URN (for LinkedIn posting, e.g., urn:li:person:JzD7IhuMn6)
    - `YOUTUBE_CLIENT_SECRETS_FILE` and `YOUTUBE_CREDENTIALS_FILE` - OAuth-based YouTube access (required for uploads)
 
 2. **System Requirements:**
@@ -107,6 +108,8 @@ http://localhost:8000
 - `POST /post-direct-twitter` - Post to Twitter with direct image URL
 - `POST /post-to-linkedin` - Post to LinkedIn
 - `POST /post-direct-linkedin` - Post to LinkedIn with direct image URL
+- `POST /post-to-facebook` - Post to Facebook
+- `POST /post-direct-facebook` - Post to Facebook with direct image URL
 - `POST /post-to-youtube` - Post to YouTube
 - `POST /post-direct-youtube` - Post to YouTube with direct video URL
 
@@ -243,6 +246,11 @@ constraints = """
 4. **"Instagram Posting Failed"**
    - Check Facebook access token permissions
    - Verify Instagram Business Account connection
+
+5. **"Facebook Posting Failed" - (#200) This app is not allowed to publish to other users' timelines**
+   - This error occurs when your Facebook app doesn't have the required permissions
+   - You need a Page Access Token with `pages_manage_posts` permission
+   - See FACEBOOK_PERMISSIONS_FIX.md for detailed troubleshooting steps
 
 ### Debug Mode
 ```bash

@@ -14,6 +14,7 @@ from instagram_agent import InstagramAgent
 from twitter_agent import TwitterAgent
 from linkedin_agent import LinkedInAgent
 from youtube_agent import YouTubeAgent
+from facebook_agent import FacebookAgent
 from models.database import get_db, create_tables, User, Topic, ScheduledPost
 from auth.auth import (
     AuthService, get_current_active_user, UserCreate, UserLogin, 
@@ -1132,6 +1133,171 @@ async def mark_as_posted(
         return JSONResponse(content={"success": result})
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/post-to-facebook")
+async def post_to_facebook(
+    request: Request,
+    image_filename: str = Form(...),
+    text: str = Form(...),
+    topic_id: int = Form(...),
+    scheduled_time: Optional[str] = Form(None),
+    schedule_timezone: Optional[str] = Form("UTC"),
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    try:
+        topic = db.query(Topic).filter(
+            Topic.id == topic_id,
+            Topic.user_id == current_user.id
+        ).first()
+
+        if not topic:
+            raise HTTPException(status_code=404, detail="Topic not found")
+
+        image_path = os.path.join(os.path.abspath("generated_images"), image_filename)
+        if not os.path.exists(image_path):
+            raise HTTPException(status_code=404, detail=f"Image file not found: {image_filename}")
+
+        scheduled_time_value = (scheduled_time or "").strip() or None
+        timezone_value = (schedule_timezone or "").strip() or None
+
+        print(
+            f"[post-to-facebook] user={current_user.email} image={image_filename} "
+            f"text_preview={text[:50]}... topic_id={topic_id} "
+            f"scheduled_time={scheduled_time_value} timezone={timezone_value}"
+        )
+
+        if scheduled_time_value:
+            try:
+                schedule_dt, tz_name = scheduling_service.parse_scheduled_datetime(scheduled_time_value, timezone_value)
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail=str(exc))
+
+            preview_url = ImageUploadService.get_public_url(image_path)
+            metadata = {
+                "source": "generated_image",
+                "topic_id": topic_id,
+                "preview_url": preview_url,
+                "requested_by": current_user.email,
+                "requested_at": datetime.now(timezone.utc).isoformat(),
+                "platform": "facebook",
+            }
+
+            scheduled = scheduling_service.schedule_post(
+                db=db,
+                user_id=current_user.id,
+                caption=text,  # Using 'caption' field for text in the database
+                schedule_time=schedule_dt,
+                timezone_name=tz_name,
+                image_url=preview_url,
+                image_filename=image_filename,
+                topic_id=topic_id,
+                platform="facebook",
+                metadata=metadata,
+            )
+
+            return JSONResponse(
+                status_code=201,
+                content={
+                    "success": True,
+                    "scheduled": True,
+                    "scheduled_post": serialize_scheduled_post(scheduled)
+                }
+            )
+
+        agent = FacebookAgent()
+        result = agent.post_to_facebook(text, image_path=image_path)
+
+        print(f"[post-to-facebook] Facebook response: {result}")
+        if isinstance(result, dict):
+            result.setdefault("requested_image_filename", image_filename)
+            result.setdefault("platform", "facebook")
+            result.setdefault("scheduled", False)
+        return JSONResponse(content=result)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[error] Facebook posting error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/post-direct-facebook")
+async def post_direct_facebook(
+    image_url: str = Form(...),
+    text: str = Form(...),
+    scheduled_time: Optional[str] = Form(None),
+    schedule_timezone: Optional[str] = Form("UTC"),
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    try:
+        scheduled_time_value = (scheduled_time or "").strip() or None
+        timezone_value = (schedule_timezone or "").strip() or None
+
+        print(
+            f"[post-direct-facebook] user={current_user.email} image_url={image_url} "
+            f"text_preview={text[:50]}... scheduled_time={scheduled_time_value} "
+            f"timezone={timezone_value}"
+        )
+
+        from urllib.parse import urlparse
+
+        parsed = urlparse(image_url)
+        if not parsed.scheme or not parsed.netloc:
+            raise HTTPException(status_code=400, detail="Invalid image URL format")
+
+        if scheduled_time_value:
+            try:
+                schedule_dt, tz_name = scheduling_service.parse_scheduled_datetime(scheduled_time_value, timezone_value)
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail=str(exc))
+
+            metadata = {
+                "source": "direct_url",
+                "requested_by": current_user.email,
+                "requested_at": datetime.now(timezone.utc).isoformat(),
+                "platform": "facebook",
+            }
+
+            scheduled = scheduling_service.schedule_post(
+                db=db,
+                user_id=current_user.id,
+                caption=text,
+                schedule_time=schedule_dt,
+                timezone_name=tz_name,
+                image_url=image_url,
+                image_filename=None,
+                topic_id=None,
+                platform="facebook",
+                metadata=metadata,
+            )
+
+            return JSONResponse(
+                status_code=201,
+                content={
+                    "success": True,
+                    "scheduled": True,
+                    "scheduled_post": serialize_scheduled_post(scheduled)
+                }
+            )
+
+        agent = FacebookAgent()
+        result = agent.post_to_facebook(text, image_url=image_url)
+
+        print(f"[post-direct-facebook] Facebook response: {result}")
+        if isinstance(result, dict):
+            result.setdefault("platform", "facebook")
+            result.setdefault("image_url", image_url)
+            result.setdefault("scheduled", False)
+        return JSONResponse(content=result)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[error] Direct Facebook posting error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/health")
 async def health_check():
