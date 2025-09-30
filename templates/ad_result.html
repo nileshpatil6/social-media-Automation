@@ -108,8 +108,13 @@
         {{ score_name.replace('_', ' ') }}
       </h4>
       <div
-        style="font-size: 1.25rem; font-weight: 800; margin-bottom: 10px; color:
-        {% if score_value >= 8 %}#16a34a{% elif score_value >= 6 %}#f59e0b{% else %}#ef4444{% endif %};"
+          {% set score_color = '#ef4444' %}
+          {% if score_value >= 8 %}
+            {% set score_color = '#16a34a' %}
+          {% elif score_value >= 6 %}
+            {% set score_color = '#f59e0b' %}
+          {% endif %}
+          style="font-size: 1.25rem; font-weight: 800; margin-bottom: 10px; color: {{ score_color }};"
       >
         {{ "%.1f"|format(score_value) }}/10
       </div>
@@ -126,12 +131,15 @@
         "
       >
         <div
-          class="score-bar__fill"
-          data-percent="{{ (score_value * 10)|round(1) }}"
-          style="height: 100%; width: {{ (score_value * 10)|round(1) }}%;
-            background:
-              {% if score_value >= 8 %}linear-gradient(135deg, #9c5af5, #2563eb){% elif score_value >= 6 %}linear-gradient(135deg, #9c5af5, #2563eb){% else %}linear-gradient(135deg, #9c5af5, #2563eb){% endif %};
-            border-radius: 7px; transition: width 0.5s cubic-bezier(0.23,1,0.32,1);"
+            class="score-bar__fill"
+            data-percent="{{ (score_value * 10)|round(1) }}"
+            {% set bg_value = 'linear-gradient(135deg, #ef4444, #2563eb)' %}
+            {% if score_value >= 8 %}
+              {% set bg_value = 'linear-gradient(135deg, #16a34a, #2563eb)' %}
+            {% elif score_value >= 6 %}
+              {% set bg_value = 'linear-gradient(135deg, #f59e0b, #2563eb)' %}
+            {% endif %}
+            style="height: 100%; width: {{ (score_value * 10)|round(1) }}%; background: {{ bg_value }}; border-radius: 7px; transition: width 0.5s cubic-bezier(0.23,1,0.32,1);"
         ></div>
       </div>
     </div>
@@ -780,8 +788,8 @@
       transition: all 0.2s;
       cursor: pointer;
     "
-    onmouseover="this.style.background: linear-gradient(135deg,#9C5AF5,#2563EB)'"
-    onmouseout="this.style.background: linear-gradient(135deg,#9C5AF5,#2563EB)'"
+      onmouseover="this.style.background='linear-gradient(135deg,#9C5AF5,#2563EB)'"
+      onmouseout="this.style.background='linear-gradient(135deg,#9C5AF5,#2563EB)'"
   >
     Generate Another
   </a>

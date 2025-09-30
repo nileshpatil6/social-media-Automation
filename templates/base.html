@@ -60,7 +60,7 @@
           display: grid; place-items: center; font-weight: 700; color: #ffffff; font-size: 1.1rem;
       }
       .sidebar .brand-text span:first-child { font-size: 1.1rem; font-weight: 600; color: #935BF5; }
-      .sidebar .brand-text span:last-child { font-size: 0.78rem; font-weight: 500; color: #935BF5); text-transform: uppercase; letter-spacing: 0.1em; }
+  .sidebar .brand-text span:last-child { font-size: 0.78rem; font-weight: 500; color: #935BF5; text-transform: uppercase; letter-spacing: 0.1em; }
 
       .sidebar nav { display: flex; flex-direction: column; gap: 0.5rem; }
       .sidebar nav a {
@@ -303,7 +303,8 @@
     </div>
 
     <script>
-                      if (profileInfo) profileInfo.style.display = "none";
+    const profileInfo = document.getElementById("profileInfo");
+    if (profileInfo) profileInfo.style.display = "none";
       document.addEventListener("DOMContentLoaded", () => {
         const accountIcon = document.getElementById("accountIcon");
 

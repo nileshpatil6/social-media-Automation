@@ -1439,6 +1439,293 @@ async def post_to_multiple_channels(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/generate-and-schedule")
+async def generate_and_schedule(
+    request: Request,
+    topic: str = Form(...),
+    schedule_time: str = Form(...),
+    timezone: str = Form("UTC"),
+    platforms: str = Form(...),  # Comma-separated platforms
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Generate an image based on the topic and schedule it to be posted to selected platforms
+    """
+    try:
+        # Parse platforms from comma-separated string
+        platform_list = [p.strip().lower() for p in platforms.split(",") if p.strip()]
+        
+        # Validate platforms
+        valid_platforms = {"instagram", "facebook", "linkedin", "twitter", "youtube"}
+        invalid_platforms = [p for p in platform_list if p not in valid_platforms]
+        if invalid_platforms:
+            raise HTTPException(status_code=400, detail=f"Invalid platforms: {invalid_platforms}")
+        
+        # Parse the schedule time
+        schedule_dt, tz_name = scheduling_service.parse_scheduled_datetime(schedule_time, timezone)
+        
+        # Create a new topic in the database
+        new_topic = Topic(
+            user_id=current_user.id,
+            topic_title=topic,
+            textual_description=topic,
+            status="scheduled",
+            scheduled_date=schedule_dt
+        )
+        db.add(new_topic)
+        db.commit()
+        db.refresh(new_topic)
+        
+        # For this route, we want to schedule image generation to happen at the scheduled time
+        # So we don't generate the image now, but set up the system to generate it when the time comes
+        # We'll create scheduled posts without image_filename, and the scheduling service will handle
+        # image generation when the time comes
+        
+        # Create caption based on the topic
+        caption = f"Check out this post about: {topic}"
+        
+        # Schedule the post for each selected platform - without image_filename
+        scheduled_posts = []
+        for platform in platform_list:
+            # Schedule the post using the scheduling service
+            metadata = {
+                "platform": platform,
+                "original_topic": topic,
+                "automation": True,
+                "source": "generate_at_schedule_time"
+            }
+            
+            scheduled_post = scheduling_service.schedule_post(
+                db=db,
+                user_id=current_user.id,
+                caption=caption,
+                schedule_time=schedule_dt,
+                timezone_name=tz_name,
+                image_filename=None,  # No image filename yet - will be generated at schedule time
+                topic_id=new_topic.id,
+                platform=platform,
+                metadata=metadata
+            )
+            
+            scheduled_posts.append(scheduled_post)
+        
+        return JSONResponse(content={
+            "success": True,
+            "message": f"Image generation and posting scheduled successfully for {', '.join(platform_list)}",
+            "scheduled_posts": [serialize_scheduled_post(post) for post in scheduled_posts],
+            "topic_id": new_topic.id
+        })
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[error] Generate and schedule error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/schedule-automation")
+async def schedule_automation(
+    request: Request,
+    topic: str = Form(...),
+    schedule_time: str = Form(...),
+    timezone: str = Form("UTC"),
+    platforms: str = Form(...),  # Comma-separated platforms
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Schedule automated image generation and posting to multiple platforms
+    """
+    try:
+        # Parse platforms from comma-separated string
+        platform_list = [p.strip().lower() for p in platforms.split(",") if p.strip()]
+        
+        # Validate platforms
+        valid_platforms = {"instagram", "facebook", "linkedin", "twitter", "youtube"}
+        invalid_platforms = [p for p in platform_list if p not in valid_platforms]
+        if invalid_platforms:
+            raise HTTPException(status_code=400, detail=f"Invalid platforms: {invalid_platforms}")
+        
+        # Parse the schedule time
+        schedule_dt, tz_name = scheduling_service.parse_scheduled_datetime(schedule_time, timezone)
+        
+        # Create a new topic in the database
+        new_topic = Topic(
+            user_id=current_user.id,
+            topic_title=topic,
+            textual_description=topic,
+            status="scheduled",
+            scheduled_date=schedule_dt
+        )
+        db.add(new_topic)
+        db.commit()
+        db.refresh(new_topic)
+        
+        # Generate the image based on the topic using the AdGenerationService
+        ad_service = AdGenerationService()
+        
+        # Check if AdGenerationService has generate_ad_image method, otherwise use generate_advertisement
+        if hasattr(ad_service, 'generate_ad_image'):
+            generated_image_path = ad_service.generate_ad_image(
+                topic=topic,
+                user_email=current_user.email
+            )
+        else:
+            # Use generate_advertisement method instead
+            result = ad_service.generate_advertisement(topic, "", "")
+            if result.get('success') and result.get('final_image_path'):
+                generated_image_path = result['final_image_path']
+            else:
+                raise HTTPException(status_code=500, detail=f"Failed to generate image: {result.get('error', 'Unknown error')}")
+        
+        # Check if image generation was successful
+        if not generated_image_path or not os.path.exists(generated_image_path):
+            raise HTTPException(status_code=500, detail="Failed to generate image for the topic")
+        
+        # Extract just the filename from the full path
+        image_filename = os.path.basename(generated_image_path)
+        
+        # Create caption based on the topic
+        caption = f"New post about: {topic}"
+        
+        # Schedule the post for each selected platform
+        scheduled_posts = []
+        for platform in platform_list:
+            # For the first platform, use the generated image
+            # Schedule the post using the scheduling service
+            metadata = {
+                "platform": platform,
+                "original_topic": topic,
+                "automation": True
+            }
+            
+            scheduled_post = scheduling_service.schedule_post(
+                db=db,
+                user_id=current_user.id,
+                caption=caption,
+                schedule_time=schedule_dt,
+                timezone_name=tz_name,
+                image_filename=image_filename,
+                topic_id=new_topic.id,
+                platform=platform,
+                metadata=metadata
+            )
+            
+            scheduled_posts.append(scheduled_post)
+        
+        return JSONResponse(content={
+            "success": True,
+            "message": f"Automation scheduled successfully for {', '.join(platform_list)}",
+            "scheduled_posts": [serialize_scheduled_post(post) for post in scheduled_posts],
+            "topic_id": new_topic.id
+        })
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[error] Automation scheduling error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/auto-generate-and-post")
+async def auto_generate_and_post(
+    request: Request,
+    topic: str = Form(...),
+    schedule_time: str = Form(...),
+    timezone: str = Form("UTC"),
+    platforms: str = Form(...),  # Comma-separated platforms
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Generate an image based on the topic and schedule it to be posted to selected platforms
+    """
+    try:
+        # Parse platforms from comma-separated string
+        platform_list = [p.strip().lower() for p in platforms.split(",") if p.strip()]
+        
+        # Validate platforms
+        valid_platforms = {"instagram", "facebook", "linkedin", "twitter", "youtube"}
+        invalid_platforms = [p for p in platform_list if p not in valid_platforms]
+        if invalid_platforms:
+            raise HTTPException(status_code=400, detail=f"Invalid platforms: {invalid_platforms}")
+        
+        # Parse the schedule time
+        schedule_dt, tz_name = scheduling_service.parse_scheduled_datetime(schedule_time, timezone)
+        
+        # Generate the image based on the topic using the AdGenerationService
+        ad_service = AdGenerationService()
+        
+        # Use generate_advertisement method to generate the image
+        result = ad_service.generate_advertisement(topic, "", "")
+        if not result.get('success') or not result.get('final_image_path'):
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Failed to generate image: {result.get('error', 'Unknown error during image generation')}"
+            )
+        
+        # Extract image path and filename
+        generated_image_path = result['final_image_path']
+        if not os.path.exists(generated_image_path):
+            raise HTTPException(status_code=500, detail="Generated image file does not exist")
+        
+        image_filename = os.path.basename(generated_image_path)
+        
+        # Create a new topic in the database
+        new_topic = Topic(
+            user_id=current_user.id,
+            topic_title=topic,
+            textual_description=topic,
+            status="scheduled",
+            scheduled_date=schedule_dt
+        )
+        db.add(new_topic)
+        db.commit()
+        db.refresh(new_topic)
+        
+        # Create caption based on the topic
+        caption = f"Check out this post about: {topic}"
+        
+        # Schedule the post for each selected platform
+        scheduled_posts = []
+        for platform in platform_list:
+            metadata = {
+                "platform": platform,
+                "original_topic": topic,
+                "automation": True,
+                "source": "auto_generate_and_post"
+            }
+            
+            scheduled_post = scheduling_service.schedule_post(
+                db=db,
+                user_id=current_user.id,
+                caption=caption,
+                schedule_time=schedule_dt,
+                timezone_name=tz_name,
+                image_filename=image_filename,
+                topic_id=new_topic.id,
+                platform=platform,
+                metadata=metadata
+            )
+            
+            scheduled_posts.append(scheduled_post)
+        
+        return JSONResponse(content={
+            "success": True,
+            "message": f"Image generated and scheduled successfully for {', '.join(platform_list)}",
+            "scheduled_posts": [serialize_scheduled_post(post) for post in scheduled_posts],
+            "topic_id": new_topic.id,
+            "image_filename": image_filename
+        })
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[error] Auto-generate and post error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""

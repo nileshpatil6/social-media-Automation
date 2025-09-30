@@ -311,7 +311,8 @@
         </a>
       </div>
 
-      <!-- Batch Upload -->
+      <!--
+      Batch Upload
       <div
         class="animate-popIn animate-glow"
         style="
@@ -349,6 +350,7 @@
           Upload Excel
         </button>
       </div>
+      -->
 
       <!-- View Topics -->
       <div
@@ -386,6 +388,45 @@
           onmouseout="this.style.backgroundColor='white'; this.style.transform='translateY(0)';"
         >
           View Topics
+        </button>
+      </div>
+
+      <!-- Automation Flow -->
+      <div
+        class="animate-popIn animate-glow"
+        style="
+          border-radius: 14px;
+          padding: 20px;
+          background: linear-gradient(135deg, #f59c5a, #f5604a);
+          color: white;
+          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+          transition: transform 0.3s, box-shadow 0.3s;
+        "
+        onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 30px rgba(0,0,0,0.2)';"
+        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.12)';"
+      >
+        <h3 style="margin-top: 0; font-weight: 700; font-size: 1.25rem">
+          Auto-Generate & Post
+        </h3>
+        <p style="margin: 10px 0; font-size: 0.95rem; color: #ffe0cc">
+          Automate image generation and posting to social media
+        </p>
+        <button
+          onclick="showAutomationModal()"
+          style="
+            background: white;
+            color: #8a3b1e;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+          "
+          onmouseover="this.style.backgroundColor='#ffe0cc'; this.style.transform='translateY(-2px)';"
+          onmouseout="this.style.backgroundColor='white'; this.style.transform='translateY(0)';"
+        >
+          Setup Automation
         </button>
       </div>
 
@@ -489,7 +530,8 @@
         </button>
       </div>
 
-      <!-- Direct YouTube Posting -->
+      <!--
+      Direct YouTube Posting
       <div
         class="animate-popIn animate-fadeIn"
         style="
@@ -504,13 +546,16 @@
         <p>Post a video directly to YouTube using URL</p>
         <button onclick="showDirectYouTubePostModal()" style="background: white; color: #ff0000; padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;">Post to YouTube</button>
     </div>
+      -->
     
-    <!-- Direct Facebook Posting -->
-    <div style="border: 1px solid #ddd; border-radius: 10px; padding: 20px; background: linear-gradient(135deg, #4267B2 0%, #3b5998 100%); color: white;">
-        <h3 style="color: white; margin-top: 0;">📘 Post to Facebook</h3>
-        <p>Post an image directly to Facebook using URL</p>
-        <button onclick="showDirectFacebookPostModal()" style="background: white; color: #4267B2; padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;">Post to Facebook</button>
-    </div>
+  <!--
+  Direct Facebook Posting
+  <div style="border: 1px solid #ddd; border-radius: 10px; padding: 20px; background: linear-gradient(135deg, #4267B2 0%, #3b5998 100%); color: white;">
+    <h3 style="color: white; margin-top: 0;">📘 Post to Facebook</h3>
+    <p>Post an image directly to Facebook using URL</p>
+    <button onclick="showDirectFacebookPostModal()" style="background: white; color: #4267B2; padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;">Post to Facebook</button>
+  </div>
+  -->
     
 
       <!-- Auto Post from Logs -->
@@ -1460,45 +1505,46 @@
     </div>
 </div>
 
-<!-- Direct Facebook Post Modal -->
+<!--
+Direct Facebook Post Modal
 <div id="directFacebookPostModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
-    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; max-width: 600px; width: 90%;">
-        <h3>📘 Post Image Directly to Facebook</h3>
+  <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; max-width: 600px; width: 90%;">
+    <h3>📘 Post Image Directly to Facebook</h3>
         
-        <form id="directFacebookPostForm">
-            <div class="form-group">
-                <label for="facebookImageUrl">Image URL:</label>
-                <input type="url" id="facebookImageUrl" name="image_url" placeholder="https://example.com/image.jpg" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                <small>Enter a publicly accessible image URL</small>
-            </div>
+    <form id="directFacebookPostForm">
+      <div class="form-group">
+        <label for="facebookImageUrl">Image URL:</label>
+        <input type="url" id="facebookImageUrl" name="image_url" placeholder="https://example.com/image.jpg" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        <small>Enter a publicly accessible image URL</small>
+      </div>
             
-            <div class="form-group">
-                <label for="facebookText">Text:</label>
-                <textarea id="facebookText" name="text" placeholder="Write your Facebook post here..." required style="width: 100%; height: 120px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;"></textarea>
-            </div>
+      <div class="form-group">
+        <label for="facebookText">Text:</label>
+        <textarea id="facebookText" name="text" placeholder="Write your Facebook post here..." required style="width: 100%; height: 120px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;"></textarea>
+      </div>
             
-            <div class="form-group">
-                <div style="border: 1px solid #ddd; padding: 10px; border-radius: 4px; background: #f9f9f9; margin: 10px 0;">
-                    <label>Image Preview:</label>
-                    <div id="facebookImagePreview" style="margin-top: 10px; text-align: center; min-height: 100px; display: flex; align-items: center; justify-content: center; color: #666;">
-                        Enter an image URL to see preview
-                    </div>
-                </div>
-            </div>
+      <div class="form-group">
+        <div style="border: 1px solid #ddd; padding: 10px; border-radius: 4px; background: #f9f9f9; margin: 10px 0;">
+          <label>Image Preview:</label>
+          <div id="facebookImagePreview" style="margin-top: 10px; text-align: center; min-height: 100px; display: flex; align-items: center; justify-content: center; color: #666;">
+            Enter an image URL to see preview
+          </div>
+        </div>
+      </div>
 
-            <div class="form-group" style="margin: 15px 0;">
-                <label style="display: flex; align-items: center; gap: 8px;">
-                    <input type="checkbox" id="facebookScheduleToggle"> Schedule this post
-                </label>
-                <small>Enable to publish at a specific future time.</small>
-            </div>
+      <div class="form-group" style="margin: 15px 0;">
+        <label style="display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="facebookScheduleToggle"> Schedule this post
+        </label>
+        <small>Enable to publish at a specific future time.</small>
+      </div>
 
-            <div id="facebookScheduleFields" style="display: none; border: 1px solid #ddd; padding: 12px; border-radius: 6px; background: #f8f9ff; margin-bottom: 15px;">
-                <div class="form-group">
-                    <label for="facebookScheduleTime">Scheduled date & time</label>
-                    <input type="datetime-local" id="facebookScheduleTime" name="scheduled_time" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                </div>
-                <div class="form-group">
+      <div id="facebookScheduleFields" style="display: none; border: 1px solid #ddd; padding: 12px; border-radius: 6px; background: #f8f9ff; margin-bottom: 15px;">
+        <div class="form-group">
+          <label for="facebookScheduleTime">Scheduled date & time</label>
+          <input type="datetime-local" id="facebookScheduleTime" name="scheduled_time" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+        </div>
+        <div class="form-group">
                     <label for="facebookScheduleTimezone">Timezone</label>
                     <select id="facebookScheduleTimezone" name="schedule_timezone" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
                         <option value="UTC">UTC</option>
@@ -1794,6 +1840,215 @@
         </form>
 
         <div id="directYouTubePostResult" style="margin-top: 20px"></div>
+      </div>
+    </div>
+
+    <!-- Automation Modal -->
+    <div
+      id="automationModal"
+      class="animate-fadeIn"
+      style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+      "
+    >
+      <div
+        class="animate-popIn"
+        style="
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: #fff;
+          padding: 30px;
+          border-radius: 14px;
+          max-width: 700px;
+          width: 90%;
+          max-height: 85%;
+          overflow-y: auto;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        "
+      >
+        <h3
+          style="
+            margin-top: 0;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #8a3b1e;
+          "
+        >
+          Auto-Generate & Post
+        </h3>
+        <p style="color: #6b7280; margin: 10px 0;">
+          Schedule automated image generation and posting to social media
+        </p>
+
+        <form id="automationForm">
+          <div class="form-group" style="margin-bottom: 1rem">
+            <label
+              for="topicInput"
+              style="display: block; font-weight: 600; margin-bottom: 0.3rem"
+            >
+              Topic/Description:
+            </label>
+            <input
+              type="text"
+              id="topicInput"
+              name="topic"
+              placeholder="Enter your topic or description for image generation"
+              required
+              style="
+                width: 100%;
+                padding: 10px;
+                border: 1px solid #cbd5e1;
+                border-radius: 6px;
+                font-size: 0.9rem;
+              "
+            />
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1rem">
+            <label
+              style="display: block; font-weight: 600; margin-bottom: 0.3rem"
+            >
+              Schedule:
+            </label>
+            <input
+              type="datetime-local"
+              id="scheduleDateTime"
+              name="schedule_time"
+              required
+              style="
+                width: 100%;
+                padding: 10px;
+                border: 1px solid #cbd5e1;
+                border-radius: 6px;
+                font-size: 0.9rem;
+              "
+            />
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1rem">
+            <label
+              style="display: block; font-weight: 600; margin-bottom: 0.3rem"
+            >
+              Select Social Media Platforms:
+            </label>
+            
+            <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px;">
+              <!-- <label style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" name="platforms" value="facebook" /> 
+                <span style="display: inline-flex; align-items: center; gap: 5px;">
+                  <span style="font-size: 1.2em;">📘</span> Facebook
+                </span>
+              </label> -->
+              
+              <label style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" name="platforms" value="instagram" /> 
+                <span style="display: inline-flex; align-items: center; gap: 5px;">
+                  <span style="font-size: 1.2em;">📱</span> Instagram
+                </span>
+              </label>
+              
+              <label style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" name="platforms" value="twitter" /> 
+                <span style="display: inline-flex; align-items: center; gap: 5px;">
+                  <span style="font-size: 1.2em;">🐦</span> Twitter
+                </span>
+              </label>
+              
+              <label style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" name="platforms" value="linkedin" /> 
+                <span style="display: inline-flex; align-items: center; gap: 5px;">
+                  <span style="font-size: 1.2em;">👔</span> LinkedIn
+                </span>
+              </label>
+              
+              <!-- <label style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" name="platforms" value="youtube" /> 
+                <span style="display: inline-flex; align-items: center; gap: 5px;">
+                  <span style="font-size: 1.2em;">📺</span> YouTube
+                </span>
+              </label> -->
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1rem">
+            <label style="display: block; font-weight: 600; margin-bottom: 0.3rem">
+              Timezone:
+            </label>
+            <select
+              id="scheduleTimezone"
+              name="schedule_timezone"
+              style="
+                width: 100%;
+                padding: 10px;
+                border: 1px solid #cbd5e1;
+                border-radius: 6px;
+              "
+            >
+              <option value="UTC">UTC</option>
+              <option value="America/New_York">America/New_York</option>
+              <option value="America/Los_Angeles">America/Los_Angeles</option>
+              <option value="Europe/London">Europe/London</option>
+              <option value="Europe/Paris">Europe/Paris</option>
+              <option value="Asia/Kolkata">Asia/Kolkata</option>
+              <option value="Australia/Sydney">Australia/Sydney</option>
+            </select>
+            <small style="color: #6b7280">
+              Your local timezone is preselected when available.
+            </small>
+          </div>
+
+          <div style="display: flex; gap: 10px; margin-top: 20px">
+            <button
+              type="submit"
+              style="
+                flex: 1;
+                background: linear-gradient(135deg, #f59c5a, #f5604a);
+                color: #fff;
+                padding: 12px;
+                border: none;
+                border-radius: 8px;
+                font-weight: 600;
+                font-size: 0.95rem;
+                cursor: pointer;
+                transition: all 0.3s ease;
+              "
+              onmouseover="this.style.opacity='0.9'"
+              onmouseout="this.style.opacity='1'"
+            >
+              Schedule Automation
+            </button>
+            <button
+              type="button"
+              onclick="hideAutomationModal()"
+              style="
+                flex: 1;
+                background: #ddd;
+                color: #333;
+                padding: 12px;
+                border: none;
+                border-radius: 8px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+              "
+              onmouseover="this.style.background='#ccc'"
+              onmouseout="this.style.background='#ddd'"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+
+        <div id="automationResult" style="margin-top: 20px"></div>
       </div>
     </div>
 
@@ -2444,6 +2699,26 @@ function hideDirectFacebookPostModal() {
     document.getElementById("autoPostModal").style.display = "none";
     document.getElementById("autoPostResult").innerHTML = "";
     stopAutoPosting();
+  }
+
+  function showAutomationModal() {
+    if (!authToken) {
+      alert("Please login first");
+      return;
+    }
+    document.getElementById("automationModal").style.display = "block";
+  }
+
+  function hideAutomationModal() {
+    document.getElementById("automationModal").style.display = "none";
+    const form = document.getElementById("automationForm");
+    if (form) {
+      form.reset();
+    }
+    const result = document.getElementById("automationResult");
+    if (result) {
+      result.innerHTML = "";
+    }
   }
 
   // Upload form handling
@@ -4105,5 +4380,78 @@ function showFacebookImageError() {
       console.log("Auto-posting check failed:", error);
     }
   }
+
+  // Automation form handling
+  document.getElementById('automationForm').addEventListener('submit', async function(event) {
+    event.preventDefault();
+    
+    const topicInput = document.getElementById('topicInput');
+    const scheduleTimeInput = document.getElementById('scheduleDateTime');
+    const timezoneSelect = document.getElementById('scheduleTimezone');
+    const platformCheckboxes = document.querySelectorAll('input[name="platforms"]:checked');
+    const resultDiv = document.getElementById('automationResult');
+    
+    const topic = topicInput.value.trim();
+    const scheduleTime = scheduleTimeInput.value;
+    const timezone = timezoneSelect.value;
+    
+    if (!topic || !scheduleTime) {
+      resultDiv.innerHTML = '<div style="color: red;">❌ Please fill in all required fields.</div>';
+      return;
+    }
+    
+    if (platformCheckboxes.length === 0) {
+      resultDiv.innerHTML = '<div style="color: red;">❌ Please select at least one social media platform.</div>';
+      return;
+    }
+    
+    // Get selected platforms
+    const selectedPlatforms = Array.from(platformCheckboxes).map(cb => cb.value);
+    
+    // Disable submit button during request
+    const submitButton = event.submitter;
+    submitButton.disabled = true;
+    submitButton.textContent = "Scheduling...";
+    
+    try {
+      const formData = new FormData();
+      formData.append('topic', topic);
+      formData.append('schedule_time', scheduleTime);
+      formData.append('timezone', timezone);
+      formData.append('platforms', selectedPlatforms.join(','));
+      
+      const response = await fetch('/auto-generate-and-post', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+        },
+        body: formData
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        resultDiv.innerHTML = '<div style="color: green;">✅ Image generated and scheduled successfully!</div>';
+        // Reset the form after successful submission
+        setTimeout(() => {
+          document.getElementById('automationForm').reset();
+          hideAutomationModal(); // Close modal after successful submission
+        }, 2000);
+        
+        // Refresh scheduled posts to show the new ones
+        if (typeof loadScheduledPosts === "function") {
+          loadScheduledPosts();
+        }
+      } else {
+        resultDiv.innerHTML = `<div style="color: red;">❌ Error: ${result.error || result.detail || 'Schedule failed'}</div>`;
+      }
+    } catch (error) {
+      resultDiv.innerHTML = `<div style="color: red;">❌ Error: ${error.message || 'Something went wrong'}</div>`;
+    } finally {
+      // Re-enable submit button
+      submitButton.disabled = false;
+      submitButton.textContent = "Schedule Automation";
+    }
+  });
 </script>
 {% endblock %}

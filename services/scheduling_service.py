@@ -11,6 +11,9 @@ from sqlalchemy.orm import Session
 
 from instagram_agent import InstagramAgent
 from twitter_agent import TwitterAgent
+from facebook_agent import FacebookAgent
+from linkedin_agent import LinkedInAgent
+from youtube_agent import YouTubeAgent
 from models.database import ScheduledPost, SessionLocal, Topic
 from services.image_upload_service import ImageUploadService
 
@@ -24,7 +27,7 @@ class SchedulingError(Exception):
 class SchedulingService:
     """Manage creation and execution of scheduled social posts."""
 
-    SUPPORTED_PLATFORMS = {"instagram", "twitter"}
+    SUPPORTED_PLATFORMS = {"instagram", "twitter", "facebook", "linkedin", "youtube"}
     DEFAULT_TIMEZONE = "UTC"
     MAX_ATTEMPTS = 3
     def _get_agent(self, platform: str):
@@ -33,6 +36,12 @@ class SchedulingService:
             return InstagramAgent()
         if platform_name == "twitter":
             return TwitterAgent()
+        if platform_name == "facebook":
+            return FacebookAgent()
+        if platform_name == "linkedin":
+            return LinkedInAgent()
+        if platform_name == "youtube":
+            return YouTubeAgent()
         raise ValueError(f"Unsupported platform: {platform}")
 
     BACKOFF_SECONDS = (60, 300, 900)
@@ -240,6 +249,29 @@ class SchedulingService:
         db.commit()
         db.refresh(scheduled_post)
 
+        # Check if the post needs image generation (topic_id exists but no image_filename)
+        needs_image_generation = scheduled_post.topic_id and not scheduled_post.image_filename
+        
+        if needs_image_generation:
+            # Get the topic to generate the image
+            topic = db.query(Topic).filter(Topic.id == scheduled_post.topic_id).first()
+            if topic:
+                # Generate image based on the topic
+                from services.ad_generation_service import AdGenerationService
+                ad_service = AdGenerationService()
+                result = ad_service.generate_advertisement(topic.textual_description, "", "")
+                
+                if not result.get('success') or not result.get('final_image_path'):
+                    raise SchedulingError(f"Failed to generate image for topic: {topic.textual_description}")
+                
+                # Extract just the filename from the full path
+                image_filename = os.path.basename(result['final_image_path'])
+                
+                # Update the scheduled post with the generated image
+                scheduled_post.image_filename = image_filename
+                db.commit()
+                db.refresh(scheduled_post)
+
         local_path, image_url = self._resolve_image_url(scheduled_post)
 
         if platform == "instagram":
@@ -273,6 +305,42 @@ class SchedulingService:
 
             if not result.get("success"):
                 raise SchedulingError("Twitter post failed", result)
+        elif platform == "facebook":
+            result = agent.post_to_facebook(
+                scheduled_post.caption,
+                image_path=local_path if local_path else None
+            )
+
+            if not isinstance(result, dict):
+                raise SchedulingError("Facebook post returned unexpected payload", {"raw": result})
+
+            if not result.get("success"):
+                raise SchedulingError("Facebook post failed", result)
+        elif platform == "linkedin":
+            result = agent.post_to_linkedin(
+                scheduled_post.caption,
+                image_path=local_path if local_path else None
+            )
+
+            if not isinstance(result, dict):
+                raise SchedulingError("LinkedIn post returned unexpected payload", {"raw": result})
+
+            if not result.get("success"):
+                raise SchedulingError("LinkedIn post failed", result)
+        elif platform == "youtube":
+            # For YouTube, we need to create a video post, but we have an image
+            # We'll create a video from the image or use the image as thumbnail
+            result = agent.post_to_youtube(
+                title=scheduled_post.caption[:100],  # YouTube title has length limits
+                description=scheduled_post.caption,
+                thumbnail_path=local_path if local_path else None
+            )
+
+            if not isinstance(result, dict):
+                raise SchedulingError("YouTube post returned unexpected payload", {"raw": result})
+
+            if not result.get("success"):
+                raise SchedulingError("YouTube post failed", result)
         else:
             raise SchedulingError("Unsupported platform", {"platform": platform})
 
