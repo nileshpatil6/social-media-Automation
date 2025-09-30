@@ -40,8 +40,7 @@
 
 <!-- Generated Image Display -->
 {% if result.final_image_filename %}
-<div style="text-align: center; margin: 30px 0; margin-left: 1rem;">
-
+<div style="text-align: center; margin: 30px 0; margin-left: 1rem">
   {% set filename = result.final_image_filename %}
   <img
     src="/serve-image/{{ filename }}"
@@ -55,15 +54,14 @@
     "
     onerror="this.src='/images/{{ filename }}'; this.onerror=function(){this.src='/generated_images/{{ filename }}'; this.onerror=null;}"
   />
-
- 
 </div>
 
 {% endif %}
 
 <!-- Quality Analysis -->
 {% if result.final_analysis %}
-<div class="info" style="margin: 25px 0">
+
+<div class="info" style="margin: 25px 0 25px 1rem">
   <h3
     style="
       font-size: 1.4rem;
@@ -78,34 +76,40 @@
   <div
     style="
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 15px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
     "
   >
-    {% for score_name, score_value in result.final_analysis.scores.items() %} {%
-    if score_value >= 8 %}
+    {% for score_name, score_value in result.final_analysis.scores.items() %}
     <div
-      style="background: {% if score_value >= 8 %}#d4edda{% elif score_value >= 6 %}#fff3cd{% else %}#f8d7da{% endif %};
-                    padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 6px 18px rgba(0,0,0,0.08);"
+      style="
+        background: #fff;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 1.4rem 1.3rem;
+        box-shadow: 0 4px 16px rgba(60, 60, 120, 0.07);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-width: 180px;
+        margin-bottom: 0.5rem;
+      "
     >
       <h4
         style="
-          margin: 0 0 8px 0;
-          font-weight: 600;
-          font-size: 1rem;
+          margin: 0 0 10px 0;
+          font-weight: 700;
+          font-size: 1.08rem;
           text-transform: capitalize;
           color: #333;
+          letter-spacing: 0.2px;
         "
       >
         {{ score_name.replace('_', ' ') }}
       </h4>
       <div
-        style="
-          font-size: 1.2rem;
-          font-weight: 700;
-          margin-bottom: 8px;
-          color: #111;
-        "
+        style="font-size: 1.25rem; font-weight: 800; margin-bottom: 10px; color:
+        {% if score_value >= 8 %}#16a34a{% elif score_value >= 6 %}#f59e0b{% else %}#ef4444{% endif %};"
       >
         {{ "%.1f"|format(score_value) }}/10
       </div>
@@ -113,143 +117,25 @@
         class="score-bar"
         style="
           width: 100%;
-          height: 10px;
-          background: #e5e7eb;
-          border-radius: 6px;
-          overflow: hidden;
-        "
-      >
-        <div
-          class="score-bar__fill score-bar__fill-high"
-          data-percent="{{ (score_value * 10)|round(1) }}"
-          style="
-            height: 100%; 
-            width: {{ (score_value * 10)|round(1) }}%; 
-            background: linear-gradient(135deg, #9C5AF5, #60A5FA); 
-            border-radius: 6px;
-            transition: width 0.5s ease-in-out;"
-        ></div>
-      </div>
-    </div>
-    {% elif score_value >= 6 %} <
-    <div
-      class="score-card score-card-medium"
-      style="
-        background: #ffffff;
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        width: 100%;
-        max-width: 320px;
-      "
-    >
-      <h4
-        class="score-card__title"
-        style="
-          font-size: 1rem;
-          font-weight: 600;
-          color: #374151;
-          margin-bottom: 0.5rem;
-        "
-      >
-        {{ score_name.replace('_', ' ') }}
-      </h4>
-
-      <div
-        class="score-card__value"
-        style="
-          font-size: 0.95rem;
-          font-weight: 500;
-          color: #6b7280;
-          margin-bottom: 0.75rem;
-        "
-      >
-        {{ "%.1f"|format(score_value) }}/10
-      </div>
-
-      <div
-        class="score-bar"
-        style="
-          width: 100%;
-          height: 10px;
+          height: 12px;
           background: #f3f4f6;
-          border-radius: 6px;
+          border-radius: 7px;
           overflow: hidden;
-        "
-      >
-        <div
-          class="score-bar__fill score-bar__fill-medium"
-          data-percent="{{ (score_value * 10)|round(1) }}"
-          style="height: 100%; width: {{ (score_value * 10)|round(1) }}%; 
-                    background: linear-gradient(135deg,#F59E0B,#FBBF24); 
-                    border-radius: 6px; 
-                    transition: width 0.5s ease-in-out;"
-        ></div>
-      </div>
-    </div>
-
-    {% else %}
-    <div
-      class="score-card score-card-low"
-      style="
-        background: #ffffff;
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        width: 100%;
-        max-width: 320px;
-      "
-    >
-      <h4
-        class="score-card__title"
-        style="
-          font-size: 1rem;
-          font-weight: 600;
-          color: #374151;
           margin-bottom: 0.5rem;
-        "
-      >
-        {{ score_name.replace('_', ' ') }}
-      </h4>
-
-      <div
-        class="score-card__value"
-        style="
-          font-size: 0.95rem;
-          font-weight: 500;
-          color: #6b7280;
-          margin-bottom: 0.75rem;
-        "
-      >
-        {{ "%.1f"|format(score_value) }}/10
-      </div>
-
-      <div
-        class="score-bar"
-        style="
-          width: 100%;
-          height: 10px;
-          background: #f3f4f6;
-          border-radius: 6px;
-          overflow: hidden;
+          margin-left: 0;
         "
       >
         <div
-          class="score-bar__fill score-bar__fill-low"
+          class="score-bar__fill"
           data-percent="{{ (score_value * 10)|round(1) }}"
-          style="height: 100%; width: {{ (score_value * 10)|round(1) }}%; 
-                    background: linear-gradient(135deg,#EF4444,#F87171); 
-                    border-radius: 6px; 
-                    transition: width 0.5s ease-in-out;"
+          style="height: 100%; width: {{ (score_value * 10)|round(1) }}%;
+            background:
+              {% if score_value >= 8 %}linear-gradient(135deg, #9c5af5, #2563eb){% elif score_value >= 6 %}linear-gradient(135deg, #9c5af5, #2563eb){% else %}linear-gradient(135deg, #9c5af5, #2563eb){% endif %};
+            border-radius: 7px; transition: width 0.5s cubic-bezier(0.23,1,0.32,1);"
         ></div>
       </div>
     </div>
-
-    {% endif %} {% endfor %}
+    {% endfor %}
   </div>
 
   <script>
@@ -1019,22 +905,52 @@ result.final_image_filename } %}
 
 {% endif %}
 
-<div style="margin-top: 30px; display: flex; gap: 15px; margin-left: 1rem; flex-wrap: wrap;">
-
-  <a href="/simple" 
-     style="background: linear-gradient(135deg,#9C5AF5,#2563EB); color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; cursor: pointer;"
-     onmouseover="this.style.background: linear-gradient(135deg,#9C5AF5,#2563EB)'"
-     onmouseout="this.style.background: linear-gradient(135deg,#9C5AF5,#2563EB)'">
-     Generate Another
+<div
+  style="
+    margin-top: 30px;
+    display: flex;
+    gap: 15px;
+    margin-left: 1rem;
+    flex-wrap: wrap;
+  "
+>
+  <a
+    href="/simple"
+    style="
+      background: linear-gradient(135deg, #9c5af5, #2563eb);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: all 0.2s;
+      cursor: pointer;
+    "
+    onmouseover="this.style.background: linear-gradient(135deg,#9C5AF5,#2563EB)'"
+    onmouseout="this.style.background: linear-gradient(135deg,#9C5AF5,#2563EB)'"
+  >
+    Generate Another
   </a>
 
-  <a href="/" 
-     style="background: #E5E7EB; color: #374151; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; cursor: pointer;"
-     onmouseover="this.style.background='#D1D5DB'"
-     onmouseout="this.style.background='#E5E7EB'">
-     ← Back to Dashboard
+  <a
+    href="/"
+    style="
+      background: #e5e7eb;
+      color: #374151;
+      padding: 10px 20px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: all 0.2s;
+      cursor: pointer;
+    "
+    onmouseover="this.style.background='#D1D5DB'"
+    onmouseout="this.style.background='#E5E7EB'"
+  >
+    ← Back to Dashboard
   </a>
-
 </div>
 
 {% endblock %}
