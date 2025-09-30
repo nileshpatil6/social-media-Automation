@@ -130,8 +130,79 @@
         </details>
     </div>
     
-    <!-- Post to Instagram Section -->
+    <!-- Post to Multiple Channels Section -->
     {% if result.final_image_filename %}
+    <div class="card card--accent">
+        <div class="stack">
+            <div>
+                <h3>Post to Multiple Channels</h3>
+                <p>Publish this creative to all your social media channels at once or select specific platforms.</p>
+            </div>
+            
+            <!-- Platform selection checkboxes -->
+            <div class="form-group" style="margin-top: 1rem; padding: 15px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <label style="display: block; font-weight: bold; margin-bottom: 10px;">Select Platforms:</label>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                    <label style="display: flex; gap: 8px; align-items: center;">
+                        <input type="checkbox" id="postInstagramCheck" checked> 
+                        <span style="color: #ff9a9e; font-weight: bold;">Instagram</span>
+                    </label>
+                    <label style="display: flex; gap: 8px; align-items: center;">
+                        <input type="checkbox" id="postFacebookCheck" checked> 
+                        <span style="color: #4267B2; font-weight: bold;">Facebook</span>
+                    </label>
+                    <label style="display: flex; gap: 8px; align-items: center;">
+                        <input type="checkbox" id="postLinkedInCheck" checked> 
+                        <span style="color: #0077b5; font-weight: bold;">LinkedIn</span>
+                    </label>
+                    <label style="display: flex; gap: 8px; align-items: center;">
+                        <input type="checkbox" id="postTwitterCheck"> 
+                        <span style="color: #1da1f2; font-weight: bold;">Twitter</span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="form-group" style="margin-top: 1rem;">
+                <label for="postCaption">Caption/Text for All Platforms</label>
+                <textarea id="postCaption" rows="5" placeholder="Add a caption or text for your posts..."></textarea>
+                <small>You can edit the caption before posting. For LinkedIn/Facebook, this will be the main text.</small>
+            </div>
+            <div class="form-group" style="margin-top: 1rem;">
+                <label style="display:flex; gap:8px; align-items:center;">
+                    <input type="checkbox" id="generatedScheduleToggle"> Schedule these posts
+                </label>
+                <small>Enable to publish at a specific future time rather than immediately.</small>
+            </div>
+            <div id="generatedScheduleFields" style="display:none; border:1px solid #e2e8f0; background:#f8fafc; padding:12px; border-radius:8px; margin-bottom:1rem;">
+                <div class="form-group">
+                    <label for="generatedScheduleTime">Scheduled date &amp; time</label>
+                    <input type="datetime-local" id="generatedScheduleTime" style="width:100%; padding:8px; border:1px solid #cbd5f5; border-radius:5px;">
+                </div>
+                <div class="form-group">
+                    <label for="generatedScheduleTimezone">Timezone</label>
+                    <select id="generatedScheduleTimezone" style="width:100%; padding:8px; border:1px solid #cbd5f5; border-radius:5px;">
+                        <option value="UTC">UTC</option>
+                        <option value="America/New_York">America/New_York</option>
+                        <option value="America/Los_Angeles">America/Los_Angeles</option>
+                        <option value="Europe/London">Europe/London</option>
+                        <option value="Europe/Paris">Europe/Paris</option>
+                        <option value="Asia/Kolkata">Asia/Kolkata</option>
+                        <option value="Australia/Sydney">Australia/Sydney</option>
+                    </select>
+                    <small>Your local timezone is selected automatically when possible.</small>
+                </div>
+            </div>
+            <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                <button type="button" class="btn btn--primary" id="postToAllBtn">Post to Selected Channels</button>
+                <span id="postStatus" style="font-weight: 600;"></span>
+            </div>
+            <div id="postResult" class="stack" style="display: none;"></div>
+            <div id="multiChannelResults" class="stack" style="margin-top: 15px;"></div>
+        </div>
+    </div>
+    
+    <!-- Legacy Instagram-only posting section (for reference) -->
+    <!--
     <div class="card card--accent">
         <div class="stack">
             <div>
@@ -175,6 +246,7 @@
             <div id="postResult" class="stack" style="display: none;"></div>
         </div>
     </div>
+    -->
     {% endif %}
 
 {% set workflow_context = {
@@ -202,7 +274,7 @@
     const generatedScheduleFields = document.getElementById('generatedScheduleFields');
     const generatedScheduleTime = document.getElementById('generatedScheduleTime');
     const generatedScheduleTimezone = document.getElementById('generatedScheduleTimezone');
-    const generatedSubmitButton = document.getElementById('postToInstagramBtn');
+    const generatedSubmitButton = document.getElementById('postToAllBtn');
 
     try {
         const resolvedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -228,7 +300,7 @@
         generatedScheduleToggle.addEventListener('change', () => {
             const enabled = generatedScheduleToggle.checked;
             generatedScheduleFields.style.display = enabled ? 'block' : 'none';
-            generatedSubmitButton.textContent = enabled ? 'Schedule Post' : 'Post to Instagram';
+            generatedSubmitButton.textContent = enabled ? 'Schedule Posts' : 'Post to Selected Channels';
             setStatus('', '#475569');
         });
     }
@@ -272,31 +344,18 @@
     }
 
     function generateCaption(topic) {
-
         const base = (topic || 'Our latest campaign').trim();
-
         const hashtag = base.toLowerCase().replace(/[^a-z0-9]+/g, '');
-
         const lines = [
-
             `${base} - created with Visionary Ads Studio.`,
-
             '',
-
             'Highlights:',
-
             '- AI-tailored visuals',
-
             '- Brand-consistent messaging',
-
-            '- Ready for Instagram engagement',
-
+            '- Ready for social media engagement',
             '',
-
             `#${hashtag || 'visionaryads'} #VisionaryAds #AIMarketing`
-
         ];
-
         return lines.join('\n');
     }
 
@@ -319,21 +378,38 @@
         }
     }
 
-    async function postGeneratedImage() {
-        const button = document.getElementById('postToInstagramBtn');
+    async function postToMultipleChannels() {
+        const instagramCheck = document.getElementById('postInstagramCheck');
+        const facebookCheck = document.getElementById('postFacebookCheck');
+        const linkedinCheck = document.getElementById('postLinkedInCheck');
+        const twitterCheck = document.getElementById('postTwitterCheck');
         const captionField = document.getElementById('postCaption');
         const resultContainer = document.getElementById('postResult');
+        const multiResultsContainer = document.getElementById('multiChannelResults');
         const scheduleToggle = document.getElementById('generatedScheduleToggle');
         const scheduleTimeInput = document.getElementById('generatedScheduleTime');
         const timezoneSelect = document.getElementById('generatedScheduleTimezone');
+        const button = document.getElementById('postToAllBtn');
 
-        if (!button || !captionField || !resultContainer) {
+        if (!captionField || !resultContainer || !multiResultsContainer || !button) {
             return;
         }
 
         const token = resolveAuthToken();
         if (!token) {
             alert('Please log in before posting.');
+            return;
+        }
+
+        // Check if at least one platform is selected
+        const selectedPlatforms = [];
+        if (instagramCheck && instagramCheck.checked) selectedPlatforms.push('instagram');
+        if (facebookCheck && facebookCheck.checked) selectedPlatforms.push('facebook');
+        if (linkedinCheck && linkedinCheck.checked) selectedPlatforms.push('linkedin');
+        if (twitterCheck && twitterCheck.checked) selectedPlatforms.push('twitter');
+
+        if (selectedPlatforms.length === 0) {
+            setStatus('Please select at least one platform.', '#dc2626');
             return;
         }
 
@@ -351,117 +427,220 @@
         }
 
         button.disabled = true;
-        setStatus(scheduleEnabled ? 'Scheduling post...' : 'Posting to Instagram...', '#475569');
+        setStatus(scheduleEnabled ? 'Scheduling posts...' : 'Posting to selected channels...', '#475569');
         resultContainer.style.display = 'none';
         resultContainer.innerHTML = '';
+        multiResultsContainer.innerHTML = '';
+        multiResultsContainer.style.display = 'block';
 
         try {
-            const formData = new FormData();
-            formData.append('image_filename', workflowContext.imageFilename);
-            formData.append('caption', caption);
-            formData.append('topic_id', workflowContext.topicId);
-
-            if (scheduleEnabled) {
-                formData.append('scheduled_time', scheduleTimeInput.value);
-                formData.append('schedule_timezone', (timezoneSelect && timezoneSelect.value) || generatedLocalTimezone || 'UTC');
-            }
-
-            const response = await fetch('/post-to-instagram', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
-                body: formData
-            });
-
-            const result = await response.json();
-
-            if (response.ok && result.scheduled) {
-                const scheduled = result.scheduled_post || {};
-                const scheduledIso = scheduled.schedule_time;
-                const tz = scheduled.timezone || ((timezoneSelect && timezoneSelect.value) || 'UTC');
+            // Create a status display for each platform
+            let statusHTML = '<div style="margin-top: 15px;"><h4>Post Status:</h4><div class="status-cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">';
+            
+            for (const platform of selectedPlatforms) {
+                const platformName = platform.charAt(0).toUpperCase() + platform.slice(1);
+                const colorMap = {
+                    'instagram': '#ff9a9e',
+                    'facebook': '#4267B2', 
+                    'linkedin': '#0077b5',
+                    'twitter': '#1da1f2'
+                };
+                const color = colorMap[platform] || '#6b7280';
                 
-                // Format datetime in the user's chosen timezone
-                let readable = '';
-                if (scheduledIso) {
-                    try {
-                        const date = new Date(scheduledIso);
+                statusHTML += `
+                    <div class="status-card" id="${platform}StatusCard" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; background: #f8fafc;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 10px; height: 10px; border-radius: 50%; background: ${color};"></div>
+                            <strong>${platformName}</strong>
+                        </div>
+                        <div id="${platform}Status" style="font-size: 12px; margin-top: 5px;">⏳ Pending...</div>
+                    </div>
+                `;
+            }
+            statusHTML += '</div></div>';
+            multiResultsContainer.innerHTML = statusHTML;
+
+            // Use the new endpoint if not scheduling (more efficient for immediate posting)
+            if (!scheduleEnabled) {
+                // Immediate posting via new endpoint
+                const formData = new FormData();
+                formData.append('image_filename', workflowContext.imageFilename);
+                formData.append('topic_id', workflowContext.topicId);
+                formData.append('caption', caption);  // Will be used as text for platforms that don't use caption
+                formData.append('text', caption);      // Will be used for platforms that use text
+                formData.append('platforms', selectedPlatforms.join(','));
+
+                const response = await fetch('/post-to-multiple-channels', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    // Update status for each platform
+                    for (const platform of selectedPlatforms) {
+                        const statusElement = document.getElementById(`${platform}Status`);
+                        const platformResult = result.results[platform];
                         
-                        // Try modern approach with timeZone support
-                        if (Intl && Intl.DateTimeFormat) {
-                            try {
-                                readable = new Intl.DateTimeFormat('en-US', {
-                                    timeZone: tz,
-                                    year: 'numeric',
-                                    month: '2-digit', 
-                                    day: '2-digit',
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    second: '2-digit',
-                                    hour12: true
-                                }).format(date);
-                            } catch (e) {
-                                console.log('Intl.DateTimeFormat failed, trying toLocaleString:', e);
-                                readable = date.toLocaleString('en-US', {
-                                    timeZone: tz,
-                                    year: 'numeric',
-                                    month: '2-digit', 
-                                    day: '2-digit',
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    second: '2-digit',
-                                    hour12: true
-                                });
+                        if (platformResult && platformResult.success) {
+                            if (statusElement) {
+                                statusElement.innerHTML = `<span style="color: #16a34a;">✅ Posted successfully</span>`;
                             }
                         } else {
-                            // Fallback for older browsers - just use the basic toLocaleString
-                            readable = date.toLocaleString();
+                            const errorMessage = platformResult?.error || `Failed to post to ${platform}`;
+                            if (statusElement) {
+                                statusElement.innerHTML = `<span style="color: #dc2626;">❌ ${errorMessage}</span>`;
+                            }
                         }
-                    } catch (e) {
-                        console.error('Date formatting error:', e);
-                        readable = scheduledIso; // Show raw ISO string as last resort
                     }
-                } else if (scheduleTimeInput) {
-                    readable = scheduleTimeInput.value;
+                } else {
+                    // Handle error case
+                    for (const platform of selectedPlatforms) {
+                        const statusElement = document.getElementById(`${platform}Status`);
+                        if (statusElement) {
+                            statusElement.innerHTML = `<span style="color: #dc2626;">❌ Request failed</span>`;
+                        }
+                    }
                 }
-                
-                setStatus(`Scheduled for ${readable} (${tz})`, '#16a34a');
-                resultContainer.style.display = 'block';
-                resultContainer.innerHTML = `
-                    <div class="alert alert--info">
-                        <div>
-                            <strong>Post scheduled.</strong><br>
-                            It will publish automatically at ${readable} (${tz}).
-                        </div>
-                    </div>
-                `;
-                if (typeof loadScheduledPosts === 'function') {
-                    loadScheduledPosts();
-                }
-            } else if (response.ok && result.success) {
-                await markWorkflowAsPosted(token);
-                setStatus('Posted successfully.', '#16a34a');
-                resultContainer.style.display = 'block';
-                resultContainer.innerHTML = `
-                    <div class="alert alert--success">
-                        <div>
-                            <strong>Instagram post created.</strong><br>
-                            ${result.post_url ? `View it here: <a href="${result.post_url}" target="_blank">Instagram Link</a>` : 'Check your Instagram account to confirm.'}
-                        </div>
-                    </div>
-                `;
             } else {
-                const errorMessage = result.error || result.detail || 'Instagram posting failed.';
-                throw new Error(errorMessage);
+                // Scheduling requires individual platform requests
+                const results = {};
+                for (const platform of selectedPlatforms) {
+                    const statusElement = document.getElementById(`${platform}Status`);
+                    const statusCard = document.getElementById(`${platform}StatusCard`);
+                    
+                    if (statusElement) {
+                        statusElement.innerHTML = '🔄 Scheduling...';
+                    }
+
+                    try {
+                        const formData = new FormData();
+                        formData.append('image_filename', workflowContext.imageFilename);
+                        formData.append('topic_id', workflowContext.topicId);
+                        
+                        // Different field names for different platforms
+                        if (platform === 'instagram' || platform === 'twitter') {
+                            formData.append('caption', caption);
+                        } else {
+                            // For Facebook and LinkedIn, use 'text' instead of 'caption'
+                            formData.append('text', caption);
+                        }
+
+                        formData.append('scheduled_time', scheduleTimeInput.value);
+                        formData.append('schedule_timezone', (timezoneSelect && timezoneSelect.value) || generatedLocalTimezone || 'UTC');
+
+                        // Different endpoint for each platform for scheduling
+                        let endpoint;
+                        switch(platform) {
+                            case 'instagram':
+                                endpoint = '/post-to-instagram';
+                                break;
+                            case 'facebook':
+                                endpoint = '/post-to-facebook';
+                                break;
+                            case 'linkedin':
+                                endpoint = '/post-to-linkedin';
+                                break;
+                            case 'twitter':
+                                endpoint = '/post-to-twitter';
+                                break;
+                            default:
+                                throw new Error(`Unsupported platform: ${platform}`);
+                        }
+
+                        const response = await fetch(endpoint, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: formData
+                        });
+
+                        const result = await response.json();
+                        results[platform] = result;
+
+                        if (response.ok && result.scheduled) {
+                            const scheduled = result.scheduled_post || {};
+                            const scheduledIso = scheduled.schedule_time;
+                            const tz = scheduled.timezone || ((timezoneSelect && timezoneSelect.value) || 'UTC');
+                            
+                            // Format datetime in the user's chosen timezone
+                            let readable = '';
+                            if (scheduledIso) {
+                                try {
+                                    const date = new Date(scheduledIso);
+                                    
+                                    if (Intl && Intl.DateTimeFormat) {
+                                        try {
+                                            readable = new Intl.DateTimeFormat('en-US', {
+                                                timeZone: tz,
+                                                year: 'numeric',
+                                                month: '2-digit', 
+                                                day: '2-digit',
+                                                hour: '2-digit',
+                                                minute: '2-digit',
+                                                second: '2-digit',
+                                                hour12: true
+                                            }).format(date);
+                                        } catch (e) {
+                                            readable = date.toLocaleString('en-US', {
+                                                timeZone: tz,
+                                                year: 'numeric',
+                                                month: '2-digit', 
+                                                day: '2-digit',
+                                                hour: '2-digit',
+                                                minute: '2-digit',
+                                                second: '2-digit',
+                                                hour12: true
+                                            });
+                                        }
+                                    } else {
+                                        readable = date.toLocaleString();
+                                    }
+                                } catch (e) {
+                                    console.error('Date formatting error:', e);
+                                    readable = scheduledIso;
+                                }
+                            } else if (scheduleTimeInput) {
+                                readable = scheduleTimeInput.value;
+                            }
+                            
+                            if (statusElement) {
+                                statusElement.innerHTML = `<span style="color: #16a34a;">✅ Scheduled for ${readable}</span>`;
+                            }
+                        } else {
+                            const errorMessage = result.error || result.detail || `Failed to schedule ${platform}`;
+                            if (statusElement) {
+                                statusElement.innerHTML = `<span style="color: #dc2626;">❌ ${errorMessage}</span>`;
+                            }
+                        }
+                    } catch (error) {
+                        console.error(`Error scheduling for ${platform}:`, error);
+                        if (statusElement) {
+                            statusElement.innerHTML = `<span style="color: #dc2626;">❌ ${error.message || 'Error occurred'}</span>`;
+                        }
+                    }
+                }
             }
+
+            // Check if any succeeded to determine overall status
+            setStatus(`Process completed. Check individual status above.`, '#475569');
+            if (typeof loadScheduledPosts === 'function' && scheduleEnabled) {
+                loadScheduledPosts();
+            }
+            
         } catch (error) {
-            console.error('Instagram posting error:', error);
-            setStatus(error.message || 'Posting failed.', '#dc2626');
+            console.error('Multi-channel posting error:', error);
+            setStatus(error.message || 'Multi-channel posting failed.', '#dc2626');
             resultContainer.style.display = 'block';
             resultContainer.innerHTML = `
                 <div class="alert alert--error">
                     <div>
-                        <strong>Unable to post to Instagram.</strong><br>
+                        <strong>Error during multi-channel posting.</strong><br>
                         ${error.message || 'An unexpected error occurred. Please try again.'}
                     </div>
                 </div>
@@ -472,7 +651,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        const button = document.getElementById('postToInstagramBtn');
+        const button = document.getElementById('postToAllBtn');
         const captionField = document.getElementById('postCaption');
 
         if (!button || !captionField) {
@@ -480,7 +659,7 @@
         }
 
         captionField.value = generateCaption(workflowContext.topic);
-        button.addEventListener('click', postGeneratedImage);
+        button.addEventListener('click', postToMultipleChannels);
     });
 })();
 </script>

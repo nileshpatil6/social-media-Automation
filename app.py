@@ -1299,6 +1299,146 @@ async def post_direct_facebook(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/post-to-multiple-channels")
+async def post_to_multiple_channels(
+    request: Request,
+    image_filename: str = Form(...),
+    topic_id: int = Form(...),
+    caption: Optional[str] = Form(None),  # For Instagram/Twitter
+    text: Optional[str] = Form(None),     # For Facebook/LinkedIn
+    platforms: str = Form(...),           # Comma-separated list of platforms
+    scheduled_time: Optional[str] = Form(None),
+    schedule_timezone: Optional[str] = Form("UTC"),
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Post to multiple channels simultaneously
+    Platforms should be sent as comma-separated values in the request
+    """
+    try:
+        topic = db.query(Topic).filter(
+            Topic.id == topic_id,
+            Topic.user_id == current_user.id
+        ).first()
+
+        if not topic:
+            raise HTTPException(status_code=404, detail="Topic not found")
+
+        image_path = os.path.join(os.path.abspath("generated_images"), image_filename)
+        if not os.path.exists(image_path):
+            raise HTTPException(status_code=404, detail=f"Image file not found: {image_filename}")
+
+        # Parse platforms from comma-separated string
+        platform_list = [p.strip().lower() for p in platforms.split(",") if p.strip()]
+        
+        # Validate platforms
+        valid_platforms = {"instagram", "facebook", "linkedin", "twitter"}
+        invalid_platforms = [p for p in platform_list if p not in valid_platforms]
+        if invalid_platforms:
+            raise HTTPException(status_code=400, detail=f"Invalid platforms: {invalid_platforms}")
+        
+        # Use either caption or text depending on what's provided
+        post_content = caption or text or ""
+        if not post_content:
+            raise HTTPException(status_code=400, detail="Either caption or text must be provided")
+
+        scheduled_time_value = (scheduled_time or "").strip() or None
+        timezone_value = (schedule_timezone or "").strip() or None
+
+        print(
+            f"[post-to-multiple-channels] user={current_user.email} image={image_filename} "
+            f"platforms={platform_list} topic_id={topic_id} "
+            f"scheduled_time={scheduled_time_value} timezone={timezone_value}"
+        )
+
+        results = {}
+        scheduled_any = False
+        
+        # If scheduling, schedule for each selected platform
+        if scheduled_time_value:
+            try:
+                schedule_dt, tz_name = scheduling_service.parse_scheduled_datetime(scheduled_time_value, timezone_value)
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail=str(exc))
+
+            preview_url = ImageUploadService.get_public_url(image_path)
+            metadata = {
+                "source": "generated_image",
+                "topic_id": topic_id,
+                "preview_url": preview_url,
+                "requested_by": current_user.email,
+                "requested_at": datetime.now(timezone.utc).isoformat(),
+                "selected_platforms": platform_list,
+            }
+
+            for platform in platform_list:
+                platform_metadata = metadata.copy()
+                platform_metadata["target_platform"] = platform
+                
+                scheduled = scheduling_service.schedule_post(
+                    db=db,
+                    user_id=current_user.id,
+                    caption=post_content,
+                    schedule_time=schedule_dt,
+                    timezone_name=tz_name,
+                    image_url=preview_url,
+                    image_filename=image_filename,
+                    topic_id=topic_id,
+                    platform=platform,
+                    metadata=platform_metadata,
+                )
+                
+                results[platform] = {
+                    "success": True,
+                    "scheduled": True,
+                    "scheduled_post": serialize_scheduled_post(scheduled)
+                }
+                
+                scheduled_any = True
+        else:
+            # Post immediately to each selected platform
+            for platform in platform_list:
+                try:
+                    if platform == "instagram":
+                        # Upload image for Instagram posting
+                        image_url = ImageUploadService.get_public_url(image_path)
+                        if not image_url:
+                            raise Exception("Failed to upload image to public service")
+                        agent = InstagramAgent()
+                        result = agent.post_to_instagram(image_url, post_content)
+                    elif platform == "facebook":
+                        agent = FacebookAgent()
+                        result = agent.post_to_facebook(post_content, image_path=image_path)
+                    elif platform == "linkedin":
+                        agent = LinkedInAgent()
+                        result = agent.post_to_linkedin(post_content, image_path=image_path)
+                    elif platform == "twitter":
+                        agent = TwitterAgent()
+                        result = agent.post_to_twitter(post_content, image_path=image_path)
+                    else:
+                        result = {"success": False, "error": f"Unsupported platform: {platform}"}
+                    
+                    results[platform] = result
+                except Exception as e:
+                    print(f"[error] Error posting to {platform}: {e}")
+                    results[platform] = {"success": False, "error": str(e)}
+
+        # Return results for each platform
+        return JSONResponse(content={
+            "success": True,
+            "results": results,
+            "scheduled_any": scheduled_any,
+            "platforms_attempted": platform_list
+        })
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[error] Multi-channel posting error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
