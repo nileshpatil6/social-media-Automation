@@ -68,7 +68,7 @@ aside.sidebar {
 .sidebar nav a.active::before {
     content: "";
     position: absolute; left: 0; top: 0; bottom: 0;
-    width: 4px; background: #935BF5; border-radius: 0 4px 4px 0;
+    width: 4px; background: linear-gradient(135deg,#9C5AF5,#3B82F6); border-radius: 0 4px 4px 0;
 }
 .sidebar nav a:hover, .sidebar nav a:focus-visible { background: rgba(59,130,246,0.12); color: #935BF5; }
 
@@ -77,7 +77,7 @@ main.main-content { flex: 1; display: flex; flex-direction: column; overflow-x: 
 
 /* Topbar */
 header.topbar {
-    background: #935BF5;
+   background: linear-gradient(135deg,#9C5AF5,#3B82F6);
     color: #ffffff;
     border-bottom: 1px solid rgba(15,23,42,0.08);
     display: flex; align-items: center; justify-content: space-between;
@@ -87,9 +87,9 @@ header.topbar {
 header.topbar .topbar-left { font-weight: 600; font-size: 1.2rem; }
 header.topbar .topbar-right { display: flex; align-items: center; gap: 1rem; position: relative; }
 header.topbar .account-logo {
-    width: 40px; height: 40px; border-radius: 50%; background:#935BF5;border:1px solid #313034ff;
+    width: 40px; height: 40px; border-radius: 50%; background:#313034ff;border:1px solid #313034ff;
     display: grid; place-items: center;
-    color: #496ed5ff; font-weight: 700; cursor: pointer;
+    color: #919398ff; font-weight: 700; cursor: pointer;
 }
 
 /* Account dropdown */

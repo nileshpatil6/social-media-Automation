@@ -1,433 +1,957 @@
-{% extends "base.html" %}
-
-{% block title %}Advertisement Generated{% endblock %}
-
+{% extends "base.html" %} {% block title %}Advertisement Generated{% endblock %}
 {% block content %}
-<h1>🎨 Advertisement Generation Result</h1>
+<h1
+  style="
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: #333;
+    margin-bottom: 1rem;
+    margin-left: 1rem;
+  "
+>
+  Advertisement Generation Result
+</h1>
 {% if result.success %}
-    <div class="success">
-        <h3>✅ Advertisement Generated Successfully!</h3>
-        <p>Your AI-powered advertisement has been created and analyzed.</p>
+<div
+  style="
+    background: #e6f7ff;
+    border-left: 4px solid #60a5fa;
+    padding: 15px 20px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+    margin-left: 1rem;
+  "
+>
+  <h3
+    style="
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #16a34a;
+      margin: 0 0 5px 0;
+      margin-left: 1rem;
+    "
+  >
+    ✅ Advertisement Generated Successfully!
+  </h3>
+  <p style="font-size: 0.95rem; color: #444; margin: 0; margin-left: 1rem">
+    Your AI-powered advertisement has been created and analyzed.
+  </p>
+</div>
+
+<!-- Generated Image Display -->
+{% if result.final_image_filename %}
+<div style="text-align: center; margin: 30px 0; margin-left: 1rem;">
+
+  {% set filename = result.final_image_filename %}
+  <img
+    src="/serve-image/{{ filename }}"
+    alt="Generated Advertisement"
+    style="
+      max-width: 100%;
+      height: auto;
+      max-height: 480px;
+      border-radius: 14px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    "
+    onerror="this.src='/images/{{ filename }}'; this.onerror=function(){this.src='/generated_images/{{ filename }}'; this.onerror=null;}"
+  />
+
+ 
+</div>
+
+{% endif %}
+
+<!-- Quality Analysis -->
+{% if result.final_analysis %}
+<div class="info" style="margin: 25px 0">
+  <h3
+    style="
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #222;
+      margin-bottom: 1rem;
+      text-align: center;
+    "
+  >
+    Quality Analysis
+  </h3>
+  <div
+    style="
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+    "
+  >
+    {% for score_name, score_value in result.final_analysis.scores.items() %} {%
+    if score_value >= 8 %}
+    <div
+      style="background: {% if score_value >= 8 %}#d4edda{% elif score_value >= 6 %}#fff3cd{% else %}#f8d7da{% endif %};
+                    padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 6px 18px rgba(0,0,0,0.08);"
+    >
+      <h4
+        style="
+          margin: 0 0 8px 0;
+          font-weight: 600;
+          font-size: 1rem;
+          text-transform: capitalize;
+          color: #333;
+        "
+      >
+        {{ score_name.replace('_', ' ') }}
+      </h4>
+      <div
+        style="
+          font-size: 1.2rem;
+          font-weight: 700;
+          margin-bottom: 8px;
+          color: #111;
+        "
+      >
+        {{ "%.1f"|format(score_value) }}/10
+      </div>
+      <div
+        class="score-bar"
+        style="
+          width: 100%;
+          height: 10px;
+          background: #e5e7eb;
+          border-radius: 6px;
+          overflow: hidden;
+        "
+      >
+        <div
+          class="score-bar__fill score-bar__fill-high"
+          data-percent="{{ (score_value * 10)|round(1) }}"
+          style="
+            height: 100%; 
+            width: {{ (score_value * 10)|round(1) }}%; 
+            background: linear-gradient(135deg, #9C5AF5, #60A5FA); 
+            border-radius: 6px;
+            transition: width 0.5s ease-in-out;"
+        ></div>
+      </div>
     </div>
-    
-    <!-- Generated Image Display -->
-    {% if result.final_image_filename %}
-    <div style="text-align: center; margin: 30px 0;">
-        <h3>🖼️ Generated Advertisement</h3>
-        {% set filename = result.final_image_filename %}
-        <img 
-            src="/serve-image/{{ filename }}" 
-            alt="Generated Advertisement"
-            style="max-width: 100%; max-height: 500px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);"
-            onerror="this.src='/images/{{ filename }}'; this.onerror=function(){this.src='/generated_images/{{ filename }}'; this.onerror=null;}"
+    {% elif score_value >= 6 %} <
+    <div
+      class="score-card score-card-medium"
+      style="
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        width: 100%;
+        max-width: 320px;
+      "
+    >
+      <h4
+        class="score-card__title"
+        style="
+          font-size: 1rem;
+          font-weight: 600;
+          color: #374151;
+          margin-bottom: 0.5rem;
+        "
+      >
+        {{ score_name.replace('_', ' ') }}
+      </h4>
+
+      <div
+        class="score-card__value"
+        style="
+          font-size: 0.95rem;
+          font-weight: 500;
+          color: #6b7280;
+          margin-bottom: 0.75rem;
+        "
+      >
+        {{ "%.1f"|format(score_value) }}/10
+      </div>
+
+      <div
+        class="score-bar"
+        style="
+          width: 100%;
+          height: 10px;
+          background: #f3f4f6;
+          border-radius: 6px;
+          overflow: hidden;
+        "
+      >
+        <div
+          class="score-bar__fill score-bar__fill-medium"
+          data-percent="{{ (score_value * 10)|round(1) }}"
+          style="height: 100%; width: {{ (score_value * 10)|round(1) }}%; 
+                    background: linear-gradient(135deg,#F59E0B,#FBBF24); 
+                    border-radius: 6px; 
+                    transition: width 0.5s ease-in-out;"
+        ></div>
+      </div>
+    </div>
+
+    {% else %}
+    <div
+      class="score-card score-card-low"
+      style="
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        width: 100%;
+        max-width: 320px;
+      "
+    >
+      <h4
+        class="score-card__title"
+        style="
+          font-size: 1rem;
+          font-weight: 600;
+          color: #374151;
+          margin-bottom: 0.5rem;
+        "
+      >
+        {{ score_name.replace('_', ' ') }}
+      </h4>
+
+      <div
+        class="score-card__value"
+        style="
+          font-size: 0.95rem;
+          font-weight: 500;
+          color: #6b7280;
+          margin-bottom: 0.75rem;
+        "
+      >
+        {{ "%.1f"|format(score_value) }}/10
+      </div>
+
+      <div
+        class="score-bar"
+        style="
+          width: 100%;
+          height: 10px;
+          background: #f3f4f6;
+          border-radius: 6px;
+          overflow: hidden;
+        "
+      >
+        <div
+          class="score-bar__fill score-bar__fill-low"
+          data-percent="{{ (score_value * 10)|round(1) }}"
+          style="height: 100%; width: {{ (score_value * 10)|round(1) }}%; 
+                    background: linear-gradient(135deg,#EF4444,#F87171); 
+                    border-radius: 6px; 
+                    transition: width 0.5s ease-in-out;"
+        ></div>
+      </div>
+    </div>
+
+    {% endif %} {% endfor %}
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      var fills = document.querySelectorAll("[data-percent]");
+      Array.prototype.forEach.call(fills, function (fill) {
+        var percent = parseFloat(fill.dataset.percent);
+        if (isNaN(percent)) {
+          return;
+        }
+        var clamped = Math.max(0, Math.min(percent, 100));
+        fill.style.width = clamped + "%";
+      });
+    });
+  </script>
+
+  <div
+    style="
+      margin: 20px 0 0 1rem;
+      padding: 1rem;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      max-width: 400px;
+    "
+  >
+    <h4
+      style="
+        margin-left: 1rem;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.75rem;
+      "
+    >
+      ⭐ Overall Score:
+      <span style="color: #4f46e5"
+        >{{ "%.1f"|format(result.final_analysis.overall_score) }}/10</span
+      >
+    </h4>
+
+    <div
+      class="overall-score"
+      style="
+        width: 100%;
+        height: 12px;
+        background: #f3f4f6;
+        border-radius: 6px;
+        overflow: hidden;
+      "
+    >
+      <div
+        class="overall-score__fill"
+        data-percent="{{ (result.final_analysis.overall_score * 10)|round(1) }}"
+        style="height: 100%; width: {{ (result.final_analysis.overall_score * 10)|round(1) }}%; 
+                    background: linear-gradient(135deg,#9C5AF5,#60A5FA); 
+                    border-radius: 6px; 
+                    transition: width 0.6s ease-in-out;"
+      ></div>
+    </div>
+  </div>
+
+  <p
+    style="
+      margin-left: 1rem;
+      font-size: 1rem;
+      color: #374151;
+      background: #f9fafb;
+      padding: 0.5rem 0.75rem;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+    "
+  >
+    <strong style="color: #111827"> Decision:</strong>
+    <span style="color: #4f46e5; font-weight: 600"
+      >{{ result.final_analysis.decision }}</span
+    >
+  </p>
+
+  {% if result.final_analysis.recommendations %}
+  <p
+    style="
+      margin-left: 1rem;
+      font-size: 1rem;
+      color: #374151;
+      background: #f9fafb;
+      padding: 0.6rem 0.8rem;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+      line-height: 1.5;
+    "
+  >
+    <strong style="color: #111827"> Recommendations:</strong>
+    <span style="color: #2563eb; font-weight: 500"
+      >{{ result.final_analysis.recommendations|join(', ') }}</span
+    >
+  </p>
+
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- Generation Workflow Summary -->
+<div
+  class="info"
+  style="
+    margin-left: 1rem;
+    padding: 1rem;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  "
+>
+  <h3
+    style="
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #1e3a8a;
+      margin-bottom: 0.75rem;
+    "
+  >
+    Generation Workflow
+  </h3>
+  <p style="margin: 0.25rem 0; font-size: 1rem; color: #374151">
+    <strong style="color: #111827">Total Attempts:</strong> {{
+    result.total_attempts }}
+  </p>
+  <p style="margin: 0.25rem 0; font-size: 1rem; color: #374151">
+    <strong style="color: #111827">Workflow Steps:</strong> {{
+    result.steps|length }}
+  </p>
+
+  <details
+    style="
+      margin: 15px 0;
+      padding: 0.5rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      background: #fff;
+    "
+  >
+    <summary
+      style="cursor: pointer; font-weight: 600; color: #2563eb; font-size: 1rem"
+    >
+      🔍 View Detailed Steps
+    </summary>
+    <div
+      class="step-list"
+      style="
+        margin-top: 0.75rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+      "
+    >
+      {% for step in result.steps %} {% if step.status == 'completed' %}
+      <div
+        style="
+          padding: 0.75rem;
+          border-radius: 8px;
+          background: #ecfdf5;
+          border: 1px solid #34d399;
+        "
+      >
+        <strong style="color: #065f46">{{ step.step|title }}:</strong>
+        <span style="color: #059669; font-weight: 600"
+          >{{ step.status|title }}</span
         >
-        <p style="font-size: 12px; color: #666; margin-top: 10px;">
-            📁 Image file: {{ filename }}
-            <br>💾 Full path: {{ result.final_image_path }}
-        </p>
-    </div>
-    {% endif %}
-    
-    <!-- Quality Analysis -->
-    {% if result.final_analysis %}
-    <div class="info">
-        <h3>📊 Quality Analysis</h3>
-        <div class="score-grid">
-            {% for score_name, score_value in result.final_analysis.scores.items() %}
-            {% if score_value >= 8 %}
-            <div class="score-card score-card-high">
-                <h4 class="score-card__title">{{ score_name.replace('_', ' ') }}</h4>
-                <div class="score-card__value">{{ "%.1f"|format(score_value) }}/10</div>
-                <div class="score-bar">
-                    <div class="score-bar__fill score-bar__fill-high" data-percent="{{ (score_value * 10)|round(1) }}"></div>
-                </div>
-            </div>
-            {% elif score_value >= 6 %}
-            <div class="score-card score-card-medium">
-                <h4 class="score-card__title">{{ score_name.replace('_', ' ') }}</h4>
-                <div class="score-card__value">{{ "%.1f"|format(score_value) }}/10</div>
-                <div class="score-bar">
-                    <div class="score-bar__fill score-bar__fill-medium" data-percent="{{ (score_value * 10)|round(1) }}"></div>
-                </div>
-            </div>
-            {% else %}
-            <div class="score-card score-card-low">
-                <h4 class="score-card__title">{{ score_name.replace('_', ' ') }}</h4>
-                <div class="score-card__value">{{ "%.1f"|format(score_value) }}/10</div>
-                <div class="score-bar">
-                    <div class="score-bar__fill score-bar__fill-low" data-percent="{{ (score_value * 10)|round(1) }}"></div>
-                </div>
-            </div>
-            {% endif %}
-            {% endfor %}
-        </div>
-        
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                var fills = document.querySelectorAll('[data-percent]');
-                Array.prototype.forEach.call(fills, function (fill) {
-                    var percent = parseFloat(fill.dataset.percent);
-                    if (isNaN(percent)) {
-                        return;
-                    }
-                    var clamped = Math.max(0, Math.min(percent, 100));
-                    fill.style.width = clamped + '%';
-                });
-            });
-        </script>
-
-        <div style="margin: 20px 0;">
-            <h4>Overall Score: {{ "%.1f"|format(result.final_analysis.overall_score) }}/10</h4>
-            <div class="overall-score">
-                <div class="overall-score__fill" data-percent="{{ (result.final_analysis.overall_score * 10)|round(1) }}"></div>
-            </div>
-        </div>
-        
-        <p><strong>Decision:</strong> {{ result.final_analysis.decision }}</p>
-        {% if result.final_analysis.recommendations %}
-        <p><strong>Recommendations:</strong> {{ result.final_analysis.recommendations|join(', ') }}</p>
+        {% if step.get('error') %}
+        <br /><small style="color: #b91c1c">Error: {{ step.error }}</small>
         {% endif %}
-    </div>
-    {% endif %}
-    
-    <!-- Generation Workflow Summary -->
-    <div class="info">
-        <h3>🔄 Generation Workflow</h3>
-        <p><strong>Total Attempts:</strong> {{ result.total_attempts }}</p>
-        <p><strong>Workflow Steps:</strong> {{ result.steps|length }}</p>
-        
-        <details style="margin: 15px 0;">
-            <summary style="cursor: pointer; font-weight: bold;">🔍 View Detailed Steps</summary>
-            <div class="step-list">
-                {% for step in result.steps %}
-                {% if step.status == 'completed' %}
-                <div class="step-card step-card-completed">
-                    <strong>{{ step.step|title }}:</strong> 
-                    <span class="step-card__status step-card__status-completed">{{ step.status|title }}</span>
-                    {% if step.get('error') %}
-                    <br><small class="step-card__error">Error: {{ step.error }}</small>
-                    {% endif %}
-                </div>
-                {% elif step.status == 'failed' %}
-                <div class="step-card step-card-failed">
-                    <strong>{{ step.step|title }}:</strong> 
-                    <span class="step-card__status step-card__status-failed">{{ step.status|title }}</span>
-                    {% if step.get('error') %}
-                    <br><small class="step-card__error">Error: {{ step.error }}</small>
-                    {% endif %}
-                </div>
-                {% else %}
-                <div class="step-card">
-                    <strong>{{ step.step|title }}:</strong> 
-                    <span class="step-card__status">{{ step.status|title }}</span>
-                    {% if step.get('error') %}
-                    <br><small class="step-card__error">Error: {{ step.error }}</small>
-                    {% endif %}
-                </div>
-                {% endif %}
-                {% endfor %}
-            </div>
-        </details>
-    </div>
-    
-    <!-- Post to Instagram Section -->
-    {% if result.final_image_filename %}
-    <div class="card card--accent">
-        <div class="stack">
-            <div>
-                <h3>Post to Instagram</h3>
-                <p>Publish this creative directly to Instagram using the same reliable workflow as Auto Post.</p>
-            </div>
-            <div class="form-group">
-                <label for="postCaption">Instagram Caption</label>
-                <textarea id="postCaption" rows="5" placeholder="Add a caption for your post..."></textarea>
-                <small>You can edit the caption before posting.</small>
-            </div>
-            <div class="form-group" style="margin-top: 1rem;">
-                <label style="display:flex; gap:8px; align-items:center;">
-                    <input type="checkbox" id="generatedScheduleToggle"> Schedule this post
-                </label>
-                <small>Enable to publish at a specific future time rather than immediately.</small>
-            </div>
-            <div id="generatedScheduleFields" style="display:none; border:1px solid #e2e8f0; background:#f8fafc; padding:12px; border-radius:8px; margin-bottom:1rem;">
-                <div class="form-group">
-                    <label for="generatedScheduleTime">Scheduled date &amp; time</label>
-                    <input type="datetime-local" id="generatedScheduleTime" style="width:100%; padding:8px; border:1px solid #cbd5f5; border-radius:5px;">
-                </div>
-                <div class="form-group">
-                    <label for="generatedScheduleTimezone">Timezone</label>
-                    <select id="generatedScheduleTimezone" style="width:100%; padding:8px; border:1px solid #cbd5f5; border-radius:5px;">
-                        <option value="UTC">UTC</option>
-                        <option value="America/New_York">America/New_York</option>
-                        <option value="America/Los_Angeles">America/Los_Angeles</option>
-                        <option value="Europe/London">Europe/London</option>
-                        <option value="Europe/Paris">Europe/Paris</option>
-                        <option value="Asia/Kolkata">Asia/Kolkata</option>
-                        <option value="Australia/Sydney">Australia/Sydney</option>
-                    </select>
-                    <small>Your local timezone is selected automatically when possible.</small>
-                </div>
-            </div>
-            <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-                <button type="button" class="btn btn--primary" id="postToInstagramBtn">Post to Instagram</button>
-                <span id="postStatus" style="font-weight: 600;"></span>
-            </div>
-            <div id="postResult" class="stack" style="display: none;"></div>
-        </div>
-    </div>
-    {% endif %}
+      </div>
 
-{% set workflow_context = {
-    "topic": topic,
-    "workflowId": result.workflow_id,
-    "topicId": topic_id,
-    "imageFilename": result.final_image_filename
-} %}
+      {% elif step.status == 'failed' %}
+      <div
+        style="
+          padding: 0.75rem;
+          border-radius: 8px;
+          background: #fef2f2;
+          border: 1px solid #f87171;
+        "
+      >
+        <strong style="color: #7f1d1d">{{ step.step|title }}:</strong>
+        <span style="color: #dc2626; font-weight: 600"
+          >{{ step.status|title }}</span
+        >
+        {% if step.get('error') %}
+        <br /><small style="color: #991b1b">Error: {{ step.error }}</small>
+        {% endif %}
+      </div>
+
+      {% else %}
+      <div
+        style="
+          padding: 0.75rem;
+          border-radius: 8px;
+          background: #eff6ff;
+          border: 1px solid #93c5fd;
+        "
+      >
+        <strong style="color: #1e3a8a">{{ step.step|title }}:</strong>
+        <span style="color: #2563eb; font-weight: 600"
+          >{{ step.status|title }}</span
+        >
+        {% if step.get('error') %}
+        <br /><small style="color: #b91c1c">Error: {{ step.error }}</small>
+        {% endif %}
+      </div>
+      {% endif %} {% endfor %}
+    </div>
+  </details>
+</div>
+
+<!-- Post to Instagram Section -->
+{% if result.final_image_filename %}
+<div
+  class="card card--accent"
+  style="
+    margin-left: 1rem;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  "
+>
+  <div class="stack" style="display: flex; flex-direction: column; gap: 1rem">
+    <div>
+      <h3
+        style="
+          font-size: 1.25rem;
+          font-weight: 600;
+          color: #1e3a8a;
+          margin-bottom: 0.5rem;
+        "
+      >
+        Post to Instagram
+      </h3>
+      <p style="color: #374151; font-size: 0.95rem; line-height: 1.5">
+        Publish this creative directly to Instagram using the same reliable
+        workflow as Auto Post.
+      </p>
+    </div>
+
+    <div
+      class="form-group"
+      style="display: flex; flex-direction: column; gap: 0.5rem"
+    >
+      <label for="postCaption" style="font-weight: 600; color: #111827"
+        >Instagram Caption</label
+      >
+      <textarea
+        id="postCaption"
+        rows="5"
+        placeholder="Add a caption for your post..."
+        style="
+          font-family: sans-serif;
+          width: 100%;
+          padding: 10px;
+          border: 1px solid #cbd5e1;
+          border-radius: 8px;
+          font-size: 0.95rem;
+          color: #374151;
+          resize: vertical;
+        "
+      >
+      </textarea>
+      <small style="color: #6b7280"
+        >You can edit the caption before posting.</small
+      >
+    </div>
+
+    <div
+      class="form-group"
+      style="
+        margin-top: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      "
+    >
+      <label
+        style="
+          display: flex;
+          gap: 8px;
+          align-items: center;
+          font-size: 0.95rem;
+          color: #111827;
+          font-weight: 500;
+        "
+      >
+        <input
+          type="checkbox"
+          id="generatedScheduleToggle"
+          style="accent-color: #2563eb"
+        />
+        Schedule this post
+      </label>
+      <small style="color: #6b7280"
+        >Enable to publish at a specific future time rather than
+        immediately.</small
+      >
+    </div>
+
+    <div
+      id="generatedScheduleFields"
+      style="
+        display: none;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        margin-top: 0.5rem;
+      "
+    >
+      <div class="form-group" style="margin-bottom: 0.75rem">
+        <label
+          for="generatedScheduleTime"
+          style="font-weight: 600; color: #111827"
+          >Scheduled date &amp; time</label
+        >
+        <input
+          type="datetime-local"
+          id="generatedScheduleTime"
+          style="
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            margin-top: 0.25rem;
+          "
+        />
+      </div>
+      <div class="form-group">
+        <label
+          for="generatedScheduleTimezone"
+          style="font-weight: 600; color: #111827"
+          >Timezone</label
+        >
+        <select
+          id="generatedScheduleTimezone"
+          style="
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            margin-top: 0.25rem;
+          "
+        >
+          <option value="UTC">UTC</option>
+          <option value="America/New_York">America/New_York</option>
+          <option value="America/Los_Angeles">America/Los_Angeles</option>
+          <option value="Europe/London">Europe/London</option>
+          <option value="Europe/Paris">Europe/Paris</option>
+          <option value="Asia/Kolkata">Asia/Kolkata</option>
+          <option value="Australia/Sydney">Australia/Sydney</option>
+        </select>
+        <small style="color: #6b7280"
+          >Your local timezone is selected automatically when possible.</small
+        >
+      </div>
+    </div>
+
+    <div
+      style="
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-top: 0.5rem;
+      "
+    >
+      <button
+        type="button"
+        id="postToInstagramBtn"
+        style="
+          padding: 0.7rem 1.5rem;
+          border: none;
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: 0.95rem;
+          color: #fff;
+          cursor: pointer;
+          background: linear-gradient(135deg, #9c5af5, #60a5fa);
+          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+          transition: all 0.3s ease;
+        "
+      >
+        Post to Instagram
+      </button>
+      <span
+        id="postStatus"
+        style="font-weight: 600; font-size: 0.95rem; color: #374151"
+      ></span>
+    </div>
+
+    <div
+      id="postResult"
+      class="stack"
+      style="display: none; margin-top: 1rem"
+    ></div>
+  </div>
+</div>
+
+{% endif %} {% set workflow_context = { "topic": topic, "workflowId":
+result.workflow_id, "topicId": topic_id, "imageFilename":
+result.final_image_filename } %}
 <script type="application/json" id="workflowContextData">
-    {{ workflow_context | tojson(indent=2) }}
+  {{ workflow_context | tojson(indent=2) }}
 </script>
 <script>
-(function () {
+  (function () {
     let workflowContext = {};
-    const workflowContextScript = document.getElementById('workflowContextData');
+    const workflowContextScript = document.getElementById(
+      "workflowContextData"
+    );
     if (workflowContextScript) {
-        try {
-            workflowContext = JSON.parse(workflowContextScript.textContent);
-        } catch (err) {
-            console.warn('Unable to parse workflow context JSON:', err);
-        }
+      try {
+        workflowContext = JSON.parse(workflowContextScript.textContent);
+      } catch (err) {
+        console.warn("Unable to parse workflow context JSON:", err);
+      }
     }
-    let generatedLocalTimezone = 'UTC';
-    const generatedScheduleToggle = document.getElementById('generatedScheduleToggle');
-    const generatedScheduleFields = document.getElementById('generatedScheduleFields');
-    const generatedScheduleTime = document.getElementById('generatedScheduleTime');
-    const generatedScheduleTimezone = document.getElementById('generatedScheduleTimezone');
-    const generatedSubmitButton = document.getElementById('postToInstagramBtn');
+    let generatedLocalTimezone = "UTC";
+    const generatedScheduleToggle = document.getElementById(
+      "generatedScheduleToggle"
+    );
+    const generatedScheduleFields = document.getElementById(
+      "generatedScheduleFields"
+    );
+    const generatedScheduleTime = document.getElementById(
+      "generatedScheduleTime"
+    );
+    const generatedScheduleTimezone = document.getElementById(
+      "generatedScheduleTimezone"
+    );
+    const generatedSubmitButton = document.getElementById("postToInstagramBtn");
 
     try {
-        const resolvedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        if (resolvedTimezone) {
-            generatedLocalTimezone = resolvedTimezone;
-        }
+      const resolvedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (resolvedTimezone) {
+        generatedLocalTimezone = resolvedTimezone;
+      }
     } catch (err) {
-        console.warn('Unable to detect local timezone:', err);
+      console.warn("Unable to detect local timezone:", err);
     }
 
     if (generatedScheduleTimezone) {
-        const tzOptions = Array.from(generatedScheduleTimezone.options || []);
-        if (generatedLocalTimezone && !tzOptions.some(opt => opt.value === generatedLocalTimezone)) {
-            const option = document.createElement('option');
-            option.value = generatedLocalTimezone;
-            option.textContent = generatedLocalTimezone;
-            generatedScheduleTimezone.insertBefore(option, generatedScheduleTimezone.firstChild);
-        }
-        generatedScheduleTimezone.value = generatedLocalTimezone || generatedScheduleTimezone.value || 'UTC';
+      const tzOptions = Array.from(generatedScheduleTimezone.options || []);
+      if (
+        generatedLocalTimezone &&
+        !tzOptions.some((opt) => opt.value === generatedLocalTimezone)
+      ) {
+        const option = document.createElement("option");
+        option.value = generatedLocalTimezone;
+        option.textContent = generatedLocalTimezone;
+        generatedScheduleTimezone.insertBefore(
+          option,
+          generatedScheduleTimezone.firstChild
+        );
+      }
+      generatedScheduleTimezone.value =
+        generatedLocalTimezone || generatedScheduleTimezone.value || "UTC";
     }
 
-    if (generatedScheduleToggle && generatedScheduleFields && generatedSubmitButton) {
-        generatedScheduleToggle.addEventListener('change', () => {
-            const enabled = generatedScheduleToggle.checked;
-            generatedScheduleFields.style.display = enabled ? 'block' : 'none';
-            generatedSubmitButton.textContent = enabled ? 'Schedule Post' : 'Post to Instagram';
-            setStatus('', '#475569');
-        });
+    if (
+      generatedScheduleToggle &&
+      generatedScheduleFields &&
+      generatedSubmitButton
+    ) {
+      generatedScheduleToggle.addEventListener("change", () => {
+        const enabled = generatedScheduleToggle.checked;
+        generatedScheduleFields.style.display = enabled ? "block" : "none";
+        generatedSubmitButton.textContent = enabled
+          ? "Schedule Post"
+          : "Post to Instagram";
+        setStatus("", "#475569");
+      });
     }
 
     window.generatedAd = workflowContext;
 
     function resolveAuthToken() {
-        if (window.authToken) {
-            return window.authToken;
+      if (window.authToken) {
+        return window.authToken;
+      }
+
+      let token = null;
+
+      try {
+        token = localStorage.getItem("authToken");
+      } catch (err) {
+        console.warn("Unable to access localStorage:", err);
+      }
+
+      if (!token) {
+        const cookieMatch = document.cookie.match(
+          /(?:^|; )(?:authToken|sb-access-token)=([^;]+)/
+        );
+        if (cookieMatch) {
+          token = decodeURIComponent(cookieMatch[1]);
         }
+      }
 
-        let token = null;
+      if (token) {
+        window.authToken = token;
+      }
 
-        try {
-            token = localStorage.getItem('authToken');
-        } catch (err) {
-            console.warn('Unable to access localStorage:', err);
-        }
-
-        if (!token) {
-            const cookieMatch = document.cookie.match(/(?:^|; )(?:authToken|sb-access-token)=([^;]+)/);
-            if (cookieMatch) {
-                token = decodeURIComponent(cookieMatch[1]);
-            }
-        }
-
-        if (token) {
-            window.authToken = token;
-        }
-
-        return token;
+      return token;
     }
 
     function setStatus(message, color) {
-        const statusEl = document.getElementById('postStatus');
-        if (!statusEl) {
-            return;
-        }
-        statusEl.textContent = message || '';
-        statusEl.style.color = color || 'inherit';
+      const statusEl = document.getElementById("postStatus");
+      if (!statusEl) {
+        return;
+      }
+      statusEl.textContent = message || "";
+      statusEl.style.color = color || "inherit";
     }
 
     function generateCaption(topic) {
+      const base = (topic || "Our latest campaign").trim();
 
-        const base = (topic || 'Our latest campaign').trim();
+      const hashtag = base.toLowerCase().replace(/[^a-z0-9]+/g, "");
 
-        const hashtag = base.toLowerCase().replace(/[^a-z0-9]+/g, '');
+      const lines = [
+        `${base} - created with Visionary Ads Studio.`,
 
-        const lines = [
+        "",
 
-            `${base} - created with Visionary Ads Studio.`,
+        "Highlights:",
 
-            '',
+        "- AI-tailored visuals",
 
-            'Highlights:',
+        "- Brand-consistent messaging",
 
-            '- AI-tailored visuals',
+        "- Ready for Instagram engagement",
 
-            '- Brand-consistent messaging',
+        "",
 
-            '- Ready for Instagram engagement',
+        `#${hashtag || "visionaryads"} #VisionaryAds #AIMarketing`,
+      ];
 
-            '',
-
-            `#${hashtag || 'visionaryads'} #VisionaryAds #AIMarketing`
-
-        ];
-
-        return lines.join('\n');
+      return lines.join("\n");
     }
 
     async function markWorkflowAsPosted(token) {
-        if (!workflowContext.workflowId) {
-            return;
-        }
+      if (!workflowContext.workflowId) {
+        return;
+      }
 
-        try {
-            await fetch('/mark-as-posted', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ workflow_id: workflowContext.workflowId })
-            });
-        } catch (err) {
-            console.warn('Unable to mark workflow as posted:', err);
-        }
+      try {
+        await fetch("/mark-as-posted", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ workflow_id: workflowContext.workflowId }),
+        });
+      } catch (err) {
+        console.warn("Unable to mark workflow as posted:", err);
+      }
     }
 
     async function postGeneratedImage() {
-        const button = document.getElementById('postToInstagramBtn');
-        const captionField = document.getElementById('postCaption');
-        const resultContainer = document.getElementById('postResult');
-        const scheduleToggle = document.getElementById('generatedScheduleToggle');
-        const scheduleTimeInput = document.getElementById('generatedScheduleTime');
-        const timezoneSelect = document.getElementById('generatedScheduleTimezone');
+      const button = document.getElementById("postToInstagramBtn");
+      const captionField = document.getElementById("postCaption");
+      const resultContainer = document.getElementById("postResult");
+      const scheduleToggle = document.getElementById("generatedScheduleToggle");
+      const scheduleTimeInput = document.getElementById(
+        "generatedScheduleTime"
+      );
+      const timezoneSelect = document.getElementById(
+        "generatedScheduleTimezone"
+      );
 
-        if (!button || !captionField || !resultContainer) {
-            return;
+      if (!button || !captionField || !resultContainer) {
+        return;
+      }
+
+      const token = resolveAuthToken();
+      if (!token) {
+        alert("Please log in before posting.");
+        return;
+      }
+
+      const caption =
+        (captionField.value || "").trim() ||
+        generateCaption(workflowContext.topic);
+      const scheduleEnabled = scheduleToggle && scheduleToggle.checked;
+
+      if (scheduleEnabled && (!scheduleTimeInput || !scheduleTimeInput.value)) {
+        setStatus("Select a scheduled date and time.", "#dc2626");
+        return;
+      }
+
+      if (!workflowContext.imageFilename || !workflowContext.topicId) {
+        setStatus(
+          "Missing image information. Regenerate the ad or contact support.",
+          "#dc2626"
+        );
+        return;
+      }
+
+      button.disabled = true;
+      setStatus(
+        scheduleEnabled ? "Scheduling post..." : "Posting to Instagram...",
+        "#475569"
+      );
+      resultContainer.style.display = "none";
+      resultContainer.innerHTML = "";
+
+      try {
+        const formData = new FormData();
+        formData.append("image_filename", workflowContext.imageFilename);
+        formData.append("caption", caption);
+        formData.append("topic_id", workflowContext.topicId);
+
+        if (scheduleEnabled) {
+          formData.append("scheduled_time", scheduleTimeInput.value);
+          formData.append(
+            "schedule_timezone",
+            (timezoneSelect && timezoneSelect.value) ||
+              generatedLocalTimezone ||
+              "UTC"
+          );
         }
 
-        const token = resolveAuthToken();
-        if (!token) {
-            alert('Please log in before posting.');
-            return;
-        }
+        const response = await fetch("/post-to-instagram", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        });
 
-        const caption = (captionField.value || '').trim() || generateCaption(workflowContext.topic);
-        const scheduleEnabled = scheduleToggle && scheduleToggle.checked;
+        const result = await response.json();
 
-        if (scheduleEnabled && (!scheduleTimeInput || !scheduleTimeInput.value)) {
-            setStatus('Select a scheduled date and time.', '#dc2626');
-            return;
-        }
+        if (response.ok && result.scheduled) {
+          const scheduled = result.scheduled_post || {};
+          const scheduledIso = scheduled.schedule_time;
+          const tz =
+            scheduled.timezone ||
+            (timezoneSelect && timezoneSelect.value) ||
+            "UTC";
 
-        if (!workflowContext.imageFilename || !workflowContext.topicId) {
-            setStatus('Missing image information. Regenerate the ad or contact support.', '#dc2626');
-            return;
-        }
+          // Format datetime in the user's chosen timezone
+          let readable = "";
+          if (scheduledIso) {
+            try {
+              const date = new Date(scheduledIso);
 
-        button.disabled = true;
-        setStatus(scheduleEnabled ? 'Scheduling post...' : 'Posting to Instagram...', '#475569');
-        resultContainer.style.display = 'none';
-        resultContainer.innerHTML = '';
-
-        try {
-            const formData = new FormData();
-            formData.append('image_filename', workflowContext.imageFilename);
-            formData.append('caption', caption);
-            formData.append('topic_id', workflowContext.topicId);
-
-            if (scheduleEnabled) {
-                formData.append('scheduled_time', scheduleTimeInput.value);
-                formData.append('schedule_timezone', (timezoneSelect && timezoneSelect.value) || generatedLocalTimezone || 'UTC');
-            }
-
-            const response = await fetch('/post-to-instagram', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
-                body: formData
-            });
-
-            const result = await response.json();
-
-            if (response.ok && result.scheduled) {
-                const scheduled = result.scheduled_post || {};
-                const scheduledIso = scheduled.schedule_time;
-                const tz = scheduled.timezone || ((timezoneSelect && timezoneSelect.value) || 'UTC');
-                
-                // Format datetime in the user's chosen timezone
-                let readable = '';
-                if (scheduledIso) {
-                    try {
-                        const date = new Date(scheduledIso);
-                        
-                        // Try modern approach with timeZone support
-                        if (Intl && Intl.DateTimeFormat) {
-                            try {
-                                readable = new Intl.DateTimeFormat('en-US', {
-                                    timeZone: tz,
-                                    year: 'numeric',
-                                    month: '2-digit', 
-                                    day: '2-digit',
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    second: '2-digit',
-                                    hour12: true
-                                }).format(date);
-                            } catch (e) {
-                                console.log('Intl.DateTimeFormat failed, trying toLocaleString:', e);
-                                readable = date.toLocaleString('en-US', {
-                                    timeZone: tz,
-                                    year: 'numeric',
-                                    month: '2-digit', 
-                                    day: '2-digit',
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    second: '2-digit',
-                                    hour12: true
-                                });
-                            }
-                        } else {
-                            // Fallback for older browsers - just use the basic toLocaleString
-                            readable = date.toLocaleString();
-                        }
-                    } catch (e) {
-                        console.error('Date formatting error:', e);
-                        readable = scheduledIso; // Show raw ISO string as last resort
-                    }
-                } else if (scheduleTimeInput) {
-                    readable = scheduleTimeInput.value;
+              // Try modern approach with timeZone support
+              if (Intl && Intl.DateTimeFormat) {
+                try {
+                  readable = new Intl.DateTimeFormat("en-US", {
+                    timeZone: tz,
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                    hour12: true,
+                  }).format(date);
+                } catch (e) {
+                  console.log(
+                    "Intl.DateTimeFormat failed, trying toLocaleString:",
+                    e
+                  );
+                  readable = date.toLocaleString("en-US", {
+                    timeZone: tz,
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                    hour12: true,
+                  });
                 }
-                
-                setStatus(`Scheduled for ${readable} (${tz})`, '#16a34a');
-                resultContainer.style.display = 'block';
-                resultContainer.innerHTML = `
+              } else {
+                // Fallback for older browsers - just use the basic toLocaleString
+                readable = date.toLocaleString();
+              }
+            } catch (e) {
+              console.error("Date formatting error:", e);
+              readable = scheduledIso; // Show raw ISO string as last resort
+            }
+          } else if (scheduleTimeInput) {
+            readable = scheduleTimeInput.value;
+          }
+
+          setStatus(`Scheduled for ${readable} (${tz})`, "#16a34a");
+          resultContainer.style.display = "block";
+          resultContainer.innerHTML = `
                     <div class="alert alert--info">
                         <div>
                             <strong>Post scheduled.</strong><br>
@@ -435,61 +959,82 @@
                         </div>
                     </div>
                 `;
-                if (typeof loadScheduledPosts === 'function') {
-                    loadScheduledPosts();
-                }
-            } else if (response.ok && result.success) {
-                await markWorkflowAsPosted(token);
-                setStatus('Posted successfully.', '#16a34a');
-                resultContainer.style.display = 'block';
-                resultContainer.innerHTML = `
+          if (typeof loadScheduledPosts === "function") {
+            loadScheduledPosts();
+          }
+        } else if (response.ok && result.success) {
+          await markWorkflowAsPosted(token);
+          setStatus("Posted successfully.", "#16a34a");
+          resultContainer.style.display = "block";
+          resultContainer.innerHTML = `
                     <div class="alert alert--success">
                         <div>
                             <strong>Instagram post created.</strong><br>
-                            ${result.post_url ? `View it here: <a href="${result.post_url}" target="_blank">Instagram Link</a>` : 'Check your Instagram account to confirm.'}
+                            ${
+                              result.post_url
+                                ? `View it here: <a href="${result.post_url}" target="_blank">Instagram Link</a>`
+                                : "Check your Instagram account to confirm."
+                            }
                         </div>
                     </div>
                 `;
-            } else {
-                const errorMessage = result.error || result.detail || 'Instagram posting failed.';
-                throw new Error(errorMessage);
-            }
-        } catch (error) {
-            console.error('Instagram posting error:', error);
-            setStatus(error.message || 'Posting failed.', '#dc2626');
-            resultContainer.style.display = 'block';
-            resultContainer.innerHTML = `
+        } else {
+          const errorMessage =
+            result.error || result.detail || "Instagram posting failed.";
+          throw new Error(errorMessage);
+        }
+      } catch (error) {
+        console.error("Instagram posting error:", error);
+        setStatus(error.message || "Posting failed.", "#dc2626");
+        resultContainer.style.display = "block";
+        resultContainer.innerHTML = `
                 <div class="alert alert--error">
                     <div>
                         <strong>Unable to post to Instagram.</strong><br>
-                        ${error.message || 'An unexpected error occurred. Please try again.'}
+                        ${
+                          error.message ||
+                          "An unexpected error occurred. Please try again."
+                        }
                     </div>
                 </div>
             `;
-        } finally {
-            button.disabled = false;
-        }
+      } finally {
+        button.disabled = false;
+      }
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        const button = document.getElementById('postToInstagramBtn');
-        const captionField = document.getElementById('postCaption');
+    document.addEventListener("DOMContentLoaded", () => {
+      const button = document.getElementById("postToInstagramBtn");
+      const captionField = document.getElementById("postCaption");
 
-        if (!button || !captionField) {
-            return;
-        }
+      if (!button || !captionField) {
+        return;
+      }
 
-        captionField.value = generateCaption(workflowContext.topic);
-        button.addEventListener('click', postGeneratedImage);
+      captionField.value = generateCaption(workflowContext.topic);
+      button.addEventListener("click", postGeneratedImage);
     });
-})();
+  })();
 </script>
 
 {% endif %}
 
-<div style="margin-top: 30px; display: flex; gap: 15px;">
-    <a href="/simple" class="back-link">🔄 Generate Another</a>
-    <a href="/" class="back-link">← Back to Dashboard</a>
+<div style="margin-top: 30px; display: flex; gap: 15px; margin-left: 1rem; flex-wrap: wrap;">
+
+  <a href="/simple" 
+     style="background: linear-gradient(135deg,#9C5AF5,#2563EB); color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; cursor: pointer;"
+     onmouseover="this.style.background: linear-gradient(135deg,#9C5AF5,#2563EB)'"
+     onmouseout="this.style.background: linear-gradient(135deg,#9C5AF5,#2563EB)'">
+     Generate Another
+  </a>
+
+  <a href="/" 
+     style="background: #E5E7EB; color: #374151; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; cursor: pointer;"
+     onmouseover="this.style.background='#D1D5DB'"
+     onmouseout="this.style.background='#E5E7EB'">
+     ← Back to Dashboard
+  </a>
+
 </div>
 
 {% endblock %}
