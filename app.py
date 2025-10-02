@@ -37,14 +37,20 @@ templates = Jinja2Templates(directory="templates")
 
 # Mount static files for serving generated images
 images_dir = os.path.abspath("generated_images")
+static_dir = os.path.abspath("static")
+
+# Create required directories
 os.makedirs(images_dir, exist_ok=True)
+os.makedirs(static_dir, exist_ok=True)
 
 print(f"[startup] Images directory: {images_dir}")
-print(f"[startup] Directory exists: {os.path.exists(images_dir)}")
+print(f"[startup] Static directory: {static_dir}")
+print(f"[startup] Images directory exists: {os.path.exists(images_dir)}")
+print(f"[startup] Static directory exists: {os.path.exists(static_dir)}")
 
 app.mount("/images", StaticFiles(directory=images_dir), name="images")
 app.mount("/generated_images", StaticFiles(directory=images_dir), name="generated_images")
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 # Scheduling setup
 scheduler_runner = ScheduledPostRunner()
@@ -1732,5 +1738,8 @@ async def health_check():
     return {"status": "healthy", "version": "2.0.0"}
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # Get port from environment variable for Render compatibility
+    port = int(os.environ.get("PORT", 8000))
+    print(f"[startup] Starting server on port {port}")
+    uvicorn.run(app, host="0.0.0.0", port=port)
 

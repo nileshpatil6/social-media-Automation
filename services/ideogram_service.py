@@ -81,8 +81,8 @@ class IdeogramService:
         payload = {
             "prompt": main_prompt,
             "aspect_ratio": ideogram_aspect_ratio,
-            "rendering_speed": "TURBO",
-            "magic_prompt": "AUTO",
+            "rendering_speed": "QUALITY",
+            "magic_prompt": "ON",
             "num_images": 1
         }
         
@@ -110,7 +110,7 @@ class IdeogramService:
                     'success': True,
                     'image_data': result.get('data', []),
                     'request_id': result.get('request_id'),
-                    'model_used': 'ideogram-v2',
+                    'model_used': 'ideogram-v3',
                     'retry_count': retry_count,
                     'original_prompt': prompt_data
                 }
@@ -150,8 +150,8 @@ class IdeogramService:
         edit_payload = {
             "prompt": enhanced_prompt,
             "aspect_ratio": "1x1",
-            "rendering_speed": "DEFAULT",
-            "magic_prompt": "AUTO",
+            "rendering_speed": "QUALITY",
+            "magic_prompt": "ON",
             "style_type": "GENERAL",
             "num_images": 1
         }
