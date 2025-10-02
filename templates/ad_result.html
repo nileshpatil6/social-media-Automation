@@ -133,11 +133,11 @@
         <div
             class="score-bar__fill"
             data-percent="{{ (score_value * 10)|round(1) }}"
-            {% set bg_value = 'linear-gradient(135deg, #ef4444, #2563eb)' %}
+            {% set bg_value = 'linear-gradient(135deg, #9c5af5, #60a5fa)' %}
             {% if score_value >= 8 %}
-              {% set bg_value = 'linear-gradient(135deg, #16a34a, #2563eb)' %}
+              {% set bg_value = 'linear-gradient(135deg, #9c5af5, #60a5fa)' %}
             {% elif score_value >= 6 %}
-              {% set bg_value = 'linear-gradient(135deg, #f59e0b, #2563eb)' %}
+              {% set bg_value = 'linear-gradient(135deg, #9c5af5, #60a5fa)' %}
             {% endif %}
             style="height: 100%; width: {{ (score_value * 10)|round(1) }}%; background: {{ bg_value }}; border-radius: 7px; transition: width 0.5s cubic-bezier(0.23,1,0.32,1);"
         ></div>
@@ -167,20 +167,37 @@
             </div>
         </div>
         
-        <p><strong>Decision:</strong> {{ result.final_analysis.decision }}</p>
+    <p style="margin-top: 1rem; padding: 10px; background: #f9fafb; border-left: 4px solid #2563eb; border-radius: 6px; font-size: 0.95rem;">
+  <strong style="color: #1e3a8a;">Decision:</strong> 
+  <span style="color: #111827;">{{ result.final_analysis.decision }}</span>
+</p>
+
         {% if result.final_analysis.recommendations %}
-        <p><strong>Recommendations:</strong> {{ result.final_analysis.recommendations|join(', ') }}</p>
+        <p style="margin-top: 1rem; padding: 10px; background: #fefce8; border-left: 4px solid #f59e0b; border-radius: 6px; font-size: 0.95rem;">
+  <strong style="color: #b45309;">Recommendations:</strong> 
+  <span style="color: #92400e;">{{ result.final_analysis.recommendations|join(', ') }}</span>
+</p>
+
         {% endif %}
     </div>
     {% endif %}
     
     <!-- Generation Workflow Summary -->
-    <div class="info">
-        <h3>🔄 Generation Workflow</h3>
-        <p><strong>Total Attempts:</strong> {{ result.total_attempts }}</p>
-        <p><strong>Workflow Steps:</strong> {{ result.steps|length }}</p>
+    <div class="info" style="margin-left:0.8rem">
+        <div style="margin-top: 25px; padding: 15px; background: #f0f9ff; border-left: 4px solid #3b82f6; border-radius: 8px;">
+  <h3 style="margin: 0 0 10px 0; font-size: 1.4rem; font-weight: 700; color: #1e3a8a;">
+    🔄 Generation Workflow
+  </h3>
+  <p style="margin: 5px 0; font-size: 0.95rem; color: #334155;">
+    <strong>Total Attempts:</strong> {{ result.total_attempts }}
+  </p>
+  <p style="margin: 5px 0; font-size: 0.95rem; color: #334155;">
+    <strong>Workflow Steps:</strong> {{ result.steps|length }}
+  </p>
+</div>
+
         
-        <details style="margin: 15px 0;">
+        <details style="margin: 15px ; margin-left:0.8rem">
             <summary style="cursor: pointer; font-weight: bold;">🔍 View Detailed Steps</summary>
             <div class="step-list">
                 {% for step in result.steps %}
@@ -218,70 +235,124 @@
     {% if result.final_image_filename %}
     <div class="card card--accent">
         <div class="stack">
-            <div>
-                <h3>Post to Multiple Channels</h3>
-                <p>Publish this creative to all your social media channels at once or select specific platforms.</p>
-            </div>
+          <div style="background:#f9fafb; padding:18px; border-radius:10px; border:1px solid #e5e7eb; margin-bottom:15px;margin-left:0.8rem">
+  <h3 style="font-size:1.25rem; font-weight:700; color:#1f2937; margin:0 0 8px 0;">
+     Post to Multiple Channels
+  </h3>
+  <p style="color:#4b5563; font-size:0.95rem; margin:0;">
+    Publish this creative to all your social media channels at once or select specific platforms.
+  </p>
+</div>
+
             
             <!-- Platform selection checkboxes -->
-            <div class="form-group" style="margin-top: 1rem; padding: 15px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
-                <label style="display: block; font-weight: bold; margin-bottom: 10px;">Select Platforms:</label>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
-                    <label style="display: flex; gap: 8px; align-items: center;">
-                        <input type="checkbox" id="postInstagramCheck" checked> 
-                        <span style="color: #ff9a9e; font-weight: bold;">Instagram</span>
-                    </label>
-                    <label style="display: flex; gap: 8px; align-items: center;">
-                        <input type="checkbox" id="postFacebookCheck" checked> 
-                        <span style="color: #4267B2; font-weight: bold;">Facebook</span>
-                    </label>
-                    <label style="display: flex; gap: 8px; align-items: center;">
-                        <input type="checkbox" id="postLinkedInCheck" checked> 
-                        <span style="color: #0077b5; font-weight: bold;">LinkedIn</span>
-                    </label>
-                    <label style="display: flex; gap: 8px; align-items: center;">
-                        <input type="checkbox" id="postTwitterCheck"> 
-                        <span style="color: #1da1f2; font-weight: bold;">Twitter</span>
-                    </label>
-                </div>
-            </div>
-            
-            <div class="form-group" style="margin-top: 1rem;">
-                <label for="postCaption">Caption/Text for All Platforms</label>
-                <textarea id="postCaption" rows="5" placeholder="Add a caption or text for your posts..."></textarea>
-                <small>You can edit the caption before posting. For LinkedIn/Facebook, this will be the main text.</small>
-            </div>
-            <div class="form-group" style="margin-top: 1rem;">
-                <label style="display:flex; gap:8px; align-items:center;">
-                    <input type="checkbox" id="generatedScheduleToggle"> Schedule these posts
-                </label>
-                <small>Enable to publish at a specific future time rather than immediately.</small>
-            </div>
-            <div id="generatedScheduleFields" style="display:none; border:1px solid #e2e8f0; background:#f8fafc; padding:12px; border-radius:8px; margin-bottom:1rem;">
-                <div class="form-group">
-                    <label for="generatedScheduleTime">Scheduled date &amp; time</label>
-                    <input type="datetime-local" id="generatedScheduleTime" style="width:100%; padding:8px; border:1px solid #cbd5f5; border-radius:5px;">
-                </div>
-                <div class="form-group">
-                    <label for="generatedScheduleTimezone">Timezone</label>
-                    <select id="generatedScheduleTimezone" style="width:100%; padding:8px; border:1px solid #cbd5f5; border-radius:5px;">
-                        <option value="UTC">UTC</option>
-                        <option value="America/New_York">America/New_York</option>
-                        <option value="America/Los_Angeles">America/Los_Angeles</option>
-                        <option value="Europe/London">Europe/London</option>
-                        <option value="Europe/Paris">Europe/Paris</option>
-                        <option value="Asia/Kolkata">Asia/Kolkata</option>
-                        <option value="Australia/Sydney">Australia/Sydney</option>
-                    </select>
-                    <small>Your local timezone is selected automatically when possible.</small>
-                </div>
-            </div>
-            <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-                <button type="button" class="btn btn--primary" id="postToAllBtn">Post to Selected Channels</button>
-                <span id="postStatus" style="font-weight: 600;"></span>
-            </div>
-            <div id="postResult" class="stack" style="display: none;"></div>
-            <div id="multiChannelResults" class="stack" style="margin-top: 15px;"></div>
+            <div class="form-group" style="margin-top: 1.5rem; padding: 20px; background: #ffffff; border-radius: 12px; border: 1px solid #e5e7eb; box-shadow: 0 4px 8px rgba(0,0,0,0.05);margin-left:0.8rem">
+    <label style="display: block; font-weight: 600; font-size: 1.1rem; margin-bottom: 15px; color: #111827;">
+        Select Platforms:
+    </label>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 18px; margin-left:0.8rem">
+        
+        <!-- Instagram -->
+        <label style="display: flex; gap: 10px; align-items: center; padding: 12px; background: #fdf2f8; border-radius: 10px; border: 1px solid #fbcfe8; cursor: pointer; transition: 0.3s;">
+            <input type="checkbox" id="postInstagramCheck" checked style="transform: scale(1.2); cursor: pointer;">
+            <span style="color: #d946ef; font-weight: 600;">Instagram</span>
+        </label>
+
+        <!-- Facebook -->
+       
+
+        <!-- LinkedIn -->
+        <label style="display: flex; gap: 10px; align-items: center; padding: 12px; background: #f0f9ff; border-radius: 10px; border: 1px solid #bae6fd; cursor: pointer; transition: 0.3s;">
+            <input type="checkbox" id="postLinkedInCheck" checked style="transform: scale(1.2); cursor: pointer;">
+            <span style="color: #0369a1; font-weight: 600;">LinkedIn</span>
+        </label>
+
+        <!-- Twitter -->
+        <label style="display: flex; gap: 10px; align-items: center; padding: 12px; background: #f0f9ff; border-radius: 10px; border: 1px solid #bae6fd; cursor: pointer; transition: 0.3s;">
+            <input type="checkbox" id="postTwitterCheck" style="transform: scale(1.2); cursor: pointer;">
+            <span style="color: #0ea5e9; font-weight: 600;">Twitter</span>
+        </label>
+
+    </div>
+</div>
+
+           <div class="form-group" style="margin-top: 1.5rem; margin-left:0.8rem">
+    <label for="postCaption" style="display: block; font-weight: 600; font-size: 1.05rem; color: #111827; margin-bottom: 8px;">
+        Caption/Text for All Platforms
+    </label>
+
+    <textarea id="postCaption" rows="5" placeholder="Add a caption or text for your posts..." 
+        style="width: 100%; padding: 14px; border: 1px solid #d1d5db; border-radius: 10px; background: #f9fafb; font-size: 0.95rem; line-height: 1.5; resize: vertical; transition: all 0.2s ease; font-family:sans-serif">
+    </textarea>
+
+    <small style="display: block; margin-top: 6px; font-size: 0.85rem; color: #6b7280;">
+        You can edit the caption before posting. For LinkedIn/Facebook, this will appear as the main text.
+    </small>
+</div>
+
+            <div class="form-group" style="margin-top: 1.2rem; padding: 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; margin-left:0.8rem">
+  <label style="display: flex; gap: 10px; align-items: center; font-weight: 600; color: #333; cursor: pointer;">
+    <input type="checkbox" id="generatedScheduleToggle" style="width: 16px; height: 16px; cursor: pointer;"> 
+    Schedule these posts
+  </label>
+  <small style="display: block; margin-top: 6px; color: #64748b; font-size: 0.85rem;">
+    Enable to publish at a specific future time rather than immediately.
+  </small>
+</div>
+<div id="generatedScheduleFields" 
+     style="display:none; border:1px solid #e2e8f0; background:#f8fafc; padding:16px; border-radius:8px; margin-top:1rem; margin-bottom:1rem; box-shadow: 0 2px 6px rgba(0,0,0,0.05); margin-left:0.8rem">
+    
+    <div class="form-group" style="margin-bottom: 1rem;">
+        <label for="generatedScheduleTime" style="display:block; font-weight:600; margin-bottom:6px; color:#334155;">
+            Scheduled date &amp; time
+        </label>
+        <input type="datetime-local" id="generatedScheduleTime" 
+               style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.95rem; outline:none; transition:0.2s;">
+    </div>
+    
+    <div class="form-group" style="margin-left:0.8rem">
+        <label for="generatedScheduleTimezone" style="display:block; font-weight:600; margin-bottom:6px; color:#334155;">
+            Timezone
+        </label>
+        <select id="generatedScheduleTimezone" 
+                style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.95rem; outline:none; transition:0.2s;">
+            <option value="UTC">UTC</option>
+            <option value="America/New_York">America/New_York</option>
+            <option value="America/Los_Angeles">America/Los_Angeles</option>
+            <option value="Europe/London">Europe/London</option>
+            <option value="Europe/Paris">Europe/Paris</option>
+            <option value="Asia/Kolkata">Asia/Kolkata</option>
+            <option value="Australia/Sydney">Australia/Sydney</option>
+        </select>
+        <small style="display:block; margin-top:6px; color:#64748b; font-size:0.85rem;">
+            Your local timezone is selected automatically when possible.
+        </small>
+    </div>
+</div>
+
+           <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin-top:1.2rem;">
+    <button type="button" id="postToAllBtn" 
+        style="background: linear-gradient(135deg, #6366f1, #2563eb); 
+               color: #fff; 
+               padding: 10px 20px; 
+               border: none; 
+               border-radius: 8px; 
+               font-weight: 600; 
+               font-size: 0.95rem; 
+               cursor: pointer; 
+               margin-left:0.8rem;
+               transition: all 0.2s ease;">
+        Post to Selected Channels
+    </button>
+    
+    <span id="postStatus" style="font-weight:600; color:#334155; font-size:0.9rem;"></span>
+</div>
+
+<div id="postResult" class="stack" style="display:none; margin-top:1rem; padding:12px; border:1px solid #e2e8f0; border-radius:8px; background:#f8fafc;"></div>
+
+<div id="multiChannelResults" class="stack" style="margin-top:15px; padding:12px; border:1px dashed #cbd5e1; border-radius:8px; background:#f9fafb;"></div>
+
         </div>
     </div>
     
@@ -775,6 +846,7 @@
     flex-wrap: wrap;
   "
 >
+  <!-- Primary button -->
   <a
     href="/simple"
     style="
@@ -785,33 +857,39 @@
       text-decoration: none;
       font-weight: 600;
       font-size: 0.95rem;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
       cursor: pointer;
+      display: inline-block;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     "
-      onmouseover="this.style.background='linear-gradient(135deg,#9C5AF5,#2563EB)'"
-      onmouseout="this.style.background='linear-gradient(135deg,#9C5AF5,#2563EB)'"
+    onmouseover="this.style.opacity='0.9'"
+    onmouseout="this.style.opacity='1'"
   >
-    Generate Another
+     Generate Another
   </a>
 
+  <!-- Secondary button -->
   <a
     href="/"
     style="
-      background: #e5e7eb;
+      background: #f3f4f6;
       color: #374151;
       padding: 10px 20px;
       border-radius: 8px;
       text-decoration: none;
       font-weight: 600;
       font-size: 0.95rem;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
       cursor: pointer;
+      display: inline-block;
+      border: 1px solid #d1d5db;
     "
-    onmouseover="this.style.background='#D1D5DB'"
-    onmouseout="this.style.background='#E5E7EB'"
+    onmouseover="this.style.background='#e5e7eb'"
+    onmouseout="this.style.background='#f3f4f6'"
   >
     ← Back to Dashboard
   </a>
 </div>
+
 
 {% endblock %}
