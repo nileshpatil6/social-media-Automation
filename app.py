@@ -8,6 +8,7 @@ import uvicorn
 import os
 import tempfile
 from datetime import datetime, timedelta, timezone
+from contextlib import asynccontextmanager
 
 # Import our services and models
 from instagram_agent import InstagramAgent
@@ -28,9 +29,24 @@ from services.scheduling_service import SchedulingService, ScheduledPostRunner
 # Create tables on startup
 create_tables()
 
+# Scheduling setup - initialize before app
+scheduler_runner = ScheduledPostRunner()
+scheduling_service = scheduler_runner.service
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    await scheduler_runner.start()
+    print("[startup] Scheduler started")
+    yield
+    # Shutdown
+    await scheduler_runner.stop()
+    print("[shutdown] Scheduler stopped")
+
 app = FastAPI(
     title="AI-Powered Advertisement Generation System", 
-    description="Generate high-quality brand advertisements using AI and post to Instagram"
+    description="Generate high-quality brand advertisements using AI and post to Instagram",
+    lifespan=lifespan
 )
 
 templates = Jinja2Templates(directory="templates")
@@ -51,10 +67,6 @@ print(f"[startup] Static directory exists: {os.path.exists(static_dir)}")
 app.mount("/images", StaticFiles(directory=images_dir), name="images")
 app.mount("/generated_images", StaticFiles(directory=images_dir), name="generated_images")
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
-
-# Scheduling setup
-scheduler_runner = ScheduledPostRunner()
-scheduling_service = scheduler_runner.service
 
 def serialize_scheduled_post(post: ScheduledPost) -> Dict[str, Any]:
     return {
@@ -78,15 +90,6 @@ def serialize_scheduled_post(post: ScheduledPost) -> Dict[str, Any]:
         "updated_at": post.updated_at.replace(tzinfo=timezone.utc).isoformat() if getattr(post, "updated_at", None) else None,
         "metadata": post.job_metadata,
     }
-
-@app.on_event("startup")
-async def start_scheduler():
-    await scheduler_runner.start()
-
-
-@app.on_event("shutdown")
-async def stop_scheduler():
-    await scheduler_runner.stop()
 
 # Authentication endpoints
 @app.post("/auth/register", response_model=Token)

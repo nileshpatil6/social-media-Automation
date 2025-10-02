@@ -423,8 +423,8 @@
             cursor: pointer;
             transition: 0.3s;
           "
-          onmouseover="this.style.background;color: #1e3a8a; this.style.transform='translateY(-2px)';"
-          onmouseout="this.style.backgroundColor='white'; this.style.transform='translateY(0)';"
+          onmouseover="this.style.background='linear-gradient(135deg, #7c3aed, #2563eb)'; this.style.transform='translateY(-2px)';"
+          onmouseout="this.style.background='linear-gradient(135deg, #9c5af5, #3b82f6)'; this.style.transform='translateY(0)';"
         >
           Setup Automation
         </button>
@@ -2311,9 +2311,9 @@ Direct Facebook Post Modal
 
 <button 
     type="submit" 
-    style="padding: 0.6rem 1.2rem;background: linear-gradient(135deg,#9C5AF5,#60A5FA) color: white; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; font-weight: 600; transition: background 0.3s ease;"
-    onmouseover="this.style.background: linear-gradient(135deg,#9C5AF5,#60A5FA)" 
-    onmouseout="this.style.background: linear-gradient(135deg,#9C5AF5,#60A5FA)'"
+    style="padding: 0.6rem 1.2rem;background: linear-gradient(135deg,#9C5AF5,#60A5FA); color: white; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; font-weight: 600; transition: background 0.3s ease;"
+    onmouseover="this.style.background='linear-gradient(135deg,#7C3AED,#3B82F6)'" 
+    onmouseout="this.style.background='linear-gradient(135deg,#9C5AF5,#60A5FA)'"
 >  Register
 </button>
         </form>
@@ -2349,9 +2349,9 @@ Direct Facebook Post Modal
 
 <button 
     type="submit" 
-    style="padding: 0.6rem 1.2rem;background: linear-gradient(135deg,#9C5AF5,#60A5FA) color: white; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; font-weight: 600; transition: background 0.3s ease;"
-    onmouseover="this.style.background: linear-gradient(135deg,#9C5AF5,#60A5FA)" 
-    onmouseout="this.style.background: linear-gradient(135deg,#9C5AF5,#60A5FA)'"
+    style="padding: 0.6rem 1.2rem;background: linear-gradient(135deg,#9C5AF5,#60A5FA); color: white; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; font-weight: 600; transition: background 0.3s ease;"
+    onmouseover="this.style.background='linear-gradient(135deg,#7C3AED,#3B82F6)'" 
+    onmouseout="this.style.background='linear-gradient(135deg,#9C5AF5,#60A5FA)'"
 >
     Register
 </button>
@@ -3193,20 +3193,22 @@ function hideDirectFacebookPostModal() {
 });
 
 // Facebook direct post form handling
-document.getElementById('directFacebookPostForm').addEventListener('submit', async function(event) {
-    event.preventDefault();
-    
-    const imageUrlInput = document.getElementById('facebookImageUrl');
-    const textInput = document.getElementById('facebookText');
-    const scheduleToggle = document.getElementById('facebookScheduleToggle');
-    const scheduleTimeInput = document.getElementById('facebookScheduleTime');
-    const timezoneSelect = document.getElementById('facebookScheduleTimezone');
-    const submitButton = document.getElementById('facebookSubmitButton');
-    const resultDiv = document.getElementById('directFacebookPostResult');
-    
-    const imageUrl = imageUrlInput.value.trim();
-    const text = textInput.value.trim();
-    const scheduleEnabled = scheduleToggle && scheduleToggle.checked;
+const directFacebookPostForm = document.getElementById('directFacebookPostForm');
+if (directFacebookPostForm) {
+    directFacebookPostForm.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        
+        const imageUrlInput = document.getElementById('facebookImageUrl');
+        const textInput = document.getElementById('facebookText');
+        const scheduleToggle = document.getElementById('facebookScheduleToggle');
+        const scheduleTimeInput = document.getElementById('facebookScheduleTime');
+        const timezoneSelect = document.getElementById('facebookScheduleTimezone');
+        const submitButton = document.getElementById('facebookSubmitButton');
+        const resultDiv = document.getElementById('directFacebookPostResult');
+        
+        const imageUrl = imageUrlInput.value.trim();
+        const text = textInput.value.trim();
+        const scheduleEnabled = scheduleToggle && scheduleToggle.checked;
     
     if (!imageUrl || !text) {
         resultDiv.innerHTML = '<div style="color: red;">❌ Please fill in all required fields.</div>';
@@ -3323,7 +3325,8 @@ document.getElementById('directFacebookPostForm').addEventListener('submit', asy
             submitButton.disabled = false;
         }
     }
-});
+    });
+}
 
   // YouTube video preview functionality
   document
@@ -3633,16 +3636,19 @@ document.getElementById('linkedinImageUrl').addEventListener('input', function()
 });
 
 // Facebook image preview functionality
-document.getElementById('facebookImageUrl').addEventListener('input', function() {
-    const url = this.value.trim();
-    const preview = document.getElementById('facebookImagePreview');
-    
-    if (url && isValidImageUrl(url)) {
-        preview.innerHTML = `<img src="${url}" style="max-width: 100%; max-height: 200px; border-radius: 4px;" onload="this.style.display='block'" onerror="showFacebookImageError()" />`;
-    } else {
-        preview.innerHTML = 'Enter a valid image URL to see preview';
-    }
-});
+const facebookImageUrl = document.getElementById('facebookImageUrl');
+if (facebookImageUrl) {
+    facebookImageUrl.addEventListener('input', function() {
+        const url = this.value.trim();
+        const preview = document.getElementById('facebookImagePreview');
+        
+        if (url && isValidImageUrl(url)) {
+            preview.innerHTML = `<img src="${url}" style="max-width: 100%; max-height: 200px; border-radius: 4px;" onload="this.style.display='block'" onerror="showFacebookImageError()" />`;
+        } else {
+            preview.innerHTML = 'Enter a valid image URL to see preview';
+        }
+    });
+}
 
   function isValidImageUrl(url) {
     try {

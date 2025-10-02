@@ -177,8 +177,8 @@ class AdGenerationService:
             # Create prompt data directly from user input
             prompt_data = {
                 'prompt': f"{topic} {brand_context} {constraints}".strip(),
-                'negative_prompt': "text artifacts, extra fingers, distorted faces, watermarks, low quality, cluttered composition",
-                'style': "modern-commercial",
+                'negative_prompt': "text artifacts, extra fingers, distorted faces, watermarks, low quality, cluttered composition, anime, cartoon, illustration, drawn, painting",
+                'style': "REALISTIC",
                 'aspect_ratio': "1:1",
                 'original_topic': topic
             }

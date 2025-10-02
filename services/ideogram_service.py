@@ -41,8 +41,14 @@ class IdeogramService:
         # Extract prompt components
         main_prompt = prompt_data.get('prompt', '')
         negative_prompt = prompt_data.get('negative_prompt', '')
-        style = prompt_data.get('style', 'AUTO')
+        style = prompt_data.get('style', 'REALISTIC')
         aspect_ratio = prompt_data.get('aspect_ratio', '1:1')
+        
+        # Enhance prompt with realistic photography modifiers to avoid anime/cartoon style
+        photorealistic_prompt = f"{main_prompt}, photorealistic, professional photography, real life, high quality photograph, detailed realistic textures, natural lighting, shot on DSLR camera"
+        
+        # Strengthen negative prompt to explicitly avoid anime/cartoon styles
+        enhanced_negative_prompt = f"{negative_prompt}, anime, cartoon, illustrated, drawn, painting, animated, manga, comic style, stylized, cel shaded, 2D art, artistic rendering, digital art, CGI, 3D render"
         
         # Map aspect ratios to Ideogram format (as shown in the API docs)
         aspect_ratio_map = {
@@ -67,34 +73,31 @@ class IdeogramService:
         
         # Map styles to Ideogram format
         style_map = {
-            'modern-commercial': 'DESIGN',
-            'flat-illustration': 'DESIGN', 
+            'modern-commercial': 'REALISTIC',
+            'flat-illustration': 'REALISTIC', 
             'photography': 'GENERAL',
             'realistic': 'GENERAL',
             'artistic': 'GENERAL',
             'AUTO': 'AUTO'
         }
         
-        ideogram_style = style_map.get(style, 'AUTO')
+        ideogram_style = style_map.get(style, 'REALISTIC')
         
         # Construct the request payload for Ideogram API v3
         payload = {
-            "prompt": main_prompt,
+            "prompt": photorealistic_prompt,
             "aspect_ratio": ideogram_aspect_ratio,
             "rendering_speed": "QUALITY",
             "magic_prompt": "ON",
-            "num_images": 1
+            "num_images": 1,
+            "style_type": "REALISTIC"  # Force realistic style
         }
         
-        # Add negative prompt if provided
-        if negative_prompt:
-            payload["negative_prompt"] = negative_prompt
+        # Add enhanced negative prompt
+        if enhanced_negative_prompt:
+            payload["negative_prompt"] = enhanced_negative_prompt
         
-        # Add style if not AUTO
-        if ideogram_style != "AUTO":
-            payload["style_type"] = ideogram_style
-        else:
-            payload["style_type"] = "GENERAL"
+     
         
         try:
             response = requests.post(
