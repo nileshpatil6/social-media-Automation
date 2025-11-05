@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Automatter</title>
+    <link rel="stylesheet" href="/static/premium-design.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #ffd700 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-6);
+            position: relative;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: backgroundMove 20s linear infinite;
+        }
+
+        @keyframes backgroundMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        .auth-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 480px;
+        }
+
+        .auth-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: var(--space-10);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.2), 0 10px 20px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .auth-brand {
+            text-align: center;
+            margin-bottom: var(--space-8);
+        }
+
+        .auth-brand-logo {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 16px;
+            margin-bottom: var(--space-4);
+            box-shadow: 0 10px 30px rgba(245, 87, 108, 0.3);
+        }
+
+        .auth-brand-logo svg {
+            width: 32px;
+            height: 32px;
+            fill: white;
+        }
+
+        .auth-brand-name {
+            font-size: var(--font-2xl);
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: var(--space-2);
+        }
+
+        .auth-brand-tagline {
+            font-size: var(--font-base);
+            color: var(--text-secondary);
+        }
+
+        .auth-title {
+            font-size: var(--font-xl);
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--space-2);
+            text-align: center;
+        }
+
+        .auth-subtitle {
+            font-size: var(--font-sm);
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: var(--space-8);
+        }
+
+        .form-group {
+            margin-bottom: var(--space-6);
+        }
+
+        .form-label {
+            display: block;
+            font-size: var(--font-sm);
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--space-2);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: var(--space-4) var(--space-5);
+            border: 2px solid var(--border-primary);
+            border-radius: var(--radius-xl);
+            font-size: var(--font-base);
+            color: var(--text-primary);
+            background: white;
+            transition: all var(--transition-base);
+            outline: none;
+        }
+
+        .form-input:hover {
+            border-color: #f5576c;
+        }
+
+        .form-input:focus {
+            border-color: #f5576c;
+            box-shadow: 0 0 0 4px rgba(245, 87, 108, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .password-strength {
+            margin-top: var(--space-2);
+            height: 4px;
+            background: var(--border-primary);
+            border-radius: 2px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .password-strength.show {
+            display: block;
+        }
+
+        .password-strength-bar {
+            height: 100%;
+            transition: all var(--transition-base);
+            border-radius: 2px;
+        }
+
+        .password-strength-bar.weak {
+            width: 33%;
+            background: #ef4444;
+        }
+
+        .password-strength-bar.medium {
+            width: 66%;
+            background: #f59e0b;
+        }
+
+        .password-strength-bar.strong {
+            width: 100%;
+            background: #10b981;
+        }
+
+        .password-hint {
+            display: none;
+            margin-top: var(--space-2);
+            font-size: var(--font-xs);
+            color: var(--text-tertiary);
+        }
+
+        .password-hint.show {
+            display: block;
+        }
+
+        .form-error {
+            display: none;
+            margin-top: var(--space-2);
+            padding: var(--space-3) var(--space-4);
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 3px solid #ef4444;
+            border-radius: var(--radius-lg);
+            font-size: var(--font-sm);
+            color: #dc2626;
+        }
+
+        .form-error.show {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-checkbox-group {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-2);
+            margin-bottom: var(--space-6);
+        }
+
+        .form-checkbox {
+            width: 18px;
+            height: 18px;
+            margin-top: 2px;
+            cursor: pointer;
+            accent-color: #f5576c;
+        }
+
+        .form-checkbox-label {
+            font-size: var(--font-sm);
+            color: var(--text-secondary);
+            cursor: pointer;
+            line-height: 1.5;
+        }
+
+        .form-checkbox-label a {
+            color: #f5576c;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .form-checkbox-label a:hover {
+            text-decoration: underline;
+        }
+
+        .btn-auth {
+            width: 100%;
+            padding: var(--space-4) var(--space-6);
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border: none;
+            border-radius: var(--radius-xl);
+            font-size: var(--font-base);
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            box-shadow: 0 8px 20px rgba(245, 87, 108, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-auth::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn-auth:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-auth:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(245, 87, 108, 0.4);
+        }
+
+        .btn-auth:active {
+            transform: translateY(0);
+        }
+
+        .btn-auth:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-auth-text {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .auth-footer {
+            text-align: center;
+            margin-top: var(--space-6);
+            font-size: var(--font-sm);
+            color: var(--text-secondary);
+        }
+
+        .auth-footer-link {
+            color: #f5576c;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color var(--transition-base);
+        }
+
+        .auth-footer-link:hover {
+            color: #e0455a;
+        }
+
+        .features-list {
+            margin-top: var(--space-6);
+            padding-top: var(--space-6);
+            border-top: 1px solid var(--border-primary);
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            margin-bottom: var(--space-3);
+        }
+
+        .feature-icon {
+            width: 20px;
+            height: 20px;
+            color: #10b981;
+        }
+
+        .feature-text {
+            font-size: var(--font-sm);
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 640px) {
+            .auth-card {
+                padding: var(--space-8);
+            }
+
+            .auth-brand-name {
+                font-size: var(--font-xl);
+            }
+
+            .auth-title {
+                font-size: var(--font-lg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-brand">
+                <div class="auth-brand-logo">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M13 10V3L4 14h7v7l9-11h-7z" fill="currentColor"/>
+                    </svg>
+                </div>
+                <div class="auth-brand-name">Automatter</div>
+                <div class="auth-brand-tagline">Automate your social media</div>
+            </div>
+
+            <h1 class="auth-title">Create Your Account</h1>
+            <p class="auth-subtitle">Start automating your social media in minutes</p>
+
+            <form id="signupForm">
+                <div class="form-group">
+                    <label for="email" class="form-label">Email Address</label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        class="form-input"
+                        placeholder="you@example.com"
+                        required
+                        autocomplete="email"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="form-label">Password</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        class="form-input"
+                        placeholder="Create a strong password"
+                        required
+                        autocomplete="new-password"
+                        minlength="8"
+                    >
+                    <div class="password-strength" id="passwordStrength">
+                        <div class="password-strength-bar" id="passwordStrengthBar"></div>
+                    </div>
+                    <div class="password-hint" id="passwordHint">
+                        Password must be at least 8 characters
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword" class="form-label">Confirm Password</label>
+                    <input
+                        type="password"
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        class="form-input"
+                        placeholder="Confirm your password"
+                        required
+                        autocomplete="new-password"
+                    >
+                </div>
+
+                <div class="form-error" id="errorMessage"></div>
+
+                <div class="form-checkbox-group">
+                    <input type="checkbox" id="terms" class="form-checkbox" required>
+                    <label for="terms" class="form-checkbox-label">
+                        I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn-auth" id="submitBtn">
+                    <span class="btn-auth-text">
+                        <span id="btnText">Create Account</span>
+                    </span>
+                </button>
+            </form>
+
+            <div class="features-list">
+                <div class="feature-item">
+                    <svg class="feature-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span class="feature-text">AI-powered content generation</span>
+                </div>
+                <div class="feature-item">
+                    <svg class="feature-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span class="feature-text">Multi-platform posting</span>
+                </div>
+                <div class="feature-item">
+                    <svg class="feature-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span class="feature-text">Automated scheduling</span>
+                </div>
+            </div>
+
+            <div class="auth-footer">
+                Already have an account? <a href="/login" class="auth-footer-link">Sign in</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const signupForm = document.getElementById('signupForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const errorMessage = document.getElementById('errorMessage');
+        const passwordInput = document.getElementById('password');
+        const confirmPasswordInput = document.getElementById('confirmPassword');
+        const passwordStrength = document.getElementById('passwordStrength');
+        const passwordStrengthBar = document.getElementById('passwordStrengthBar');
+        const passwordHint = document.getElementById('passwordHint');
+
+        // Password strength checker
+        passwordInput.addEventListener('input', () => {
+            const password = passwordInput.value;
+
+            if (password.length === 0) {
+                passwordStrength.classList.remove('show');
+                passwordHint.classList.remove('show');
+                return;
+            }
+
+            passwordStrength.classList.add('show');
+            passwordHint.classList.add('show');
+
+            let strength = 0;
+            if (password.length >= 8) strength++;
+            if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
+            if (password.match(/[0-9]/)) strength++;
+            if (password.match(/[^a-zA-Z0-9]/)) strength++;
+
+            passwordStrengthBar.className = 'password-strength-bar';
+
+            if (strength <= 2) {
+                passwordStrengthBar.classList.add('weak');
+                passwordHint.textContent = 'Weak password. Add numbers and special characters.';
+                passwordHint.style.color = '#ef4444';
+            } else if (strength === 3) {
+                passwordStrengthBar.classList.add('medium');
+                passwordHint.textContent = 'Medium strength. Consider adding more characters.';
+                passwordHint.style.color = '#f59e0b';
+            } else {
+                passwordStrengthBar.classList.add('strong');
+                passwordHint.textContent = 'Strong password!';
+                passwordHint.style.color = '#10b981';
+            }
+        });
+
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const password = passwordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+
+            // Validate passwords match
+            if (password !== confirmPassword) {
+                errorMessage.textContent = 'Passwords do not match';
+                errorMessage.classList.add('show');
+                return;
+            }
+
+            // Validate password strength
+            if (password.length < 8) {
+                errorMessage.textContent = 'Password must be at least 8 characters';
+                errorMessage.classList.add('show');
+                return;
+            }
+
+            // Disable button and show loading state
+            submitBtn.disabled = true;
+            btnText.innerHTML = '<span class="spinner"></span><span>Creating account...</span>';
+            errorMessage.classList.remove('show');
+
+            try {
+                const response = await fetch('/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Store token in localStorage
+                    localStorage.setItem('authToken', data.access_token);
+
+                    // Show success and redirect
+                    btnText.innerHTML = '<span>✓ Account created!</span>';
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 500);
+                } else {
+                    throw new Error(data.detail || 'Registration failed');
+                }
+            } catch (error) {
+                errorMessage.textContent = error.message || 'An error occurred. Please try again.';
+                errorMessage.classList.add('show');
+                submitBtn.disabled = false;
+                btnText.textContent = 'Create Account';
+            }
+        });
+    </script>
+</body>
+</html>

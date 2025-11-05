@@ -1,340 +1,170 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{% block title %}Visionary Ads Studio{% endblock %}</title>
+    <title>{% block title %}Automatter - Professional Social Media Automation{% endblock %}</title>
+
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+    <!-- Ultra Premium Design System -->
+    <link rel="stylesheet" href="/static/premium-design.css" />
 
     <style>
-      :root {
-          --brand-500: #4f46e5;
-          --brand-600: #4338ca;
-          --brand-700: #3730a3;
-          --accent-500: #ec4899;
-          --primary-blue: #3b82f6;
-          --surface: #ffffff;
-          --surface-muted: #f3f6fb;
-          --border: #e5e7eb;
-          --text-primary: #111827;
-          --text-secondary: #475569;
-          --success-500: #16a34a;
-          --error-500: #dc2626;
-          --warning-500: #d97706;
-          --shadow-sm: 0 8px 24px rgba(15, 23, 42, 0.08);
-          --shadow-md: 0 12px 34px rgba(15, 23, 42, 0.12);
-          --transition: 200ms ease;
-          --sidebar-width: 260px;
-      }
-
-      /* Reset */
-      *, *::before, *::after { box-sizing: border-box; }
-      html, body { min-height: 100%; margin: 0; font-family: 'Inter', sans-serif; line-height: 1.55; }
-      body { background: #f3f6fb; color: var(--text-primary); }
-
-      /* Links */
-      a { text-decoration: none; color: var(--primary-blue); transition: color var(--transition); }
-      a:hover, a:focus-visible { color: var(--brand-700); outline: none; }
-
-      /* Layout */
-      .page-shell { display: flex; min-height: 100vh; }
-
-      /* Sidebar */
-      aside.sidebar {
-          width: var(--sidebar-width);
-          background: var(--surface);
-          border-right: 1px solid rgba(15,23,42,0.08);
-          display: flex; flex-direction: column; padding: 2rem 1.5rem;
-          box-shadow: var(--shadow-sm);
-          transition: left 0.3s ease;
-      }
-      .sidebar .brand { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 2rem; }
-      .sidebar .brand-badge {
-          width: 50px; height: 50px; border-radius: 14px;
-          background: linear-gradient(135deg,#935BF5 );
-          display: grid; place-items: center; font-weight: 700; color: #ffffff; font-size: 1.1rem;
-      }
-      .sidebar .brand-text span:first-child { font-size: 1.1rem; font-weight: 600; color: #935BF5; }
-  .sidebar .brand-text span:last-child { font-size: 0.78rem; font-weight: 500; color: #935BF5; text-transform: uppercase; letter-spacing: 0.1em; }
-
-      .sidebar nav { display: flex; flex-direction: column; gap: 0.5rem; }
-      .sidebar nav a {
-          display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 1rem;
-          font-weight: 500; border-radius: 12px; transition: background #935BF5, color #935BF5;
-          position: relative;
-      }
-      .sidebar nav a.active::before {
-          content: "";
-          position: absolute; left: 0; top: 0; bottom: 0;
-          width: 4px; background: linear-gradient(135deg,#9C5AF5,#3B82F6); border-radius: 0 4px 4px 0;
-      }
-      .sidebar nav a:hover, .sidebar nav a:focus-visible { background: rgba(59,130,246,0.12); color: #935BF5; }
-
-      /* Main content */
-      main.main-content { flex: 1; display: flex; flex-direction: column; overflow-x: hidden; }
-
-      /* Topbar */
-      header.topbar {
-         background: linear-gradient(135deg,#9C5AF5,#3B82F6);
-          color: #ffffff;
-          border-bottom: 1px solid rgba(15,23,42,0.08);
-          display: flex; align-items: center; justify-content: space-between;
-          padding: 1rem 2rem; box-shadow: var(--shadow-sm);
-          position: sticky; top: 0; z-index: 1000;
-      }
-      header.topbar .topbar-left { font-weight: 600; font-size: 1.2rem; }
-      header.topbar .topbar-right { display: flex; align-items: center; gap: 1rem; position: relative; }
-      header.topbar .account-logo {
-          width: 40px; height: 40px; border-radius: 50%; background:#313034ff;border:1px solid #313034ff;
-          display: grid; place-items: center;
-          color: #919398ff; font-weight: 700; cursor: pointer;
-      }
-
-      /* Account dropdown */
-      .account-dropdown {
-          position: absolute;
-          top: 50px; right: 0;
-          background: #fff;
-          border: 1px solid var(--border);
-          border-radius: 10px;
-          box-shadow: var(--shadow-md);
-          width: 180px;
-          display: none;
-          flex-direction: column;
-          z-index: 2000;
-      }
-      .account-dropdown a {
-          padding: 0.75rem 1rem;
-          font-size: 0.95rem;
-          color: var(--text-primary);
-      }
-      .account-dropdown a:hover {
-          background: var(--surface-muted);
-      }
-
-              table th,
-              table td {
-                  padding: 0.75rem 1rem;
-                  text-align: left;
-                  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-              }
-
-              table tbody tr:hover {
-                  background: rgba(79, 70, 229, 0.06);
-              }
-
-              code {
-                  font-family: 'JetBrains Mono', 'Fira Code', monospace;
-                  background: rgba(15, 23, 42, 0.06);
-                  border-radius: 6px;
-                  padding: 0.2rem 0.45rem;
-                  font-size: 0.85rem;
-              }
-
-              .modal {
-                  position: fixed;
-                  inset: 0;
-                  display: none;
-                  align-items: center;
-                  justify-content: center;
-                  padding: 2rem;
-                  background: rgba(15, 23, 42, 0.45);
-                  backdrop-filter: blur(10px);
-                  z-index: 1000;
-              }
-
-              .modal.is-visible {
-                  display: flex;
-              }
-
-              .modal__dialog {
-                  background: var(--surface);
-                  border-radius: 24px;
-                  padding: 2rem;
-                  width: min(540px, 100%);
-                  box-shadow: 0 28px 55px rgba(15, 23, 42, 0.22);
-                  position: relative;
-              }
-
-              .modal__close {
-                  position: absolute;
-                  top: 1.2rem;
-                  right: 1.2rem;
-                  background: rgba(15, 23, 42, 0.06);
-                  border: none;
-                  border-radius: 50%;
-                  width: 34px;
-                  height: 34px;
-                  font-size: 1.1rem;
-                  cursor: pointer;
-              }
-
-              footer {
-                  padding: 2.5rem 0 3rem;
-                  color: var(--text-secondary);
-                  font-size: 0.9rem;
-                  text-align: center;
-              }
-
-              @media (max-width: 768px) {
-                  .top-bar {
-                      flex-direction: column;
-                      align-items: flex-start;
-                      padding: 1rem 0;
-                      width: min(100% - 2rem, 100%);
-                  }
-
-                  nav {
-                      width: 100%;
-                      gap: 0.5rem;
-                  }
-
-                  nav a {
-                      padding: 0.4rem 0.75rem;
-                  }
-
-                  main {
-                      width: min(100% - 2rem, 100%);
-                      padding: 2rem 0 3rem;
-                  }
-
-                  header {
-                      border-radius: 0 0 24px 24px;
-                  }
-
-                  .card {
-                      padding: 1.5rem;
-                      border-radius: 18px;
-                  }
-              }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
     </style>
-  </head>
-  <body>
-    <div class="page-shell">
-      <aside class="sidebar">
-        <div class="brand">
-          <div class="brand-badge">AI</div>
-          <div class="brand-text">
-            <span>Automatter</span>
-          </div>
-        </div>
-        <nav>
-          {% block nav %}
-          <a href="/" class="active" style="color: #935bf5">Dashboard</a>
-          <a href="/simple" style="color: #935bf5">Generate Ad</a>
-          <a href="/download-sample-excel" style="color: #935bf5"
-            >Sample Template</a
-          >
-          {% endblock %}
-        </nav>
-      </aside>
-
-      <main class="main-content">
-        <header class="topbar">
-          <div class="topbar-left" style="color: white">
-            Social Media Scheduler
-          </div>
-          <div class="topbar-right">
-            <div
-              class="account-logo"
-              id="accountIcon"
-              style="
-                background: linear-gradient(135deg, #9c5af5, #3b82f6);
-                color: #fff;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-              "
-            >
-              <svg
-                width="28"
-                height="28"
-                viewBox="0 0 28 28"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <circle
-                  cx="14"
-                  cy="14"
-                  r="13"
-                  fill="url(#accgrad)"
-                  stroke="#fff"
-                  stroke-width="2"
-                />
-                <defs>
-                  <linearGradient
-                    id="accgrad"
-                    x1="0"
-                    y1="0"
-                    x2="28"
-                    y2="28"
-                    gradientUnits="userSpaceOnUse"
-                  >
-                    <stop stop-color="#9C5AF5" />
-                    <stop offset="1" stop-color="#3B82F6" />
-                  </linearGradient>
-                </defs>
-                <path
-                  d="M14 8.5a3.25 3.25 0 1 1 0 6.5a3.25 3.25 0 0 1 0-6.5zm0 8.25c-2.7 0-5.25 1.13-5.25 2.25V20h10.5v-1c0-1.12-2.55-2.25-5.25-2.25z"
-                  fill="#fff"
-                />
-              </svg>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Premium Sidebar -->
+        <aside class="app-sidebar" id="sidebar">
+            <!-- Brand Section -->
+            <div class="sidebar-brand">
+                <div class="sidebar-brand-logo">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M13 10V3L4 14h7v7l9-11h-7z" fill="white"/>
+                    </svg>
+                </div>
+                <div class="sidebar-brand-text">Automatter</div>
             </div>
-                <div class="account-dropdown" id="accountDropdown">
 
-                  <a href="/profile">👤 Profile</a>
-                  <a href="#" id="logoutBtn">🚪 Logout</a>
-        </header>
+            <!-- Navigation -->
+            <nav class="sidebar-nav">
+                <div class="sidebar-nav-section">
+                    <div class="sidebar-nav-label">Main</div>
+                    {% block nav %}
+                    <a href="/" class="sidebar-nav-item active">
+                        <svg class="sidebar-nav-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" fill="currentColor"/>
+                        </svg>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="/simple" class="sidebar-nav-item">
+                        <svg class="sidebar-nav-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span>Generate Ad</span>
+                    </a>
+                    {% endblock %}
+                </div>
 
-        <div class="content-area">{% block content %}{% endblock %}</div>
+                <div class="sidebar-nav-section">
+                    <div class="sidebar-nav-label">Resources</div>
+                    <a href="/download-sample-excel" class="sidebar-nav-item">
+                        <svg class="sidebar-nav-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11zM8 15.01l1.41 1.41L11 14.84V19h2v-4.16l1.59 1.58L16 15.01 12.01 11z" fill="currentColor"/>
+                        </svg>
+                        <span>Sample Template</span>
+                    </a>
+                    <a href="#" class="sidebar-nav-item">
+                        <svg class="sidebar-nav-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" fill="currentColor"/>
+                        </svg>
+                        <span>Help Center</span>
+                    </a>
+                </div>
+            </nav>
 
+            <!-- Sidebar Footer -->
+            <div style="padding: var(--space-4); border-top: 1px solid var(--border-light);">
+                <div style="font-size: var(--font-xs); color: var(--text-tertiary); text-align: center;">
+                    &copy; 2025 Automatter
+                </div>
+            </div>
+        </aside>
 
+        <!-- Main Content Area -->
+        <div class="app-main">
+            <!-- Premium Header -->
+            <header class="app-header">
+                <div class="header-title">
+                    {% block header_title %}Dashboard{% endblock %}
+                </div>
 
-        <footer>
-          Built for automated Instagram advertising workflows. &copy; {{
-          current_year | default('2025') }} Visionary Ads Studio.
-        </footer>
-      </main>
+                <div class="header-actions">
+                    <!-- User Dropdown -->
+                    <div class="dropdown">
+                        <div class="header-user" id="accountIcon">
+                            <div class="header-user-avatar">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" fill="currentColor"/>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <div class="dropdown-menu" id="accountDropdown">
+                            <a href="/profile" class="dropdown-item">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="currentColor"/>
+                                </svg>
+                                <span>Profile</span>
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" id="logoutBtn" class="dropdown-item">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z" fill="currentColor"/>
+                                </svg>
+                                <span>Logout</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content -->
+            <div class="app-content">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
     </div>
 
+    <!-- Scripts -->
     <script>
-    const profileInfo = document.getElementById("profileInfo");
-    if (profileInfo) profileInfo.style.display = "none";
-      document.addEventListener("DOMContentLoaded", () => {
-        const accountIcon = document.getElementById("accountIcon");
+        document.addEventListener("DOMContentLoaded", () => {
+            // Account dropdown
+            const accountIcon = document.getElementById("accountIcon");
+            const accountDropdown = document.getElementById("accountDropdown");
 
-            // Logout functionality
-          const logoutBtn = document.getElementById("logoutBtn");
-          if (logoutBtn) {
-            logoutBtn.addEventListener("click", (e) => {
-              e.preventDefault();
-              // Remove tokens from localStorage and cookies
-              localStorage.removeItem("authToken");
-              document.cookie = "authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-              document.cookie = "sb-access-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-              // Redirect to login or home page
-              window.location.href = "/";
+            if (accountIcon && accountDropdown) {
+                accountIcon.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    accountIcon.parentElement.classList.toggle("active");
+                });
+
+                document.addEventListener("click", (e) => {
+                    if (!accountIcon.contains(e.target) && !accountDropdown.contains(e.target)) {
+                        accountIcon.parentElement.classList.remove("active");
+                    }
+                });
+            }
+
+            // Logout
+            const logoutBtn = document.getElementById("logoutBtn");
+            if (logoutBtn) {
+                logoutBtn.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    localStorage.removeItem("authToken");
+                    document.cookie = "authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                    document.cookie = "sb-access-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                    window.location.href = "/";
+                });
+            }
+
+            // Active nav highlighting
+            const currentPath = window.location.pathname;
+            const navItems = document.querySelectorAll('.sidebar-nav-item');
+            navItems.forEach(item => {
+                item.classList.remove('active');
+                if (item.getAttribute('href') === currentPath) {
+                    item.classList.add('active');
+                }
             });
-          }
-        const dropdown = document.getElementById("accountDropdown");
-
-        accountIcon.addEventListener("click", () => {
-          dropdown.style.display =
-            dropdown.style.display === "flex" ? "none" : "flex";
         });
-
-        // Close when clicking outside
-        document.addEventListener("click", (e) => {
-          if (!accountIcon.contains(e.target) && !dropdown.contains(e.target)) {
-            dropdown.style.display = "none";
-          }
-        });
-      });
     </script>
-  </body>
+</body>
 </html>

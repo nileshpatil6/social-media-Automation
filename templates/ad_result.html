@@ -1,895 +1,511 @@
-{% extends "base.html" %} {% block title %}Advertisement Generated{% endblock %}
+{% extends "base.html" %}
+
+{% block title %}Advertisement Generated - Automatter{% endblock %}
+
+{% block header_title %}Advertisement Result{% endblock %}
+
 {% block content %}
-<h1
-  style="
-    font-size: 1.8rem;
-    font-weight: 900;
-    color: #333;
-    margin-bottom: 1rem;
-    margin-left: 1rem;
-  "
->
-  Advertisement Generation Result
-</h1>
-{% if result.success %}
-<div
-  style="
-    background: #e6f7ff;
-    border-left: 4px solid #60a5fa;
-    padding: 15px 20px;
-    border-radius: 10px;
-    margin-bottom: 25px;
-    margin-left: 1rem;
-  "
->
-  <h3
-    style="
-      font-size: 1.2rem;
-      font-weight: 600;
-      color: #16a34a;
-      margin: 0 0 5px 0;
-      margin-left: 1rem;
-    "
-  >
-    ✅ Advertisement Generated Successfully!
-  </h3>
-  <p style="font-size: 0.95rem; color: #444; margin: 0; margin-left: 1rem">
-    Your AI-powered advertisement has been created and analyzed.
-  </p>
-</div>
+<style>
+    .result-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
 
-<!-- Generated Image Display -->
-{% if result.final_image_filename %}
-<div style="text-align: center; margin: 30px 0; margin-left: 1rem">
-  {% set filename = result.final_image_filename %}
-  <img
-    src="/serve-image/{{ filename }}"
-    alt="Generated Advertisement"
-    style="
-      max-width: 100%;
-      height: auto;
-      max-height: 480px;
-      border-radius: 14px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-    "
-    onerror="this.src='/images/{{ filename }}'; this.onerror=function(){this.src='/generated_images/{{ filename }}'; this.onerror=null;}"
-  />
-</div>
+    .result-header {
+        margin-bottom: var(--space-8);
+    }
 
-{% endif %}
+    .result-image-container {
+        background: var(--bg-primary);
+        padding: var(--space-8);
+        border-radius: var(--radius-2xl);
+        box-shadow: var(--shadow-premium);
+        text-align: center;
+        margin-bottom: var(--space-8);
+        border: 1px solid var(--border-primary);
+    }
 
-<!-- Quality Analysis -->
-{% if result.final_analysis %}
+    .result-image {
+        max-width: 100%;
+        height: auto;
+        max-height: 600px;
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-lg);
+    }
 
-<div class="info" style="margin: 25px 0 25px 1rem">
-  <h3
-    style="
-      font-size: 1.4rem;
-      font-weight: 600;
-      color: #222;
-      margin-bottom: 1rem;
-      text-align: center;
-    "
-  >
-    Quality Analysis
-  </h3>
-  <div
-    style="
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 18px;
-    "
-  >
-    {% for score_name, score_value in result.final_analysis.scores.items() %}
-    <div
-      style="
-        background: #fff;
-        border: 1.5px solid #e5e7eb;
-        border-radius: 14px;
-        padding: 1.4rem 1.3rem;
-        box-shadow: 0 4px 16px rgba(60, 60, 120, 0.07);
+    .scores-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--space-4);
+        margin-bottom: var(--space-6);
+    }
+
+    .score-card {
+        background: var(--bg-primary);
+        padding: var(--space-5);
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--border-primary);
+        text-align: center;
+        box-shadow: var(--shadow-sm);
+        transition: all var(--transition-base);
+    }
+
+    .score-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
+
+    .score-title {
+        font-size: var(--font-sm);
+        font-weight: var(--font-semibold);
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: var(--space-3);
+    }
+
+    .score-value {
+        font-size: var(--font-3xl);
+        font-weight: var(--font-bold);
+        margin-bottom: var(--space-3);
+    }
+
+    .score-value.excellent { color: var(--success-600); }
+    .score-value.good { color: var(--warning-600); }
+    .score-value.poor { color: var(--error-600); }
+
+    .score-bar {
+        width: 100%;
+        height: 8px;
+        background-color: var(--gray-200);
+        border-radius: var(--radius-full);
+        overflow: hidden;
+    }
+
+    .score-bar-fill {
+        height: 100%;
+        border-radius: var(--radius-full);
+        transition: width 0.8s ease-in-out;
+    }
+
+    .score-bar-fill.excellent { background: linear-gradient(90deg, var(--success-500), var(--success-600)); }
+    .score-bar-fill.good { background: linear-gradient(90deg, var(--warning-500), var(--warning-600)); }
+    .score-bar-fill.poor { background: linear-gradient(90deg, var(--error-500), var(--error-600)); }
+
+    .overall-score-card {
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%);
+        border: 1px solid rgba(124, 58, 237, 0.1);
+        padding: var(--space-6);
+        border-radius: var(--radius-xl);
+        margin-bottom: var(--space-6);
+    }
+
+    .platform-checkbox-group {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: var(--space-4);
+    }
+
+    .platform-checkbox {
         display: flex;
-        flex-direction: column;
         align-items: center;
-        min-width: 180px;
-        margin-bottom: 0.5rem;
-      "
-    >
-      <h4
-        style="
-          margin: 0 0 10px 0;
-          font-weight: 700;
-          font-size: 1.08rem;
-          text-transform: capitalize;
-          color: #333;
-          letter-spacing: 0.2px;
-        "
-      >
-        {{ score_name.replace('_', ' ') }}
-      </h4>
-      <div
-          {% set score_color = '#ef4444' %}
-          {% if score_value >= 8 %}
-            {% set score_color = '#16a34a' %}
-          {% elif score_value >= 6 %}
-            {% set score_color = '#f59e0b' %}
-          {% endif %}
-          style="font-size: 1.25rem; font-weight: 800; margin-bottom: 10px; color: {{ score_color }};"
-      >
-        {{ "%.1f"|format(score_value) }}/10
-      </div>
-      <div
-        class="score-bar"
-        style="
-          width: 100%;
-          height: 12px;
-          background: #f3f4f6;
-          border-radius: 7px;
-          overflow: hidden;
-          margin-bottom: 0.5rem;
-          margin-left: 0;
-        "
-      >
-        <div
-            class="score-bar__fill"
-            data-percent="{{ (score_value * 10)|round(1) }}"
-            {% set bg_value = 'linear-gradient(135deg, #9c5af5, #60a5fa)' %}
-            {% if score_value >= 8 %}
-              {% set bg_value = 'linear-gradient(135deg, #9c5af5, #60a5fa)' %}
-            {% elif score_value >= 6 %}
-              {% set bg_value = 'linear-gradient(135deg, #9c5af5, #60a5fa)' %}
-            {% endif %}
-            style="height: 100%; width: {{ (score_value * 10)|round(1) }}%; background: {{ bg_value }}; border-radius: 7px; transition: width 0.5s cubic-bezier(0.23,1,0.32,1);"
-        ></div>
-      </div>
-    </div>
-    {% endfor %}
-  </div>
+        gap: var(--space-3);
+        padding: var(--space-4);
+        border-radius: var(--radius-lg);
+        border: 2px solid var(--border-primary);
+        cursor: pointer;
+        transition: all var(--transition-base);
+        background: var(--bg-primary);
+    }
 
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      var fills = document.querySelectorAll("[data-percent]");
-      Array.prototype.forEach.call(fills, function (fill) {
-        var percent = parseFloat(fill.dataset.percent);
-        if (isNaN(percent)) {
-          return;
-        }
-        var clamped = Math.max(0, Math.min(percent, 100));
-        fill.style.width = clamped + "%";
-      });
-    });
-  </script>
+    .platform-checkbox:hover {
+        border-color: var(--primary-600);
+        background: rgba(124, 58, 237, 0.03);
+    }
 
-        <div style="margin: 20px 0;">
-            <h4>Overall Score: {{ "%.1f"|format(result.final_analysis.overall_score) }}/10</h4>
-            <div class="overall-score">
-                <div class="overall-score__fill" data-percent="{{ (result.final_analysis.overall_score * 10)|round(1) }}"></div>
-            </div>
+    .platform-checkbox input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+    }
+
+    .platform-checkbox.checked {
+        border-color: var(--primary-600);
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+    }
+
+    .workflow-summary {
+        background: var(--bg-primary);
+        padding: var(--space-6);
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--border-primary);
+        margin-bottom: var(--space-6);
+    }
+
+    .step-card {
+        padding: var(--space-3);
+        border-radius: var(--radius-md);
+        margin-bottom: var(--space-2);
+        border: 1px solid var(--border-primary);
+        background: var(--bg-secondary);
+    }
+
+    .step-card.completed {
+        border-color: var(--success-500);
+        background: rgba(16, 185, 129, 0.05);
+    }
+
+    .step-card.failed {
+        border-color: var(--error-500);
+        background: rgba(239, 68, 68, 0.05);
+    }
+</style>
+
+<div class="result-container">
+    {% if result.success %}
+    <!-- Success Alert -->
+    <div class="alert alert-success">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="currentColor"/>
+        </svg>
+        <div>
+            <strong>Advertisement Generated Successfully!</strong>
+            <p>Your AI-powered advertisement has been created and analyzed.</p>
         </div>
-        
-    <p style="margin-top: 1rem; padding: 10px; background: #f9fafb; border-left: 4px solid #2563eb; border-radius: 6px; font-size: 0.95rem;">
-  <strong style="color: #1e3a8a;">Decision:</strong> 
-  <span style="color: #111827;">{{ result.final_analysis.decision }}</span>
-</p>
+    </div>
 
-        {% if result.final_analysis.recommendations %}
-        <p style="margin-top: 1rem; padding: 10px; background: #fefce8; border-left: 4px solid #f59e0b; border-radius: 6px; font-size: 0.95rem;">
-  <strong style="color: #b45309;">Recommendations:</strong> 
-  <span style="color: #92400e;">{{ result.final_analysis.recommendations|join(', ') }}</span>
-</p>
-
-        {% endif %}
+    <!-- Generated Image -->
+    {% if result.final_image_filename %}
+    <div class="result-image-container">
+        <h2 style="margin-bottom: var(--space-6); color: var(--text-primary);">Generated Advertisement</h2>
+        {% set filename = result.final_image_filename %}
+        <img
+            src="/serve-image/{{ filename }}"
+            alt="Generated Advertisement"
+            class="result-image"
+            onerror="this.src='/images/{{ filename }}'; this.onerror=function(){this.src='/generated_images/{{ filename }}'; this.onerror=null;}"
+        />
     </div>
     {% endif %}
-    
-    <!-- Generation Workflow Summary -->
-    <div class="info" style="margin-left:0.8rem">
-        <div style="margin-top: 25px; padding: 15px; background: #f0f9ff; border-left: 4px solid #3b82f6; border-radius: 8px;">
-  <h3 style="margin: 0 0 10px 0; font-size: 1.4rem; font-weight: 700; color: #1e3a8a;">
-    🔄 Generation Workflow
-  </h3>
-  <p style="margin: 5px 0; font-size: 0.95rem; color: #334155;">
-    <strong>Total Attempts:</strong> {{ result.total_attempts }}
-  </p>
-  <p style="margin: 5px 0; font-size: 0.95rem; color: #334155;">
-    <strong>Workflow Steps:</strong> {{ result.steps|length }}
-  </p>
-</div>
 
-        
-        <details style="margin: 15px ; margin-left:0.8rem">
-            <summary style="cursor: pointer; font-weight: bold;">🔍 View Detailed Steps</summary>
-            <div class="step-list">
+    <!-- Quality Analysis -->
+    {% if result.final_analysis %}
+    <div class="card">
+        <h2 style="margin-bottom: var(--space-6); font-size: var(--font-3xl); color: var(--text-primary);">Quality Analysis</h2>
+
+        <!-- Individual Scores -->
+        <div class="scores-grid">
+            {% for score_name, score_value in result.final_analysis.scores.items() %}
+            <div class="score-card">
+                <div class="score-title">{{ score_name.replace('_', ' ') }}</div>
+                <div class="score-value {% if score_value >= 8 %}excellent{% elif score_value >= 6 %}good{% else %}poor{% endif %}">
+                    {{ "%.1f"|format(score_value) }}/10
+                </div>
+                <div class="score-bar">
+                    <div class="score-bar-fill {% if score_value >= 8 %}excellent{% elif score_value >= 6 %}good{% else %}poor{% endif %}"
+                         data-width="{{ (score_value * 10)|round(1) }}" style="width: 0%;"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Overall Score -->
+        <div class="overall-score-card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 style="font-size: var(--font-xl); margin-bottom: var(--space-2);">Overall Score</h3>
+                    <p style="font-size: var(--font-4xl); font-weight: var(--font-bold); background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                        {{ "%.1f"|format(result.final_analysis.overall_score) }}/10
+                    </p>
+                </div>
+                <div style="width: 200px; height: 200px;">
+                    <svg viewBox="0 0 200 200">
+                        <circle cx="100" cy="100" r="90" fill="none" stroke="var(--gray-200)" stroke-width="20"/>
+                        <circle cx="100" cy="100" r="90" fill="none" stroke="url(#gradient)" stroke-width="20"
+                                stroke-dasharray="{{ (result.final_analysis.overall_score * 10 * 5.65)|round(1) }} 565"
+                                stroke-linecap="round" transform="rotate(-90 100 100)"/>
+                        <defs>
+                            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#7C3AED"/>
+                                <stop offset="100%" style="stop-color:#3B82F6"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Decision & Recommendations -->
+        <div style="margin-top: var(--space-6);">
+            <div class="alert alert-info" style="margin-bottom: var(--space-4);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" fill="currentColor"/>
+                </svg>
+                <div>
+                    <strong>Decision</strong>
+                    <p>{{ result.final_analysis.decision }}</p>
+                </div>
+            </div>
+
+            {% if result.final_analysis.recommendations %}
+            <div class="alert alert-warning">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" fill="currentColor"/>
+                </svg>
+                <div>
+                    <strong>Recommendations</strong>
+                    <ul style="margin: var(--space-2) 0 0 var(--space-5); padding: 0;">
+                        {% for rec in result.final_analysis.recommendations %}
+                        <li>{{ rec }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Generation Workflow -->
+    <div class="workflow-summary">
+        <h3 style="font-size: var(--font-2xl); margin-bottom: var(--space-4);">Generation Workflow</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-4);">
+            <div>
+                <p style="color: var(--text-secondary); font-size: var(--font-sm);">Total Attempts</p>
+                <p style="font-size: var(--font-2xl); font-weight: var(--font-bold); color: var(--primary-600);">{{ result.total_attempts }}</p>
+            </div>
+            <div>
+                <p style="color: var(--text-secondary); font-size: var(--font-sm);">Workflow Steps</p>
+                <p style="font-size: var(--font-2xl); font-weight: var(--font-bold); color: var(--primary-600);">{{ result.steps|length }}</p>
+            </div>
+        </div>
+
+        <details style="cursor: pointer;">
+            <summary style="font-weight: var(--font-semibold); padding: var(--space-3); background: var(--bg-tertiary); border-radius: var(--radius-md); cursor: pointer;">
+                View Detailed Steps
+            </summary>
+            <div style="margin-top: var(--space-4);">
                 {% for step in result.steps %}
-                {% if step.status == 'completed' %}
-                <div class="step-card step-card-completed">
-                    <strong>{{ step.step|title }}:</strong> 
-                    <span class="step-card__status step-card__status-completed">{{ step.status|title }}</span>
+                <div class="step-card {% if step.status == 'completed' %}completed{% elif step.status == 'failed' %}failed{% endif %}">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <strong>{{ step.step|title }}</strong>
+                        <span class="badge {% if step.status == 'completed' %}badge-success{% elif step.status == 'failed' %}badge-error{% else %}badge-neutral{% endif %}">
+                            {{ step.status|title }}
+                        </span>
+                    </div>
                     {% if step.get('error') %}
-                    <br><small class="step-card__error">Error: {{ step.error }}</small>
+                    <p style="margin-top: var(--space-2); font-size: var(--font-sm); color: var(--error-600);">Error: {{ step.error }}</p>
                     {% endif %}
                 </div>
-                {% elif step.status == 'failed' %}
-                <div class="step-card step-card-failed">
-                    <strong>{{ step.step|title }}:</strong> 
-                    <span class="step-card__status step-card__status-failed">{{ step.status|title }}</span>
-                    {% if step.get('error') %}
-                    <br><small class="step-card__error">Error: {{ step.error }}</small>
-                    {% endif %}
-                </div>
-                {% else %}
-                <div class="step-card">
-                    <strong>{{ step.step|title }}:</strong> 
-                    <span class="step-card__status">{{ step.status|title }}</span>
-                    {% if step.get('error') %}
-                    <br><small class="step-card__error">Error: {{ step.error }}</small>
-                    {% endif %}
-                </div>
-                {% endif %}
                 {% endfor %}
             </div>
         </details>
     </div>
-    
-    <!-- Post to Multiple Channels Section -->
+
+    <!-- Post to Multiple Channels -->
     {% if result.final_image_filename %}
-    <div class="card card--accent">
-        <div class="stack">
-          <div style="background:#f9fafb; padding:18px; border-radius:10px; border:1px solid #e5e7eb; margin-bottom:15px;margin-left:0.8rem">
-  <h3 style="font-size:1.25rem; font-weight:700; color:#1f2937; margin:0 0 8px 0;">
-     Post to Multiple Channels
-  </h3>
-  <p style="color:#4b5563; font-size:0.95rem; margin:0;">
-    Publish this creative to all your social media channels at once or select specific platforms.
-  </p>
-</div>
+    <div class="card">
+        <h2 style="margin-bottom: var(--space-4); font-size: var(--font-3xl);">Post to Social Media</h2>
+        <p style="color: var(--text-secondary); margin-bottom: var(--space-6);">
+            Publish this advertisement to all your social media channels at once or select specific platforms.
+        </p>
 
-            
-            <!-- Platform selection checkboxes -->
-            <div class="form-group" style="margin-top: 1.5rem; padding: 20px; background: #ffffff; border-radius: 12px; border: 1px solid #e5e7eb; box-shadow: 0 4px 8px rgba(0,0,0,0.05);margin-left:0.8rem">
-    <label style="display: block; font-weight: 600; font-size: 1.1rem; margin-bottom: 15px; color: #111827;">
-        Select Platforms:
-    </label>
-
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 18px; margin-left:0.8rem">
-        
-        <!-- Instagram -->
-        <label style="display: flex; gap: 10px; align-items: center; padding: 12px; background: #fdf2f8; border-radius: 10px; border: 1px solid #fbcfe8; cursor: pointer; transition: 0.3s;">
-            <input type="checkbox" id="postInstagramCheck" checked style="transform: scale(1.2); cursor: pointer;">
-            <span style="color: #d946ef; font-weight: 600;">Instagram</span>
-        </label>
-
-        <!-- Facebook -->
-       
-
-        <!-- LinkedIn -->
-        <label style="display: flex; gap: 10px; align-items: center; padding: 12px; background: #f0f9ff; border-radius: 10px; border: 1px solid #bae6fd; cursor: pointer; transition: 0.3s;">
-            <input type="checkbox" id="postLinkedInCheck" checked style="transform: scale(1.2); cursor: pointer;">
-            <span style="color: #0369a1; font-weight: 600;">LinkedIn</span>
-        </label>
-
-        <!-- Twitter -->
-        <label style="display: flex; gap: 10px; align-items: center; padding: 12px; background: #f0f9ff; border-radius: 10px; border: 1px solid #bae6fd; cursor: pointer; transition: 0.3s;">
-            <input type="checkbox" id="postTwitterCheck" style="transform: scale(1.2); cursor: pointer;">
-            <span style="color: #0ea5e9; font-weight: 600;">Twitter</span>
-        </label>
-
-    </div>
-</div>
-
-           <div class="form-group" style="margin-top: 1.5rem; margin-left:0.8rem">
-    <label for="postCaption" style="display: block; font-weight: 600; font-size: 1.05rem; color: #111827; margin-bottom: 8px;">
-        Caption/Text for All Platforms
-    </label>
-
-    <textarea id="postCaption" rows="5" placeholder="Add a caption or text for your posts..." 
-        style="width: 100%; padding: 14px; border: 1px solid #d1d5db; border-radius: 10px; background: #f9fafb; font-size: 0.95rem; line-height: 1.5; resize: vertical; transition: all 0.2s ease; font-family:sans-serif">
-    </textarea>
-
-    <small style="display: block; margin-top: 6px; font-size: 0.85rem; color: #6b7280;">
-        You can edit the caption before posting. For LinkedIn/Facebook, this will appear as the main text.
-    </small>
-</div>
-
-            <div class="form-group" style="margin-top: 1.2rem; padding: 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; margin-left:0.8rem">
-  <label style="display: flex; gap: 10px; align-items: center; font-weight: 600; color: #333; cursor: pointer;">
-    <input type="checkbox" id="generatedScheduleToggle" style="width: 16px; height: 16px; cursor: pointer;"> 
-    Schedule these posts
-  </label>
-  <small style="display: block; margin-top: 6px; color: #64748b; font-size: 0.85rem;">
-    Enable to publish at a specific future time rather than immediately.
-  </small>
-</div>
-<div id="generatedScheduleFields" 
-     style="display:none; border:1px solid #e2e8f0; background:#f8fafc; padding:16px; border-radius:8px; margin-top:1rem; margin-bottom:1rem; box-shadow: 0 2px 6px rgba(0,0,0,0.05); margin-left:0.8rem">
-    
-    <div class="form-group" style="margin-bottom: 1rem;">
-        <label for="generatedScheduleTime" style="display:block; font-weight:600; margin-bottom:6px; color:#334155;">
-            Scheduled date &amp; time
-        </label>
-        <input type="datetime-local" id="generatedScheduleTime" 
-               style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.95rem; outline:none; transition:0.2s;">
-    </div>
-    
-    <div class="form-group" style="margin-left:0.8rem">
-        <label for="generatedScheduleTimezone" style="display:block; font-weight:600; margin-bottom:6px; color:#334155;">
-            Timezone
-        </label>
-        <select id="generatedScheduleTimezone" 
-                style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.95rem; outline:none; transition:0.2s;">
-            <option value="UTC">UTC</option>
-            <option value="America/New_York">America/New_York</option>
-            <option value="America/Los_Angeles">America/Los_Angeles</option>
-            <option value="Europe/London">Europe/London</option>
-            <option value="Europe/Paris">Europe/Paris</option>
-            <option value="Asia/Kolkata">Asia/Kolkata</option>
-            <option value="Australia/Sydney">Australia/Sydney</option>
-        </select>
-        <small style="display:block; margin-top:6px; color:#64748b; font-size:0.85rem;">
-            Your local timezone is selected automatically when possible.
-        </small>
-    </div>
-</div>
-
-           <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin-top:1.2rem;">
-    <button type="button" id="postToAllBtn" 
-        style="background: linear-gradient(135deg, #6366f1, #2563eb); 
-               color: #fff; 
-               padding: 10px 20px; 
-               border: none; 
-               border-radius: 8px; 
-               font-weight: 600; 
-               font-size: 0.95rem; 
-               cursor: pointer; 
-               margin-left:0.8rem;
-               transition: all 0.2s ease;">
-        Post to Selected Channels
-    </button>
-    
-    <span id="postStatus" style="font-weight:600; color:#334155; font-size:0.9rem;"></span>
-</div>
-
-<div id="postResult" class="stack" style="display:none; margin-top:1rem; padding:12px; border:1px solid #e2e8f0; border-radius:8px; background:#f8fafc;"></div>
-
-<div id="multiChannelResults" class="stack" style="margin-top:15px; padding:12px; border:1px dashed #cbd5e1; border-radius:8px; background:#f9fafb;"></div>
-
-        </div>
-    </div>
-    
-    <!-- Legacy Instagram-only posting section (for reference) -->
-    <!--
-    <div class="card card--accent">
-        <div class="stack">
-            <div>
-                <h3>Post to Instagram</h3>
-                <p>Publish this creative directly to Instagram using the same reliable workflow as Auto Post.</p>
-            </div>
+        <form id="multiChannelForm">
             <div class="form-group">
-                <label for="postCaption">Instagram Caption</label>
-                <textarea id="postCaption" rows="5" placeholder="Add a caption for your post..."></textarea>
-                <small>You can edit the caption before posting.</small>
+                <label class="form-label">Select Platforms</label>
+                <div class="platform-checkbox-group">
+                    <label class="platform-checkbox" id="instagramCheckbox">
+                        <input type="checkbox" name="platforms" value="instagram" id="postInstagramCheck" checked />
+                        <span style="font-weight: var(--font-semibold); color: #E1306C;">Instagram</span>
+                    </label>
+                    <label class="platform-checkbox" id="linkedinCheckbox">
+                        <input type="checkbox" name="platforms" value="linkedin" id="postLinkedInCheck" checked />
+                        <span style="font-weight: var(--font-semibold); color: #0A66C2;">LinkedIn</span>
+                    </label>
+                    <label class="platform-checkbox" id="twitterCheckbox">
+                        <input type="checkbox" name="platforms" value="twitter" id="postTwitterCheck" />
+                        <span style="font-weight: var(--font-semibold); color: #1DA1F2;">Twitter</span>
+                    </label>
+                    <label class="platform-checkbox" id="facebookCheckbox">
+                        <input type="checkbox" name="platforms" value="facebook" id="postFacebookCheck" />
+                        <span style="font-weight: var(--font-semibold); color: #1877F2;">Facebook</span>
+                    </label>
+                </div>
             </div>
-            <div class="form-group" style="margin-top: 1rem;">
-                <label style="display:flex; gap:8px; align-items:center;">
-                    <input type="checkbox" id="generatedScheduleToggle"> Schedule this post
+
+            <div class="form-group">
+                <label class="form-label" for="postCaption">Caption/Text for All Platforms</label>
+                <textarea class="form-textarea" id="postCaption" rows="5" placeholder="Add a caption or text for your posts..."></textarea>
+                <p class="form-helper">You can edit the caption before posting. For LinkedIn/Facebook, this will appear as the main text.</p>
+            </div>
+
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: var(--space-2); cursor: pointer;">
+                    <input type="checkbox" id="generatedScheduleToggle" />
+                    <span class="form-label" style="margin: 0;">Schedule these posts</span>
                 </label>
-                <small>Enable to publish at a specific future time rather than immediately.</small>
+                <p class="form-helper">Enable to publish at a specific future time rather than immediately.</p>
             </div>
-            <div id="generatedScheduleFields" style="display:none; border:1px solid #e2e8f0; background:#f8fafc; padding:12px; border-radius:8px; margin-bottom:1rem;">
+
+            <div id="scheduleFields" style="display: none;">
                 <div class="form-group">
-                    <label for="generatedScheduleTime">Scheduled date &amp; time</label>
-                    <input type="datetime-local" id="generatedScheduleTime" style="width:100%; padding:8px; border:1px solid #cbd5f5; border-radius:5px;">
-                </div>
-                <div class="form-group">
-                    <label for="generatedScheduleTimezone">Timezone</label>
-                    <select id="generatedScheduleTimezone" style="width:100%; padding:8px; border:1px solid #cbd5f5; border-radius:5px;">
-                        <option value="UTC">UTC</option>
-                        <option value="America/New_York">America/New_York</option>
-                        <option value="America/Los_Angeles">America/Los_Angeles</option>
-                        <option value="Europe/London">Europe/London</option>
-                        <option value="Europe/Paris">Europe/Paris</option>
-                        <option value="Asia/Kolkata">Asia/Kolkata</option>
-                        <option value="Australia/Sydney">Australia/Sydney</option>
-                    </select>
-                    <small>Your local timezone is selected automatically when possible.</small>
+                    <label class="form-label" for="scheduleDate">Schedule Date & Time</label>
+                    <input type="datetime-local" class="form-input" id="scheduleDate" />
                 </div>
             </div>
-            <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-                <button type="button" class="btn btn--primary" id="postToInstagramBtn">Post to Instagram</button>
-                <span id="postStatus" style="font-weight: 600;"></span>
-            </div>
-            <div id="postResult" class="stack" style="display: none;"></div>
-        </div>
+
+            <button type="submit" class="btn btn-primary btn-block btn-lg" id="postButton">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" fill="currentColor"/>
+                </svg>
+                Post to Selected Platforms
+            </button>
+        </form>
     </div>
-    -->
     {% endif %}
 
-{% set workflow_context = {
-    "topic": topic,
-    "workflowId": result.workflow_id,
-    "topicId": topic_id,
-    "imageFilename": result.final_image_filename
-} %}
-<script type="application/json" id="workflowContextData">
-  {{ workflow_context | tojson(indent=2) }}
-</script>
+    <!-- Navigation -->
+    <div style="display: flex; gap: var(--space-4); margin-top: var(--space-8);">
+        <a href="/" class="btn btn-secondary">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" fill="currentColor"/>
+            </svg>
+            Back to Dashboard
+        </a>
+        <a href="/simple" class="btn btn-primary">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M13 3L4 14h7l-1 7 9-11h-7l1-7z" fill="currentColor"/>
+            </svg>
+            Generate Another Ad
+        </a>
+    </div>
+
+    {% else %}
+    <!-- Error State -->
+    <div class="alert alert-error">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
+        </svg>
+        <div>
+            <strong>Generation Failed</strong>
+            <p>{{ result.error if result.error else 'An error occurred during advertisement generation.' }}</p>
+        </div>
+    </div>
+
+    <a href="/simple" class="btn btn-primary">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M13 3L4 14h7l-1 7 9-11h-7l1-7z" fill="currentColor"/>
+        </svg>
+        Try Again
+    </a>
+    {% endif %}
+</div>
+
 <script>
-  (function () {
-    let workflowContext = {};
-    const workflowContextScript = document.getElementById(
-      "workflowContextData"
-    );
-    if (workflowContextScript) {
-      try {
-        workflowContext = JSON.parse(workflowContextScript.textContent);
-      } catch (err) {
-        console.warn("Unable to parse workflow context JSON:", err);
-      }
-    }
-    let generatedLocalTimezone = 'UTC';
-    const generatedScheduleToggle = document.getElementById('generatedScheduleToggle');
-    const generatedScheduleFields = document.getElementById('generatedScheduleFields');
-    const generatedScheduleTime = document.getElementById('generatedScheduleTime');
-    const generatedScheduleTimezone = document.getElementById('generatedScheduleTimezone');
-    const generatedSubmitButton = document.getElementById('postToAllBtn');
-
-    try {
-      const resolvedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      if (resolvedTimezone) {
-        generatedLocalTimezone = resolvedTimezone;
-      }
-    } catch (err) {
-      console.warn("Unable to detect local timezone:", err);
-    }
-
-    if (generatedScheduleTimezone) {
-      const tzOptions = Array.from(generatedScheduleTimezone.options || []);
-      if (
-        generatedLocalTimezone &&
-        !tzOptions.some((opt) => opt.value === generatedLocalTimezone)
-      ) {
-        const option = document.createElement("option");
-        option.value = generatedLocalTimezone;
-        option.textContent = generatedLocalTimezone;
-        generatedScheduleTimezone.insertBefore(
-          option,
-          generatedScheduleTimezone.firstChild
-        );
-      }
-      generatedScheduleTimezone.value =
-        generatedLocalTimezone || generatedScheduleTimezone.value || "UTC";
-    }
-
-    if (generatedScheduleToggle && generatedScheduleFields && generatedSubmitButton) {
-        generatedScheduleToggle.addEventListener('change', () => {
-            const enabled = generatedScheduleToggle.checked;
-            generatedScheduleFields.style.display = enabled ? 'block' : 'none';
-            generatedSubmitButton.textContent = enabled ? 'Schedule Posts' : 'Post to Selected Channels';
-            setStatus('', '#475569');
+    // Animate score bars
+    document.addEventListener('DOMContentLoaded', function() {
+        const scoreBars = document.querySelectorAll('.score-bar-fill[data-width]');
+        scoreBars.forEach(bar => {
+            setTimeout(() => {
+                bar.style.width = bar.getAttribute('data-width') + '%';
+            }, 100);
         });
-    }
 
-    window.generatedAd = workflowContext;
+        // Platform checkbox styling
+        const checkboxes = document.querySelectorAll('.platform-checkbox input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            const updateCheckboxStyle = () => {
+                const label = checkbox.closest('.platform-checkbox');
+                if (checkbox.checked) {
+                    label.classList.add('checked');
+                } else {
+                    label.classList.remove('checked');
+                }
+            };
 
-    function resolveAuthToken() {
-      if (window.authToken) {
-        return window.authToken;
-      }
-
-      let token = null;
-
-      try {
-        token = localStorage.getItem("authToken");
-      } catch (err) {
-        console.warn("Unable to access localStorage:", err);
-      }
-
-      if (!token) {
-        const cookieMatch = document.cookie.match(
-          /(?:^|; )(?:authToken|sb-access-token)=([^;]+)/
-        );
-        if (cookieMatch) {
-          token = decodeURIComponent(cookieMatch[1]);
-        }
-      }
-
-      if (token) {
-        window.authToken = token;
-      }
-
-      return token;
-    }
-
-    function setStatus(message, color) {
-      const statusEl = document.getElementById("postStatus");
-      if (!statusEl) {
-        return;
-      }
-      statusEl.textContent = message || "";
-      statusEl.style.color = color || "inherit";
-    }
-
-    function generateCaption(topic) {
-        const base = (topic || 'Our latest campaign').trim();
-        const hashtag = base.toLowerCase().replace(/[^a-z0-9]+/g, '');
-        const lines = [
-            `${base} - created with Visionary Ads Studio.`,
-            '',
-            'Highlights:',
-            '- AI-tailored visuals',
-            '- Brand-consistent messaging',
-            '- Ready for social media engagement',
-            '',
-            `#${hashtag || 'visionaryads'} #VisionaryAds #AIMarketing`
-        ];
-        return lines.join('\n');
-    }
-
-    async function markWorkflowAsPosted(token) {
-      if (!workflowContext.workflowId) {
-        return;
-      }
-
-      try {
-        await fetch("/mark-as-posted", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ workflow_id: workflowContext.workflowId }),
+            updateCheckboxStyle();
+            checkbox.addEventListener('change', updateCheckboxStyle);
         });
-      } catch (err) {
-        console.warn("Unable to mark workflow as posted:", err);
-      }
-    }
 
-    async function postToMultipleChannels() {
-        const instagramCheck = document.getElementById('postInstagramCheck');
-        const facebookCheck = document.getElementById('postFacebookCheck');
-        const linkedinCheck = document.getElementById('postLinkedInCheck');
-        const twitterCheck = document.getElementById('postTwitterCheck');
-        const captionField = document.getElementById('postCaption');
-        const resultContainer = document.getElementById('postResult');
-        const multiResultsContainer = document.getElementById('multiChannelResults');
+        // Schedule toggle
         const scheduleToggle = document.getElementById('generatedScheduleToggle');
-        const scheduleTimeInput = document.getElementById('generatedScheduleTime');
-        const timezoneSelect = document.getElementById('generatedScheduleTimezone');
-        const button = document.getElementById('postToAllBtn');
-
-        if (!captionField || !resultContainer || !multiResultsContainer || !button) {
-            return;
+        const scheduleFields = document.getElementById('scheduleFields');
+        if (scheduleToggle && scheduleFields) {
+            scheduleToggle.addEventListener('change', function() {
+                scheduleFields.style.display = this.checked ? 'block' : 'none';
+            });
         }
+    });
 
-        const token = resolveAuthToken();
-        if (!token) {
-            alert('Please log in before posting.');
-            return;
-        }
+    // Multi-channel posting
+    const multiChannelForm = document.getElementById('multiChannelForm');
+    if (multiChannelForm) {
+        multiChannelForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
 
-        // Check if at least one platform is selected
-        const selectedPlatforms = [];
-        if (instagramCheck && instagramCheck.checked) selectedPlatforms.push('instagram');
-        if (facebookCheck && facebookCheck.checked) selectedPlatforms.push('facebook');
-        if (linkedinCheck && linkedinCheck.checked) selectedPlatforms.push('linkedin');
-        if (twitterCheck && twitterCheck.checked) selectedPlatforms.push('twitter');
+            const checkedPlatforms = Array.from(document.querySelectorAll('input[name="platforms"]:checked'))
+                .map(cb => cb.value);
 
-        if (selectedPlatforms.length === 0) {
-            setStatus('Please select at least one platform.', '#dc2626');
-            return;
-        }
-
-      const caption =
-        (captionField.value || "").trim() ||
-        generateCaption(workflowContext.topic);
-      const scheduleEnabled = scheduleToggle && scheduleToggle.checked;
-
-      if (scheduleEnabled && (!scheduleTimeInput || !scheduleTimeInput.value)) {
-        setStatus("Select a scheduled date and time.", "#dc2626");
-        return;
-      }
-
-      if (!workflowContext.imageFilename || !workflowContext.topicId) {
-        setStatus(
-          "Missing image information. Regenerate the ad or contact support.",
-          "#dc2626"
-        );
-        return;
-      }
-
-        button.disabled = true;
-        setStatus(scheduleEnabled ? 'Scheduling posts...' : 'Posting to selected channels...', '#475569');
-        resultContainer.style.display = 'none';
-        resultContainer.innerHTML = '';
-        multiResultsContainer.innerHTML = '';
-        multiResultsContainer.style.display = 'block';
-
-        try {
-            // Create a status display for each platform
-            let statusHTML = '<div style="margin-top: 15px;"><h4>Post Status:</h4><div class="status-cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">';
-            
-            for (const platform of selectedPlatforms) {
-                const platformName = platform.charAt(0).toUpperCase() + platform.slice(1);
-                const colorMap = {
-                    'instagram': '#ff9a9e',
-                    'facebook': '#4267B2', 
-                    'linkedin': '#0077b5',
-                    'twitter': '#1da1f2'
-                };
-                const color = colorMap[platform] || '#6b7280';
-                
-                statusHTML += `
-                    <div class="status-card" id="${platform}StatusCard" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; background: #f8fafc;">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <div style="width: 10px; height: 10px; border-radius: 50%; background: ${color};"></div>
-                            <strong>${platformName}</strong>
-                        </div>
-                        <div id="${platform}Status" style="font-size: 12px; margin-top: 5px;">⏳ Pending...</div>
-                    </div>
-                `;
+            if (checkedPlatforms.length === 0) {
+                alert('Please select at least one platform');
+                return;
             }
-            statusHTML += '</div></div>';
-            multiResultsContainer.innerHTML = statusHTML;
 
-            // Use the new endpoint if not scheduling (more efficient for immediate posting)
-            if (!scheduleEnabled) {
-                // Immediate posting via new endpoint
-                const formData = new FormData();
-                formData.append('image_filename', workflowContext.imageFilename);
-                formData.append('topic_id', workflowContext.topicId);
-                formData.append('caption', caption);  // Will be used as text for platforms that don't use caption
-                formData.append('text', caption);      // Will be used for platforms that use text
-                formData.append('platforms', selectedPlatforms.join(','));
+            const caption = document.getElementById('postCaption').value;
+            const imageFilename = '{{ result.final_image_filename }}';
+            const topicId = {{ topic_id }};
+            const isScheduled = document.getElementById('generatedScheduleToggle').checked;
+            const scheduleDate = isScheduled ? document.getElementById('scheduleDate').value : null;
+
+            const postButton = document.getElementById('postButton');
+            if (postButton) {
+                postButton.disabled = true;
+                postButton.innerHTML = '<div class="spinner"></div> Posting...';
+            }
+
+            try {
+                const authToken = localStorage.getItem('authToken') ||
+                    document.cookie.split('; ').find(row => row.startsWith('authToken='))?.split('=')[1];
 
                 const response = await fetch('/post-to-multiple-channels', {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${token}`
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
                     },
-                    body: formData
+                    body: JSON.stringify({
+                        platforms: checkedPlatforms.join(','),
+                        image_filename: imageFilename,
+                        topic_id: topicId,
+                        caption: caption,
+                        text: caption,
+                        scheduled_time: isScheduled ? scheduleDate : null,
+                        schedule_timezone: 'UTC'
+                    })
                 });
 
                 const result = await response.json();
 
-                if (response.ok && result.success) {
-                    // Update status for each platform
-                    for (const platform of selectedPlatforms) {
-                        const statusElement = document.getElementById(`${platform}Status`);
-                        const platformResult = result.results[platform];
-                        
-                        if (platformResult && platformResult.success) {
-                            if (statusElement) {
-                                statusElement.innerHTML = `<span style="color: #16a34a;">✅ Posted successfully</span>`;
-                            }
-                        } else {
-                            const errorMessage = platformResult?.error || `Failed to post to ${platform}`;
-                            if (statusElement) {
-                                statusElement.innerHTML = `<span style="color: #dc2626;">❌ ${errorMessage}</span>`;
-                            }
-                        }
-                    }
+                if (response.ok) {
+                    alert('Successfully posted to ' + checkedPlatforms.join(', ') + '!');
                 } else {
-                    // Handle error case
-                    for (const platform of selectedPlatforms) {
-                        const statusElement = document.getElementById(`${platform}Status`);
-                        if (statusElement) {
-                            statusElement.innerHTML = `<span style="color: #dc2626;">❌ Request failed</span>`;
-                        }
-                    }
+                    alert('Error: ' + (result.detail || 'Failed to post'));
                 }
-            } else {
-                // Scheduling requires individual platform requests
-                const results = {};
-                for (const platform of selectedPlatforms) {
-                    const statusElement = document.getElementById(`${platform}Status`);
-                    const statusCard = document.getElementById(`${platform}StatusCard`);
-                    
-                    if (statusElement) {
-                        statusElement.innerHTML = '🔄 Scheduling...';
-                    }
-
-                    try {
-                        const formData = new FormData();
-                        formData.append('image_filename', workflowContext.imageFilename);
-                        formData.append('topic_id', workflowContext.topicId);
-                        
-                        // Different field names for different platforms
-                        if (platform === 'instagram' || platform === 'twitter') {
-                            formData.append('caption', caption);
-                        } else {
-                            // For Facebook and LinkedIn, use 'text' instead of 'caption'
-                            formData.append('text', caption);
-                        }
-
-                        formData.append('scheduled_time', scheduleTimeInput.value);
-                        formData.append('schedule_timezone', (timezoneSelect && timezoneSelect.value) || generatedLocalTimezone || 'UTC');
-
-                        // Different endpoint for each platform for scheduling
-                        let endpoint;
-                        switch(platform) {
-                            case 'instagram':
-                                endpoint = '/post-to-instagram';
-                                break;
-                            case 'facebook':
-                                endpoint = '/post-to-facebook';
-                                break;
-                            case 'linkedin':
-                                endpoint = '/post-to-linkedin';
-                                break;
-                            case 'twitter':
-                                endpoint = '/post-to-twitter';
-                                break;
-                            default:
-                                throw new Error(`Unsupported platform: ${platform}`);
-                        }
-
-                        const response = await fetch(endpoint, {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': `Bearer ${token}`
-                            },
-                            body: formData
-                        });
-
-                        const result = await response.json();
-                        results[platform] = result;
-
-                        if (response.ok && result.scheduled) {
-                            const scheduled = result.scheduled_post || {};
-                            const scheduledIso = scheduled.schedule_time;
-                            const tz = scheduled.timezone || ((timezoneSelect && timezoneSelect.value) || 'UTC');
-                            
-                            // Format datetime in the user's chosen timezone
-                            let readable = '';
-                            if (scheduledIso) {
-                                try {
-                                    const date = new Date(scheduledIso);
-                                    
-                                    if (Intl && Intl.DateTimeFormat) {
-                                        try {
-                                            readable = new Intl.DateTimeFormat('en-US', {
-                                                timeZone: tz,
-                                                year: 'numeric',
-                                                month: '2-digit', 
-                                                day: '2-digit',
-                                                hour: '2-digit',
-                                                minute: '2-digit',
-                                                second: '2-digit',
-                                                hour12: true
-                                            }).format(date);
-                                        } catch (e) {
-                                            readable = date.toLocaleString('en-US', {
-                                                timeZone: tz,
-                                                year: 'numeric',
-                                                month: '2-digit', 
-                                                day: '2-digit',
-                                                hour: '2-digit',
-                                                minute: '2-digit',
-                                                second: '2-digit',
-                                                hour12: true
-                                            });
-                                        }
-                                    } else {
-                                        readable = date.toLocaleString();
-                                    }
-                                } catch (e) {
-                                    console.error('Date formatting error:', e);
-                                    readable = scheduledIso;
-                                }
-                            } else if (scheduleTimeInput) {
-                                readable = scheduleTimeInput.value;
-                            }
-                            
-                            if (statusElement) {
-                                statusElement.innerHTML = `<span style="color: #16a34a;">✅ Scheduled for ${readable}</span>`;
-                            }
-                        } else {
-                            const errorMessage = result.error || result.detail || `Failed to schedule ${platform}`;
-                            if (statusElement) {
-                                statusElement.innerHTML = `<span style="color: #dc2626;">❌ ${errorMessage}</span>`;
-                            }
-                        }
-                    } catch (error) {
-                        console.error(`Error scheduling for ${platform}:`, error);
-                        if (statusElement) {
-                            statusElement.innerHTML = `<span style="color: #dc2626;">❌ ${error.message || 'Error occurred'}</span>`;
-                        }
-                    }
+            } catch (error) {
+                alert('Error posting: ' + error.message);
+            } finally {
+                if (postButton) {
+                    postButton.disabled = false;
+                    postButton.innerHTML = `
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" fill="currentColor"/>
+                        </svg>
+                        Post to Selected Platforms
+                    `;
                 }
             }
-
-            // Check if any succeeded to determine overall status
-            setStatus(`Process completed. Check individual status above.`, '#475569');
-            if (typeof loadScheduledPosts === 'function' && scheduleEnabled) {
-                loadScheduledPosts();
-            }
-            
-        } catch (error) {
-            console.error('Multi-channel posting error:', error);
-            setStatus(error.message || 'Multi-channel posting failed.', '#dc2626');
-            resultContainer.style.display = 'block';
-            resultContainer.innerHTML = `
-                <div class="alert alert--error">
-                    <div>
-                        <strong>Error during multi-channel posting.</strong><br>
-                        ${error.message || 'An unexpected error occurred. Please try again.'}
-                    </div>
-                </div>
-            `;
-      } finally {
-        button.disabled = false;
-      }
+        });
     }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        const button = document.getElementById('postToAllBtn');
-        const captionField = document.getElementById('postCaption');
-
-      if (!button || !captionField) {
-        return;
-      }
-
-        captionField.value = generateCaption(workflowContext.topic);
-        button.addEventListener('click', postToMultipleChannels);
-    });
-  })();
 </script>
-
-{% endif %}
-
-<div
-  style="
-    margin-top: 30px;
-    display: flex;
-    gap: 15px;
-    margin-left: 1rem;
-    flex-wrap: wrap;
-  "
->
-  <!-- Primary button -->
-  <a
-    href="/simple"
-    style="
-      background: linear-gradient(135deg, #9c5af5, #2563eb);
-      color: white;
-      padding: 10px 20px;
-      border-radius: 8px;
-      text-decoration: none;
-      font-weight: 600;
-      font-size: 0.95rem;
-      transition: all 0.2s ease;
-      cursor: pointer;
-      display: inline-block;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    "
-    onmouseover="this.style.opacity='0.9'"
-    onmouseout="this.style.opacity='1'"
-  >
-     Generate Another
-  </a>
-
-  <!-- Secondary button -->
-  <a
-    href="/"
-    style="
-      background: #f3f4f6;
-      color: #374151;
-      padding: 10px 20px;
-      border-radius: 8px;
-      text-decoration: none;
-      font-weight: 600;
-      font-size: 0.95rem;
-      transition: all 0.2s ease;
-      cursor: pointer;
-      display: inline-block;
-      border: 1px solid #d1d5db;
-    "
-    onmouseover="this.style.background='#e5e7eb'"
-    onmouseout="this.style.background='#f3f4f6'"
-  >
-    ← Back to Dashboard
-  </a>
-</div>
-
 
 {% endblock %}

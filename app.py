@@ -165,6 +165,16 @@ async def simple_interface(request: Request):
     """Simple single-topic generation interface"""
     return templates.TemplateResponse("simple.html", {"request": request})
 
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    """Login page"""
+    return templates.TemplateResponse("login.html", {"request": request})
+
+@app.get("/signup", response_class=HTMLResponse)
+async def signup_page(request: Request):
+    """Signup page"""
+    return templates.TemplateResponse("signup.html", {"request": request})
+
 @app.post("/generate-ad")
 async def generate_advertisement(
     request: Request,
@@ -1311,21 +1321,50 @@ async def post_direct_facebook(
 @app.post("/post-to-multiple-channels")
 async def post_to_multiple_channels(
     request: Request,
-    image_filename: str = Form(...),
-    topic_id: int = Form(...),
-    caption: Optional[str] = Form(None),  # For Instagram/Twitter
-    text: Optional[str] = Form(None),     # For Facebook/LinkedIn
-    platforms: str = Form(...),           # Comma-separated list of platforms
-    scheduled_time: Optional[str] = Form(None),
-    schedule_timezone: Optional[str] = Form("UTC"),
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
     """
     Post to multiple channels simultaneously
     Platforms should be sent as comma-separated values in the request
+    Accepts both FormData and JSON
     """
     try:
+        # Try to parse as JSON first, then fall back to form data
+        content_type = request.headers.get('content-type', '')
+        
+        if 'application/json' in content_type:
+            body = await request.json()
+            image_filename = body.get('image_filename')
+            topic_id = body.get('topic_id')
+            caption = body.get('caption')
+            text = body.get('text')
+            platforms = body.get('platforms', '')
+            scheduled_time = body.get('scheduled_time')
+            schedule_timezone = body.get('schedule_timezone', 'UTC')
+        else:
+            form = await request.form()
+            image_filename = form.get('image_filename')
+            topic_id = form.get('topic_id')
+            caption = form.get('caption')
+            text = form.get('text')
+            platforms = form.get('platforms', '')
+            scheduled_time = form.get('scheduled_time')
+            schedule_timezone = form.get('schedule_timezone', 'UTC')
+        
+        # Validate required fields
+        if not image_filename:
+            raise HTTPException(status_code=400, detail="image_filename is required")
+        if not topic_id:
+            raise HTTPException(status_code=400, detail="topic_id is required")
+        if not platforms:
+            raise HTTPException(status_code=400, detail="platforms is required")
+        
+        # Convert topic_id to int
+        try:
+            topic_id = int(topic_id)
+        except (ValueError, TypeError):
+            raise HTTPException(status_code=400, detail="topic_id must be a valid integer")
         topic = db.query(Topic).filter(
             Topic.id == topic_id,
             Topic.user_id == current_user.id
