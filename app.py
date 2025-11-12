@@ -16,15 +16,16 @@ from twitter_agent import TwitterAgent
 from linkedin_agent import LinkedInAgent
 from youtube_agent import YouTubeAgent
 from facebook_agent import FacebookAgent
-from models.database import get_db, create_tables, User, Topic, ScheduledPost
+from models.database import get_db, create_tables, User, Topic, ScheduledPost, AutomationPlan, AutomationPlanItem
 from auth.auth import (
-    AuthService, get_current_active_user, UserCreate, UserLogin, 
+    AuthService, get_current_active_user, UserCreate, UserLogin,
     Token, UserResponse
 )
 from services.ad_generation_service import AdGenerationService
 from services.excel_service import ExcelService
 from services.image_upload_service import ImageUploadService
 from services.scheduling_service import SchedulingService, ScheduledPostRunner
+from services.automation_plan_service import AutomationPlanService
 
 # Create tables on startup
 create_tables()
@@ -282,7 +283,7 @@ async def post_to_instagram(
     caption: str = Form(...),
     topic_id: int = Form(...),
     scheduled_time: Optional[str] = Form(None),
-    schedule_timezone: Optional[str] = Form("UTC"),
+    schedule_timezone: Optional[str] = Form("Asia/Kolkata"),
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
@@ -388,7 +389,7 @@ async def post_to_twitter(
     caption: str = Form(...),
     topic_id: int = Form(...),
     scheduled_time: Optional[str] = Form(None),
-    schedule_timezone: Optional[str] = Form("UTC"),
+    schedule_timezone: Optional[str] = Form("Asia/Kolkata"),
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
@@ -474,7 +475,7 @@ async def post_direct_twitter(
     image_url: str = Form(...),
     caption: str = Form(...),
     scheduled_time: Optional[str] = Form(None),
-    schedule_timezone: Optional[str] = Form("UTC"),
+    schedule_timezone: Optional[str] = Form("Asia/Kolkata"),
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
@@ -551,7 +552,7 @@ async def post_direct_image(
     image_url: str = Form(...),
     caption: str = Form(...),
     scheduled_time: Optional[str] = Form(None),
-    schedule_timezone: Optional[str] = Form("UTC"),
+    schedule_timezone: Optional[str] = Form("Asia/Kolkata"),
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
@@ -638,7 +639,7 @@ async def post_to_linkedin(
     text: str = Form(...),
     topic_id: int = Form(...),
     scheduled_time: Optional[str] = Form(None),
-    schedule_timezone: Optional[str] = Form("UTC"),
+    schedule_timezone: Optional[str] = Form("Asia/Kolkata"),
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
@@ -724,7 +725,7 @@ async def post_direct_linkedin(
     image_url: str = Form(...),
     text: str = Form(...),
     scheduled_time: Optional[str] = Form(None),
-    schedule_timezone: Optional[str] = Form("UTC"),
+    schedule_timezone: Optional[str] = Form("Asia/Kolkata"),
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
@@ -804,7 +805,7 @@ async def post_to_youtube(
     description: str = Form(...),
     topic_id: int = Form(...),
     scheduled_time: Optional[str] = Form(None),
-    schedule_timezone: Optional[str] = Form("UTC"),
+    schedule_timezone: Optional[str] = Form("Asia/Kolkata"),
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
@@ -906,7 +907,7 @@ async def post_direct_youtube(
     title: str = Form(...),
     description: str = Form(...),
     scheduled_time: Optional[str] = Form(None),
-    schedule_timezone: Optional[str] = Form("UTC"),
+    schedule_timezone: Optional[str] = Form("Asia/Kolkata"),
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
@@ -1160,7 +1161,7 @@ async def post_to_facebook(
     text: str = Form(...),
     topic_id: int = Form(...),
     scheduled_time: Optional[str] = Form(None),
-    schedule_timezone: Optional[str] = Form("UTC"),
+    schedule_timezone: Optional[str] = Form("Asia/Kolkata"),
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
@@ -1246,7 +1247,7 @@ async def post_direct_facebook(
     image_url: str = Form(...),
     text: str = Form(...),
     scheduled_time: Optional[str] = Form(None),
-    schedule_timezone: Optional[str] = Form("UTC"),
+    schedule_timezone: Optional[str] = Form("Asia/Kolkata"),
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
@@ -1341,7 +1342,7 @@ async def post_to_multiple_channels(
             text = body.get('text')
             platforms = body.get('platforms', '')
             scheduled_time = body.get('scheduled_time')
-            schedule_timezone = body.get('schedule_timezone', 'UTC')
+            schedule_timezone = body.get('schedule_timezone', 'Asia/Kolkata')
         else:
             form = await request.form()
             image_filename = form.get('image_filename')
@@ -1350,7 +1351,7 @@ async def post_to_multiple_channels(
             text = form.get('text')
             platforms = form.get('platforms', '')
             scheduled_time = form.get('scheduled_time')
-            schedule_timezone = form.get('schedule_timezone', 'UTC')
+            schedule_timezone = form.get('schedule_timezone', 'Asia/Kolkata')
         
         # Validate required fields
         if not image_filename:
@@ -1492,7 +1493,7 @@ async def generate_and_schedule(
     request: Request,
     topic: str = Form(...),
     schedule_time: str = Form(...),
-    timezone: str = Form("UTC"),
+    timezone: str = Form("Asia/Kolkata"),
     platforms: str = Form(...),  # Comma-separated platforms
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
@@ -1577,7 +1578,7 @@ async def schedule_automation(
     request: Request,
     topic: str = Form(...),
     schedule_time: str = Form(...),
-    timezone: str = Form("UTC"),
+    timezone: str = Form("Asia/Kolkata"),
     platforms: str = Form(...),  # Comma-separated platforms
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
@@ -1681,7 +1682,7 @@ async def auto_generate_and_post(
     request: Request,
     topic: str = Form(...),
     schedule_time: str = Form(...),
-    timezone: str = Form("UTC"),
+    timezone: str = Form("Asia/Kolkata"),
     platforms: str = Form(...),  # Comma-separated platforms
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
@@ -1771,6 +1772,539 @@ async def auto_generate_and_post(
         raise
     except Exception as e:
         print(f"[error] Auto-generate and post error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==================== AUTOMATION PLAN ENDPOINTS ====================
+
+@app.post("/automation-plans/generate")
+async def generate_automation_plan(
+    request: Request,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Generate a comprehensive automation plan using AI based on brand and scheduling information
+    """
+    try:
+        data = await request.json()
+
+        # Validate required fields
+        plan_service = AutomationPlanService()
+        validation = plan_service.validate_plan_data(data)
+
+        if not validation['valid']:
+            raise HTTPException(status_code=400, detail=validation['error'])
+
+        # Parse dates and ensure they have timezone info
+        from datetime import timezone as dt_timezone
+        from dateutil import tz
+
+        start_date = datetime.fromisoformat(data['start_date'].replace('Z', '+00:00'))
+        end_date = datetime.fromisoformat(data['end_date'].replace('Z', '+00:00'))
+
+        # Ensure timezone-aware
+        if start_date.tzinfo is None:
+            start_date = start_date.replace(tzinfo=dt_timezone.utc)
+        if end_date.tzinfo is None:
+            end_date = end_date.replace(tzinfo=dt_timezone.utc)
+
+        # Generate the content plan using AI
+        result = plan_service.generate_content_plan(
+            brand_name=data.get('brand_name', ''),
+            brand_description=data.get('brand_description', ''),
+            target_audience=data.get('target_audience', ''),
+            color_palette=data.get('color_palette', ''),
+            brand_style=data.get('brand_style', ''),
+            content_type=data.get('content_type', ''),
+            content_description=data.get('content_description', ''),
+            start_date=start_date,
+            end_date=end_date,
+            posts_per_day=data.get('posts_per_day', 1),
+            posting_times=data.get('posting_times', []),
+            timezone=data.get('timezone', 'Asia/Kolkata'),
+            platforms=data.get('platforms', [])
+        )
+
+        if not result.get('success'):
+            raise HTTPException(status_code=500, detail=result.get('error', 'Failed to generate plan'))
+
+        # Create the automation plan in database
+        automation_plan = AutomationPlan(
+            user_id=current_user.id,
+            brand_name=data.get('brand_name', ''),
+            brand_description=data.get('brand_description', ''),
+            target_audience=data.get('target_audience', ''),
+            color_palette=data.get('color_palette', ''),
+            brand_style=data.get('brand_style', ''),
+            content_type=data.get('content_type', ''),
+            content_description=data.get('content_description', ''),
+            start_date=start_date,
+            end_date=end_date,
+            posts_per_day=data.get('posts_per_day', 1),
+            posting_times=data.get('posting_times', []),
+            timezone=data.get('timezone', 'Asia/Kolkata'),
+            platforms=data.get('platforms', []),
+            generated_plan={
+                'plan_summary': result.get('plan_summary', ''),
+                'total_posts': result.get('total_posts', 0)
+            },
+            status='draft'
+        )
+
+        db.add(automation_plan)
+        db.commit()
+        db.refresh(automation_plan)
+
+        # Create plan items
+        for item_data in result.get('items', []):
+            # Parse scheduled datetime safely
+            item_dt = datetime.fromisoformat(item_data['scheduled_datetime'])
+            if item_dt.tzinfo is None:
+                item_dt = item_dt.replace(tzinfo=dt_timezone.utc)
+
+            plan_item = AutomationPlanItem(
+                plan_id=automation_plan.id,
+                scheduled_datetime=item_dt,
+                image_description=item_data['image_description'],
+                caption=item_data['caption'],
+                platforms=item_data['platforms'],
+                status='pending'
+            )
+            db.add(plan_item)
+
+        db.commit()
+
+        return JSONResponse(content={
+            'success': True,
+            'plan_id': automation_plan.id,
+            'plan_summary': result.get('plan_summary', ''),
+            'total_posts': result.get('total_posts', 0),
+            'items': result.get('items', [])
+        })
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[error] Generate automation plan error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/automation-plans")
+async def get_automation_plans(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get all automation plans for the current user
+    """
+    try:
+        plans = db.query(AutomationPlan).filter(
+            AutomationPlan.user_id == current_user.id
+        ).order_by(AutomationPlan.created_at.desc()).all()
+
+        return JSONResponse(content={
+            'success': True,
+            'plans': [
+                {
+                    'id': plan.id,
+                    'brand_name': plan.brand_name,
+                    'status': plan.status,
+                    'start_date': plan.start_date.isoformat() if plan.start_date else None,
+                    'end_date': plan.end_date.isoformat() if plan.end_date else None,
+                    'posts_per_day': plan.posts_per_day,
+                    'platforms': plan.platforms,
+                    'created_at': plan.created_at.isoformat() if plan.created_at else None,
+                    'generated_plan': plan.generated_plan
+                }
+                for plan in plans
+            ]
+        })
+
+    except Exception as e:
+        print(f"[error] Get automation plans error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/automation-plans/{plan_id}")
+async def get_automation_plan(
+    plan_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get a specific automation plan with all its items
+    """
+    try:
+        plan = db.query(AutomationPlan).filter(
+            AutomationPlan.id == plan_id,
+            AutomationPlan.user_id == current_user.id
+        ).first()
+
+        if not plan:
+            raise HTTPException(status_code=404, detail="Plan not found")
+
+        # Get all plan items
+        items = db.query(AutomationPlanItem).filter(
+            AutomationPlanItem.plan_id == plan_id
+        ).order_by(AutomationPlanItem.scheduled_datetime).all()
+
+        return JSONResponse(content={
+            'success': True,
+            'plan': {
+                'id': plan.id,
+                'brand_name': plan.brand_name,
+                'brand_description': plan.brand_description,
+                'target_audience': plan.target_audience,
+                'color_palette': plan.color_palette,
+                'brand_style': plan.brand_style,
+                'content_type': plan.content_type,
+                'content_description': plan.content_description,
+                'start_date': plan.start_date.isoformat() if plan.start_date else None,
+                'end_date': plan.end_date.isoformat() if plan.end_date else None,
+                'posts_per_day': plan.posts_per_day,
+                'posting_times': plan.posting_times,
+                'timezone': plan.timezone,
+                'platforms': plan.platforms,
+                'status': plan.status,
+                'generated_plan': plan.generated_plan,
+                'created_at': plan.created_at.isoformat() if plan.created_at else None
+            },
+            'items': [
+                {
+                    'id': item.id,
+                    'scheduled_datetime': item.scheduled_datetime.isoformat() if item.scheduled_datetime else None,
+                    'image_description': item.image_description,
+                    'caption': item.caption,
+                    'platforms': item.platforms,
+                    'status': item.status,
+                    'image_url': item.image_url,
+                    'image_filename': item.image_filename
+                }
+                for item in items
+            ]
+        })
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[error] Get automation plan error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.put("/automation-plans/{plan_id}")
+async def update_automation_plan(
+    plan_id: int,
+    request: Request,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Update an automation plan
+    """
+    try:
+        plan = db.query(AutomationPlan).filter(
+            AutomationPlan.id == plan_id,
+            AutomationPlan.user_id == current_user.id
+        ).first()
+
+        if not plan:
+            raise HTTPException(status_code=404, detail="Plan not found")
+
+        data = await request.json()
+
+        # Update plan fields
+        if 'brand_name' in data:
+            plan.brand_name = data['brand_name']
+        if 'brand_description' in data:
+            plan.brand_description = data['brand_description']
+        if 'target_audience' in data:
+            plan.target_audience = data['target_audience']
+        if 'color_palette' in data:
+            plan.color_palette = data['color_palette']
+        if 'brand_style' in data:
+            plan.brand_style = data['brand_style']
+        if 'platforms' in data:
+            plan.platforms = data['platforms']
+        if 'status' in data:
+            plan.status = data['status']
+
+        db.commit()
+        db.refresh(plan)
+
+        return JSONResponse(content={
+            'success': True,
+            'message': 'Plan updated successfully',
+            'plan_id': plan.id
+        })
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[error] Update automation plan error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.put("/automation-plans/{plan_id}/items/{item_id}")
+async def update_plan_item(
+    plan_id: int,
+    item_id: int,
+    request: Request,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Update a specific item in an automation plan
+    """
+    try:
+        # Verify plan ownership
+        plan = db.query(AutomationPlan).filter(
+            AutomationPlan.id == plan_id,
+            AutomationPlan.user_id == current_user.id
+        ).first()
+
+        if not plan:
+            raise HTTPException(status_code=404, detail="Plan not found")
+
+        # Get the item
+        item = db.query(AutomationPlanItem).filter(
+            AutomationPlanItem.id == item_id,
+            AutomationPlanItem.plan_id == plan_id
+        ).first()
+
+        if not item:
+            raise HTTPException(status_code=404, detail="Item not found")
+
+        data = await request.json()
+
+        # Update item fields
+        if 'image_description' in data:
+            item.image_description = data['image_description']
+        if 'caption' in data:
+            item.caption = data['caption']
+        if 'scheduled_datetime' in data:
+            from datetime import timezone as dt_timezone
+            parsed_dt = datetime.fromisoformat(data['scheduled_datetime'].replace('Z', '+00:00'))
+            if parsed_dt.tzinfo is None:
+                parsed_dt = parsed_dt.replace(tzinfo=dt_timezone.utc)
+            item.scheduled_datetime = parsed_dt
+        if 'platforms' in data:
+            item.platforms = data['platforms']
+
+        db.commit()
+        db.refresh(item)
+
+        return JSONResponse(content={
+            'success': True,
+            'message': 'Item updated successfully',
+            'item_id': item.id
+        })
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[error] Update plan item error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/automation-plans/{plan_id}")
+async def delete_automation_plan(
+    plan_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Delete an automation plan and all its items
+    """
+    try:
+        plan = db.query(AutomationPlan).filter(
+            AutomationPlan.id == plan_id,
+            AutomationPlan.user_id == current_user.id
+        ).first()
+
+        if not plan:
+            raise HTTPException(status_code=404, detail="Plan not found")
+
+        # Delete all plan items first
+        db.query(AutomationPlanItem).filter(
+            AutomationPlanItem.plan_id == plan_id
+        ).delete()
+
+        # Delete the plan
+        db.delete(plan)
+        db.commit()
+
+        return JSONResponse(content={
+            'success': True,
+            'message': 'Plan deleted successfully'
+        })
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[error] Delete automation plan error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/automation-plans/{plan_id}/activate")
+async def activate_automation_plan(
+    plan_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Activate an automation plan - this will create all scheduled posts with 3-minute pre-generation
+    """
+    try:
+        plan = db.query(AutomationPlan).filter(
+            AutomationPlan.id == plan_id,
+            AutomationPlan.user_id == current_user.id
+        ).first()
+
+        if not plan:
+            raise HTTPException(status_code=404, detail="Plan not found")
+
+        if plan.status == 'active':
+            raise HTTPException(status_code=400, detail="Plan is already active")
+
+        # Get all plan items
+        items = db.query(AutomationPlanItem).filter(
+            AutomationPlanItem.plan_id == plan_id,
+            AutomationPlanItem.status == 'pending'
+        ).all()
+
+        if not items:
+            raise HTTPException(status_code=400, detail="No pending items to schedule")
+
+        # Create a topic for this automation
+        topic = Topic(
+            user_id=current_user.id,
+            topic_title=f"Automation: {plan.brand_name}",
+            textual_description=plan.content_description or plan.brand_description,
+            brand_context=f"Brand: {plan.brand_name}, Style: {plan.brand_style}, Colors: {plan.color_palette}",
+            status="scheduled"
+        )
+        db.add(topic)
+        db.commit()
+        db.refresh(topic)
+
+        # Schedule each item with 3-minute pre-generation
+        scheduled_count = 0
+        for item in items:
+            # Ensure item.scheduled_datetime is timezone-aware
+            item_dt = item.scheduled_datetime
+            if item_dt.tzinfo is None:
+                # If naive, assume it's in the plan's timezone
+                from dateutil import tz as dateutil_tz
+                plan_tz = dateutil_tz.gettz(plan.timezone)
+                item_dt = item_dt.replace(tzinfo=plan_tz)
+
+            # Schedule for each platform in the item
+            for platform in item.platforms:
+                # Calculate generation time (3 minutes before scheduled time)
+                generation_time = item_dt - timedelta(minutes=3)
+
+                # Create scheduled post
+                metadata = {
+                    "automation_plan_id": plan.id,
+                    "plan_item_id": item.id,
+                    "image_description": item.image_description,
+                    "brand_context": f"{plan.brand_name}, {plan.color_palette}",
+                    "generation_time": generation_time.isoformat(),
+                    "source": "automation_plan"
+                }
+
+                scheduled_post = scheduling_service.schedule_post(
+                    db=db,
+                    user_id=current_user.id,
+                    caption=item.caption,
+                    schedule_time=item_dt,
+                    timezone_name=plan.timezone,
+                    image_filename=None,  # Will be generated
+                    topic_id=topic.id,
+                    platform=platform,
+                    metadata=metadata
+                )
+
+                # Update the item with scheduled post reference
+                if not item.scheduled_post_id:
+                    item.scheduled_post_id = scheduled_post.id
+
+                scheduled_count += 1
+
+            # Update item status
+            item.status = 'scheduled'
+
+        # Update plan status
+        plan.status = 'active'
+        db.commit()
+
+        return JSONResponse(content={
+            'success': True,
+            'message': f'Plan activated successfully. {scheduled_count} posts scheduled.',
+            'scheduled_count': scheduled_count,
+            'topic_id': topic.id
+        })
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[error] Activate automation plan error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/automation-timeline")
+async def get_automation_timeline(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get timeline of all scheduled posts for the current user
+    """
+    try:
+        from datetime import timezone as dt_timezone
+
+        # Get all scheduled posts for this user
+        posts = db.query(ScheduledPost).filter(
+            ScheduledPost.user_id == current_user.id
+        ).order_by(ScheduledPost.schedule_time.desc()).limit(100).all()
+
+        timeline = []
+        for post in posts:
+            # Get associated plan info if available
+            plan_info = None
+            if post.job_metadata and post.job_metadata.get('automation_plan_id'):
+                plan_id = post.job_metadata.get('automation_plan_id')
+                plan = db.query(AutomationPlan).filter(AutomationPlan.id == plan_id).first()
+                if plan:
+                    plan_info = {
+                        'plan_id': plan.id,
+                        'brand_name': plan.brand_name
+                    }
+
+            timeline.append({
+                'id': post.id,
+                'platform': post.platform,
+                'caption': post.caption[:100] + '...' if len(post.caption) > 100 else post.caption,
+                'schedule_time': post.schedule_time.isoformat() if post.schedule_time else None,
+                'status': post.status,
+                'image_url': post.image_url,
+                'image_filename': post.image_filename,
+                'posted_at': post.posted_at.isoformat() if post.posted_at else None,
+                'attempts': post.attempts,
+                'last_error': post.last_error,
+                'plan_info': plan_info,
+                'created_at': post.created_at.isoformat() if post.created_at else None
+            })
+
+        return JSONResponse(content={
+            'success': True,
+            'posts': timeline,
+            'total': len(timeline)
+        })
+
+    except Exception as e:
+        print(f"[error] Get timeline error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

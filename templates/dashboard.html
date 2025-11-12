@@ -560,57 +560,394 @@
     </div>
 </div>
 
-<div class="modal-overlay" id="automationModal" style="display: none;">
-    <div class="modal modal-large">
-        <div class="modal-header">
-            <h2 class="modal-title">Auto-Generate & Post</h2>
-            <button class="modal-close" onclick="closeAutomationModal()">&times;</button>
-        </div>
-        <div class="modal-body">
-            <form id="automationForm" onsubmit="submitAutomation(event)">
-                <div class="alert alert-info">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" fill="currentColor"/>
-                    </svg>
-                    <div>
-                        <strong>Automation Setup</strong>
-                        <p>Configure automatic content generation and posting</p>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label form-label-required">Topic/Theme</label>
-                    <input type="text" class="form-input" id="automationTopic" placeholder="e.g., Tech News, Fitness Tips" required />
-                </div>
-                <div class="form-group">
-                    <label class="form-label form-label-required">Number of Posts</label>
-                    <input type="number" class="form-input" id="automationCount" min="1" max="100" value="1" required />
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Select Platforms</label>
-                    <div style="display: flex; flex-direction: column; gap: var(--space-2);">
-                        <label style="display: flex; align-items: center; gap: var(--space-2); cursor: pointer;">
-                            <input type="checkbox" id="autoInstagram" value="instagram" />
-                            <span>Instagram</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: var(--space-2); cursor: pointer;">
-                            <input type="checkbox" id="autoTwitter" value="twitter" />
-                            <span>Twitter</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: var(--space-2); cursor: pointer;">
-                            <input type="checkbox" id="autoLinkedIn" value="linkedin" />
-                            <span>LinkedIn</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: var(--space-2); cursor: pointer;">
-                            <input type="checkbox" id="autoFacebook" value="facebook" />
-                            <span>Facebook</span>
-                        </label>
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-primary btn-block btn-lg">Start Automation</button>
-            </form>
+<!-- Automation Timeline Section -->
+<div style="margin-top: var(--space-12);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-6);">
+        <h2 style="font-size: var(--font-2xl); font-weight: var(--font-bold);">Scheduled Posts Timeline</h2>
+        <button class="btn btn-secondary" onclick="refreshTimeline()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" fill="currentColor"/>
+            </svg>
+            Refresh
+        </button>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div style="display: flex; gap: var(--space-2); margin-bottom: var(--space-6); border-bottom: 2px solid var(--border-light);">
+        <button class="timeline-tab active" data-filter="all" onclick="filterTimeline('all')">All</button>
+        <button class="timeline-tab" data-filter="pending" onclick="filterTimeline('pending')">Upcoming</button>
+        <button class="timeline-tab" data-filter="completed" onclick="filterTimeline('completed')">Completed</button>
+        <button class="timeline-tab" data-filter="failed" onclick="filterTimeline('failed')">Failed</button>
+    </div>
+
+    <!-- Timeline Container -->
+    <div id="timelineContainer" style="display: flex; flex-direction: column; gap: var(--space-4);">
+        <div style="text-align: center; padding: var(--space-8); color: var(--text-secondary);">
+            <p>Loading timeline...</p>
         </div>
     </div>
 </div>
+
+<style>
+.timeline-tab {
+    padding: var(--space-3) var(--space-6);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--text-secondary);
+    transition: all 0.2s;
+}
+
+.timeline-tab.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
+.timeline-tab:hover {
+    color: var(--primary-color);
+}
+
+.timeline-item {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-xl);
+    padding: var(--space-6);
+    transition: all 0.3s;
+    border-left: 4px solid transparent;
+}
+
+.timeline-item:hover {
+    box-shadow: var(--shadow-card);
+}
+
+.timeline-item.pending {
+    border-left-color: #3b82f6;
+}
+
+.timeline-item.completed {
+    border-left-color: #10b981;
+}
+
+.timeline-item.failed {
+    border-left-color: #ef4444;
+}
+
+.timeline-item.processing {
+    border-left-color: #f59e0b;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    font-size: var(--font-sm);
+    font-weight: 600;
+}
+
+.status-badge.pending {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.status-badge.completed {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-badge.failed {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.status-badge.processing {
+    background: #fef3c7;
+    color: #92400e;
+}
+</style>
+
+<div class="modal-overlay" id="automationModal" style="display: none;">
+    <div class="modal modal-large" style="max-width: 900px;">
+        <div class="modal-header">
+            <h2 class="modal-title">Automation Wizard</h2>
+            <button class="modal-close" onclick="closeAutomationModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <!-- Step Indicator -->
+            <div style="display: flex; justify-content: space-between; margin-bottom: var(--space-8); padding: 0 var(--space-4);">
+                <div id="step1Indicator" class="wizard-step active">
+                    <div class="step-number">1</div>
+                    <div class="step-label">Brand Info</div>
+                </div>
+                <div id="step2Indicator" class="wizard-step">
+                    <div class="step-number">2</div>
+                    <div class="step-label">Content Strategy</div>
+                </div>
+                <div id="step3Indicator" class="wizard-step">
+                    <div class="step-number">3</div>
+                    <div class="step-label">Schedule</div>
+                </div>
+                <div id="step4Indicator" class="wizard-step">
+                    <div class="step-number">4</div>
+                    <div class="step-label">Review Plan</div>
+                </div>
+            </div>
+
+            <form id="automationWizardForm">
+                <!-- Step 1: Brand Information -->
+                <div id="wizardStep1" class="wizard-panel active">
+                    <div class="alert alert-info">
+                        <div>
+                            <strong>Brand Information</strong>
+                            <p>Tell us about your brand to generate consistent content</p>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label form-label-required">Brand Name</label>
+                        <input type="text" class="form-input" id="brandName" placeholder="e.g., CurlyWave" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Brand Description</label>
+                        <textarea class="form-textarea" id="brandDescription" placeholder="What does your brand do?"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Target Audience</label>
+                        <input type="text" class="form-input" id="targetAudience" placeholder="e.g., Young professionals, 25-35" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Color Palette</label>
+                        <input type="text" class="form-input" id="colorPalette" placeholder="e.g., Silver, Blue, White" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Brand Style</label>
+                        <select class="form-input" id="brandStyle">
+                            <option value="modern">Modern</option>
+                            <option value="vintage">Vintage</option>
+                            <option value="minimalist">Minimalist</option>
+                            <option value="bold">Bold</option>
+                            <option value="elegant">Elegant</option>
+                            <option value="playful">Playful</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-primary btn-block btn-lg" onclick="nextWizardStep()">Next Step</button>
+                </div>
+
+                <!-- Step 2: Content Strategy -->
+                <div id="wizardStep2" class="wizard-panel">
+                    <div class="alert alert-info">
+                        <div>
+                            <strong>Content Strategy</strong>
+                            <p>Define what type of content you want to post</p>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label form-label-required">Content Type</label>
+                        <select class="form-input" id="contentType" required>
+                            <option value="product">Product Showcase</option>
+                            <option value="promotional">Promotional</option>
+                            <option value="educational">Educational</option>
+                            <option value="lifestyle">Lifestyle</option>
+                            <option value="testimonial">Testimonial</option>
+                            <option value="behind_the_scenes">Behind the Scenes</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label form-label-required">Content Description</label>
+                        <textarea class="form-textarea" id="contentDescription" placeholder="What should the posts be about?" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label form-label-required">Select Platforms</label>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-2);">
+                            <label style="display: flex; align-items: center; gap: var(--space-2); cursor: pointer;">
+                                <input type="checkbox" id="platformInstagram" value="instagram" />
+                                <span>Instagram</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: var(--space-2); cursor: pointer;">
+                                <input type="checkbox" id="platformTwitter" value="twitter" />
+                                <span>Twitter</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: var(--space-2); cursor: pointer;">
+                                <input type="checkbox" id="platformLinkedIn" value="linkedin" />
+                                <span>LinkedIn</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: var(--space-2); cursor: pointer;">
+                                <input type="checkbox" id="platformFacebook" value="facebook" />
+                                <span>Facebook</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: var(--space-2);">
+                        <button type="button" class="btn btn-secondary btn-lg" style="flex: 1;" onclick="previousWizardStep()">Back</button>
+                        <button type="button" class="btn btn-primary btn-lg" style="flex: 1;" onclick="nextWizardStep()">Next Step</button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Schedule Configuration -->
+                <div id="wizardStep3" class="wizard-panel">
+                    <div class="alert alert-info">
+                        <div>
+                            <strong>Schedule Configuration</strong>
+                            <p>Configure when and how often to post</p>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4);">
+                        <div class="form-group">
+                            <label class="form-label form-label-required">Start Date</label>
+                            <input type="date" class="form-input" id="startDate" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label form-label-required">End Date</label>
+                            <input type="date" class="form-input" id="endDate" required />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label form-label-required">Posts Per Day</label>
+                        <input type="number" class="form-input" id="postsPerDay" min="1" max="10" value="1" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label form-label-required">Posting Times</label>
+                        <div id="postingTimesContainer">
+                            <input type="time" class="form-input" id="postingTime1" value="09:00" style="margin-bottom: var(--space-2);" />
+                        </div>
+                        <button type="button" class="btn btn-secondary" onclick="addPostingTime()">+ Add Time Slot</button>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Timezone</label>
+                        <select class="form-input" id="timezone">
+                            <option value="Asia/Kolkata" selected>India Standard Time (IST)</option>
+                            <option value="UTC">UTC</option>
+                            <option value="America/New_York">Eastern Time (ET)</option>
+                            <option value="America/Chicago">Central Time (CT)</option>
+                            <option value="America/Denver">Mountain Time (MT)</option>
+                            <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                            <option value="Europe/London">London (GMT)</option>
+                            <option value="Europe/Paris">Paris (CET)</option>
+                            <option value="Asia/Tokyo">Tokyo (JST)</option>
+                            <option value="Asia/Shanghai">Shanghai (CST)</option>
+                            <option value="Asia/Dubai">Dubai (GST)</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: var(--space-2);">
+                        <button type="button" class="btn btn-secondary btn-lg" style="flex: 1;" onclick="previousWizardStep()">Back</button>
+                        <button type="button" class="btn btn-primary btn-lg" style="flex: 1;" onclick="generateAutomationPlan()">Generate Plan</button>
+                    </div>
+                </div>
+
+                <!-- Step 4: Review & Activate Plan -->
+                <div id="wizardStep4" class="wizard-panel">
+                    <div class="alert alert-info">
+                        <div>
+                            <strong>Review Your Plan</strong>
+                            <p>Review and edit the AI-generated content plan before activating</p>
+                        </div>
+                    </div>
+                    <div id="planSummary" style="margin-bottom: var(--space-4);"></div>
+                    <div id="planItemsContainer" style="max-height: 400px; overflow-y: auto;"></div>
+                    <div style="display: flex; gap: var(--space-2); margin-top: var(--space-4);">
+                        <button type="button" class="btn btn-secondary btn-lg" style="flex: 1;" onclick="previousWizardStep()">Back</button>
+                        <button type="button" class="btn btn-success btn-lg" style="flex: 2;" onclick="activateAutomationPlan()">Activate Plan</button>
+                    </div>
+                </div>
+            </form>
+
+            <div id="automationWizardLoading" style="display: none; text-align: center; padding: var(--space-8);">
+                <div class="spinner"></div>
+                <p style="margin-top: var(--space-4);">Generating your content plan...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.wizard-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    opacity: 0.5;
+    transition: opacity 0.3s;
+}
+
+.wizard-step.active {
+    opacity: 1;
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--border-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    transition: background 0.3s;
+}
+
+.wizard-step.active .step-number {
+    background: var(--primary-gradient);
+    color: white;
+}
+
+.step-label {
+    font-size: var(--font-sm);
+    font-weight: 500;
+}
+
+.wizard-panel {
+    display: none;
+}
+
+.wizard-panel.active {
+    display: block;
+    animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.plan-item-card {
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    margin-bottom: var(--space-3);
+    background: var(--bg-primary);
+}
+
+.plan-item-card:hover {
+    border-color: var(--primary-color);
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid var(--border-light);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background: var(--primary-gradient);
+    color: white;
+    border-radius: var(--radius-md);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+</style>
 
 <!-- Auth Modal -->
 <div class="auth-modal-overlay" id="authModal" style="display: none;">
@@ -1189,26 +1526,387 @@
         } catch (error) { alert('Error uploading to YouTube: ' + error.message); }
     }
 
-    async function submitAutomation(event) {
-        event.preventDefault();
+    // Automation Wizard State
+    let currentWizardStep = 1;
+    let generatedPlanId = null;
+    let generatedPlanData = null;
+
+    function nextWizardStep() {
+        // Validate current step
+        if (currentWizardStep === 1) {
+            const brandName = document.getElementById('brandName').value.trim();
+            if (!brandName) {
+                alert('Please enter your brand name');
+                return;
+            }
+        } else if (currentWizardStep === 2) {
+            const contentDescription = document.getElementById('contentDescription').value.trim();
+            const platforms = getSelectedPlatforms();
+            if (!contentDescription) {
+                alert('Please provide a content description');
+                return;
+            }
+            if (platforms.length === 0) {
+                alert('Please select at least one platform');
+                return;
+            }
+        }
+
+        currentWizardStep++;
+        updateWizardUI();
+    }
+
+    function previousWizardStep() {
+        if (currentWizardStep > 1) {
+            currentWizardStep--;
+            updateWizardUI();
+        }
+    }
+
+    function updateWizardUI() {
+        // Hide all panels
+        for (let i = 1; i <= 4; i++) {
+            document.getElementById(`wizardStep${i}`).classList.remove('active');
+            document.getElementById(`step${i}Indicator`).classList.remove('active');
+        }
+
+        // Show current panel
+        document.getElementById(`wizardStep${currentWizardStep}`).classList.add('active');
+        document.getElementById(`step${currentWizardStep}Indicator`).classList.add('active');
+    }
+
+    function getSelectedPlatforms() {
         const platforms = [];
-        if (document.getElementById('autoInstagram').checked) platforms.push('instagram');
-        if (document.getElementById('autoTwitter').checked) platforms.push('twitter');
-        if (document.getElementById('autoLinkedIn').checked) platforms.push('linkedin');
-        if (document.getElementById('autoFacebook').checked) platforms.push('facebook');
-        if (platforms.length === 0) { alert('Please select at least one platform'); return; }
+        if (document.getElementById('platformInstagram').checked) platforms.push('instagram');
+        if (document.getElementById('platformTwitter').checked) platforms.push('twitter');
+        if (document.getElementById('platformLinkedIn').checked) platforms.push('linkedin');
+        if (document.getElementById('platformFacebook').checked) platforms.push('facebook');
+        return platforms;
+    }
+
+    function getPostingTimes() {
+        const times = [];
+        const container = document.getElementById('postingTimesContainer');
+        const inputs = container.querySelectorAll('input[type="time"]');
+        inputs.forEach(input => {
+            if (input.value) times.push(input.value);
+        });
+        return times;
+    }
+
+    let postingTimeCount = 1;
+    function addPostingTime() {
+        postingTimeCount++;
+        const container = document.getElementById('postingTimesContainer');
+        const input = document.createElement('input');
+        input.type = 'time';
+        input.className = 'form-input';
+        input.id = `postingTime${postingTimeCount}`;
+        input.style.marginBottom = 'var(--space-2)';
+        input.value = '15:00';
+        container.appendChild(input);
+    }
+
+    async function generateAutomationPlan() {
+        // Validate dates
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        const postingTimes = getPostingTimes();
+
+        if (!startDate || !endDate) {
+            alert('Please select start and end dates');
+            return;
+        }
+
+        if (postingTimes.length === 0) {
+            alert('Please add at least one posting time');
+            return;
+        }
+
+        // Show loading
+        document.getElementById('automationWizardForm').style.display = 'none';
+        document.getElementById('automationWizardLoading').style.display = 'block';
 
         try {
             const token = getAuthToken();
-            const response = await fetch('/auto-generate-and-post', {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-                body: JSON.stringify({ topic: document.getElementById('automationTopic').value, count: parseInt(document.getElementById('automationCount').value), platforms: platforms })
+            const planData = {
+                brand_name: document.getElementById('brandName').value,
+                brand_description: document.getElementById('brandDescription').value,
+                target_audience: document.getElementById('targetAudience').value,
+                color_palette: document.getElementById('colorPalette').value,
+                brand_style: document.getElementById('brandStyle').value,
+                content_type: document.getElementById('contentType').value,
+                content_description: document.getElementById('contentDescription').value,
+                start_date: new Date(startDate + 'T00:00:00').toISOString(),
+                end_date: new Date(endDate + 'T23:59:59').toISOString(),
+                posts_per_day: parseInt(document.getElementById('postsPerDay').value),
+                posting_times: postingTimes,
+                timezone: document.getElementById('timezone').value,
+                platforms: getSelectedPlatforms()
+            };
+
+            const response = await fetch('/automation-plans/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(planData)
             });
+
             const result = await response.json();
-            if (response.ok) { alert('Automation started successfully!'); closeAutomationModal(); document.getElementById('automationForm').reset(); } else { alert('Error: ' + (result.detail || 'Failed to start automation')); }
-        } catch (error) { alert('Error starting automation: ' + error.message); }
+
+            if (response.ok && result.success) {
+                generatedPlanId = result.plan_id;
+                generatedPlanData = result;
+                displayGeneratedPlan(result);
+                currentWizardStep = 4;
+                updateWizardUI();
+            } else {
+                alert('Failed to generate plan: ' + (result.detail || result.error || 'Unknown error'));
+            }
+        } catch (error) {
+            alert('Error generating plan: ' + error.message);
+        } finally {
+            document.getElementById('automationWizardForm').style.display = 'block';
+            document.getElementById('automationWizardLoading').style.display = 'none';
+        }
     }
+
+    function displayGeneratedPlan(planData) {
+        const summaryDiv = document.getElementById('planSummary');
+        summaryDiv.innerHTML = `
+            <div style="background: var(--bg-secondary); padding: var(--space-4); border-radius: var(--radius-lg);">
+                <h3 style="margin-bottom: var(--space-2);">${planData.plan_summary || 'Content Plan'}</h3>
+                <p><strong>Total Posts:</strong> ${planData.total_posts}</p>
+            </div>
+        `;
+
+        const itemsContainer = document.getElementById('planItemsContainer');
+        itemsContainer.innerHTML = '';
+
+        planData.items.forEach((item, index) => {
+            const itemDate = new Date(item.scheduled_datetime);
+            const card = document.createElement('div');
+            card.className = 'plan-item-card';
+            card.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: var(--space-2);">
+                    <div>
+                        <strong>Post ${index + 1}</strong>
+                        <div style="font-size: var(--font-sm); color: var(--text-secondary);">
+                            ${itemDate.toLocaleDateString()} at ${itemDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: var(--space-1);">
+                        ${item.platforms.map(p => `<span class="badge">${p}</span>`).join('')}
+                    </div>
+                </div>
+                <div style="margin-bottom: var(--space-2);">
+                    <strong style="font-size: var(--font-sm);">Image:</strong>
+                    <div style="font-size: var(--font-sm); color: var(--text-secondary);">${item.image_description}</div>
+                </div>
+                <div>
+                    <strong style="font-size: var(--font-sm);">Caption:</strong>
+                    <div style="font-size: var(--font-sm); color: var(--text-secondary);">${item.caption}</div>
+                </div>
+            `;
+            itemsContainer.appendChild(card);
+        });
+    }
+
+    async function activateAutomationPlan() {
+        if (!generatedPlanId) {
+            alert('No plan to activate');
+            return;
+        }
+
+        if (!confirm('Are you sure you want to activate this automation plan? Posts will be automatically scheduled and published.')) {
+            return;
+        }
+
+        try {
+            const token = getAuthToken();
+            const response = await fetch(`/automation-plans/${generatedPlanId}/activate`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                alert(`Success! ${result.scheduled_count} posts have been scheduled.`);
+                closeAutomationModal();
+                resetWizard();
+            } else {
+                alert('Failed to activate plan: ' + (result.detail || 'Unknown error'));
+            }
+        } catch (error) {
+            alert('Error activating plan: ' + error.message);
+        }
+    }
+
+    function resetWizard() {
+        currentWizardStep = 1;
+        generatedPlanId = null;
+        generatedPlanData = null;
+        document.getElementById('automationWizardForm').reset();
+        postingTimeCount = 1;
+        document.getElementById('postingTimesContainer').innerHTML = `
+            <input type="time" class="form-input" id="postingTime1" value="09:00" style="margin-bottom: var(--space-2);" />
+        `;
+        updateWizardUI();
+    }
+
+    // Override the close function to reset wizard
+    const originalCloseAutomationModal = closeAutomationModal;
+    closeAutomationModal = function() {
+        resetWizard();
+        originalCloseAutomationModal();
+    };
+
+    // ============ TIMELINE FUNCTIONS ============
+    let allTimelinePosts = [];
+    let currentFilter = 'all';
+
+    async function loadTimeline() {
+        try {
+            const token = getAuthToken();
+            const response = await fetch('/automation-timeline', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                allTimelinePosts = result.posts;
+                displayTimeline(allTimelinePosts);
+            } else {
+                document.getElementById('timelineContainer').innerHTML = `
+                    <div style="text-align: center; padding: var(--space-8); color: var(--text-secondary);">
+                        <p>Failed to load timeline</p>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            console.error('Error loading timeline:', error);
+            document.getElementById('timelineContainer').innerHTML = `
+                <div style="text-align: center; padding: var(--space-8); color: var(--text-secondary);">
+                    <p>Error loading timeline</p>
+                </div>
+            `;
+        }
+    }
+
+    function displayTimeline(posts) {
+        const container = document.getElementById('timelineContainer');
+
+        if (!posts || posts.length === 0) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: var(--space-8); color: var(--text-secondary);">
+                    <p>No scheduled posts yet. Create an automation plan to get started!</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = posts.map(post => {
+            const scheduleDate = new Date(post.schedule_time);
+            const now = new Date();
+            const isPast = scheduleDate < now;
+            const timeString = scheduleDate.toLocaleString('en-IN', {
+                dateStyle: 'medium',
+                timeStyle: 'short',
+                timeZone: 'Asia/Kolkata'
+            });
+
+            const statusIcon = {
+                'pending': '⏰',
+                'processing': '⚙️',
+                'completed': '✅',
+                'failed': '❌',
+                'retry': '🔄'
+            };
+
+            return `
+                <div class="timeline-item ${post.status}">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: var(--space-3);">
+                        <div style="flex: 1;">
+                            <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-2);">
+                                <span class="badge">${post.platform}</span>
+                                <span class="status-badge ${post.status}">
+                                    ${statusIcon[post.status] || '📝'} ${post.status}
+                                </span>
+                                ${post.plan_info ? `<span style="font-size: var(--font-sm); color: var(--text-secondary);">Plan: ${post.plan_info.brand_name}</span>` : ''}
+                            </div>
+                            <div style="font-size: var(--font-sm); color: var(--text-secondary); margin-bottom: var(--space-2);">
+                                ⏱️ Scheduled: ${timeString} (IST)
+                                ${post.posted_at ? `<br/>✅ Posted: ${new Date(post.posted_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' })}` : ''}
+                            </div>
+                        </div>
+                        ${post.image_url || post.image_filename ? `
+                            <img src="${post.image_url || '/images/' + post.image_filename}"
+                                 style="width: 80px; height: 80px; object-fit: cover; border-radius: var(--radius-lg);"
+                                 onerror="this.style.display='none'"/>
+                        ` : ''}
+                    </div>
+                    <div style="color: var(--text-primary); margin-bottom: var(--space-2);">
+                        ${post.caption}
+                    </div>
+                    ${post.last_error ? `
+                        <div style="background: #fee2e2; color: #991b1b; padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); font-size: var(--font-sm); margin-top: var(--space-2);">
+                            ⚠️ Error: ${post.last_error}
+                        </div>
+                    ` : ''}
+                    ${post.attempts > 0 ? `
+                        <div style="font-size: var(--font-sm); color: var(--text-secondary); margin-top: var(--space-2);">
+                            Attempts: ${post.attempts}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }).join('');
+    }
+
+    function filterTimeline(filter) {
+        currentFilter = filter;
+
+        // Update active tab
+        document.querySelectorAll('.timeline-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+
+        // Filter posts
+        let filteredPosts = allTimelinePosts;
+
+        if (filter === 'pending') {
+            filteredPosts = allTimelinePosts.filter(p => p.status === 'pending' || p.status === 'retry');
+        } else if (filter === 'completed') {
+            filteredPosts = allTimelinePosts.filter(p => p.status === 'completed');
+        } else if (filter === 'failed') {
+            filteredPosts = allTimelinePosts.filter(p => p.status === 'failed');
+        }
+
+        displayTimeline(filteredPosts);
+    }
+
+    function refreshTimeline() {
+        loadTimeline();
+    }
+
+    // Load timeline on page load
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadTimeline);
+    } else {
+        loadTimeline();
+    }
+
+    // Auto-refresh timeline every 30 seconds
+    setInterval(loadTimeline, 30000);
 </script>
 
 {% endblock %}

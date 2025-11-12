@@ -28,7 +28,7 @@ class SchedulingService:
     """Manage creation and execution of scheduled social posts."""
 
     SUPPORTED_PLATFORMS = {"instagram", "twitter", "facebook", "linkedin", "youtube"}
-    DEFAULT_TIMEZONE = "UTC"
+    DEFAULT_TIMEZONE = "Asia/Kolkata"
     MAX_ATTEMPTS = 3
     def _get_agent(self, platform: str):
         platform_name = (platform or "instagram").strip().lower()
@@ -82,6 +82,10 @@ class SchedulingService:
 
     @staticmethod
     def ensure_future(schedule_time_utc: datetime, grace_seconds: int = 5) -> None:
+        # Ensure both datetimes are timezone-aware for comparison
+        if schedule_time_utc.tzinfo is None:
+            raise ValueError("schedule_time must be timezone-aware")
+
         now = datetime.now(timezone.utc)
         if schedule_time_utc <= now + timedelta(seconds=grace_seconds):
             raise ValueError("scheduled_time must be at least 5 seconds in the future")
@@ -109,7 +113,9 @@ class SchedulingService:
         if not caption:
             raise ValueError("caption is required")
 
-        if not image_url and not image_filename:
+        # Allow no image if this is an automation plan (will be generated later)
+        is_automation = metadata and metadata.get('source') == 'automation_plan'
+        if not image_url and not image_filename and not (is_automation and topic_id):
             raise ValueError("Either image_url or image_filename is required")
 
         metadata_payload = dict(metadata or {})
@@ -251,7 +257,7 @@ class SchedulingService:
 
         # Check if the post needs image generation (topic_id exists but no image_filename)
         needs_image_generation = scheduled_post.topic_id and not scheduled_post.image_filename
-        
+
         if needs_image_generation:
             # Get the topic to generate the image
             topic = db.query(Topic).filter(Topic.id == scheduled_post.topic_id).first()
@@ -259,14 +265,30 @@ class SchedulingService:
                 # Generate image based on the topic
                 from services.ad_generation_service import AdGenerationService
                 ad_service = AdGenerationService()
-                result = ad_service.generate_advertisement(topic.textual_description, "", "")
-                
+
+                # Check if this is from an automation plan with image_description
+                metadata = scheduled_post.job_metadata or {}
+                image_description = metadata.get('image_description', '')
+                brand_context = metadata.get('brand_context', '')
+
+                # Use short image description if available, otherwise use topic description
+                if image_description:
+                    # For automation plans, use the short image description
+                    # Combine brand context for better generation
+                    generation_prompt = f"{image_description}"
+                    if brand_context:
+                        generation_prompt += f", {brand_context}"
+                    result = ad_service.generate_advertisement(generation_prompt, "", "")
+                else:
+                    # Fallback to topic description
+                    result = ad_service.generate_advertisement(topic.textual_description, "", "")
+
                 if not result.get('success') or not result.get('final_image_path'):
                     raise SchedulingError(f"Failed to generate image for topic: {topic.textual_description}")
-                
+
                 # Extract just the filename from the full path
                 image_filename = os.path.basename(result['final_image_path'])
-                
+
                 # Update the scheduled post with the generated image
                 scheduled_post.image_filename = image_filename
                 db.commit()
@@ -363,15 +385,23 @@ class SchedulingService:
 
         with SessionLocal() as db:
             now = datetime.now(timezone.utc)
+            # Start processing 3 minutes before scheduled time to allow for image generation
+            pre_generation_window = now + timedelta(minutes=3)
+
+            print(f"[scheduler] Checking for due posts at {now.isoformat()}")
+            print(f"[scheduler] Pre-generation window: {pre_generation_window.isoformat()}")
+
             due_posts: List[ScheduledPost] = (
                 db.query(ScheduledPost)
                 .filter(ScheduledPost.status.in_(["pending", "retry"]))
-                .filter(ScheduledPost.schedule_time <= now)
+                .filter(ScheduledPost.schedule_time <= pre_generation_window)
                 .filter(or_(ScheduledPost.next_attempt_after == None, ScheduledPost.next_attempt_after <= now))
                 .order_by(ScheduledPost.schedule_time, ScheduledPost.id)
                 .limit(limit)
                 .all()
             )
+
+            print(f"[scheduler] Found {len(due_posts)} due posts")
 
             if not due_posts:
                 return summary
@@ -381,6 +411,7 @@ class SchedulingService:
             for scheduled_post in due_posts:
                 summary["processed"] += 1
                 platform = (scheduled_post.platform or "instagram").strip().lower()
+                print(f"[scheduler] Processing post {scheduled_post.id} for {platform} (scheduled: {scheduled_post.schedule_time})")
                 try:
                     if platform not in self.SUPPORTED_PLATFORMS:
                         raise SchedulingError("Unsupported platform", {"platform": platform})
@@ -390,6 +421,7 @@ class SchedulingService:
 
                     self._process_single_post(db, scheduled_post, agent_cache[platform])
                     summary["completed"] += 1
+                    print(f"[scheduler] Post {scheduled_post.id} completed successfully")
                 except SchedulingError as exc:
                     summary["failed"] += 1
                     self._handle_failure(db, scheduled_post, exc, exc.details)

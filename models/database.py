@@ -36,16 +36,16 @@ class User(Base):
 
 class Schedule(Base):
     __tablename__ = "schedules"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     name = Column(String, nullable=False)
     cron_expression = Column(String)
     scheduled_datetime = Column(DateTime(timezone=True))
-    timezone = Column(String, default="UTC")
+    timezone = Column(String, default="Asia/Kolkata")
     status = Column(String, default="active")  # active, paused, completed
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    
+
     # Relationships
     user = relationship("User", back_populates="schedules")
     topics = relationship("Topic", back_populates="schedule")
@@ -140,7 +140,7 @@ class ImageReview(Base):
     image_id = Column(Integer, ForeignKey("images.id"), nullable=False)
     
     # Review details
-    reviewer = Column(String, default="gemini-vision")
+    reviewer = Column(String, default="gemini-2.5-flash")
     
     # Scores (0-10)
     semantic_match_score = Column(Float)
@@ -179,7 +179,7 @@ class ScheduledPost(Base):
     caption = Column(Text, nullable=False)
     schedule_time = Column(DateTime(timezone=True), nullable=False)
     scheduled_for = Column(DateTime(timezone=True))  # Alternative column name from actual DB
-    timezone = Column(String, default="UTC")
+    timezone = Column(String, default="Asia/Kolkata")
     status = Column(String, default="pending")  # pending, processing, completed, failed, retry, cancelled
     platform = Column(String, default="instagram", server_default="instagram", nullable=False)
     attempts = Column(Integer, default=0)
@@ -200,23 +200,91 @@ class ScheduledPost(Base):
 
 class PostRecord(Base):
     __tablename__ = "post_records"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     topic_id = Column(Integer, ForeignKey("topics.id"), nullable=False)
     image_id = Column(Integer, ForeignKey("images.id"), nullable=False)
-    
+
     # Instagram posting details
     instagram_media_id = Column(String)
     instagram_container_id = Column(String)
     caption_used = Column(Text)
-    
+
     # Status
     posted_at = Column(DateTime(timezone=True))
     status = Column(String)  # posted, failed, pending
     error_message = Column(Text)
-    
+
     # Metadata
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class AutomationPlan(Base):
+    __tablename__ = "automation_plans"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+    # Brand Information
+    brand_name = Column(String, nullable=False)
+    brand_description = Column(Text)
+    target_audience = Column(Text)
+    color_palette = Column(String)  # JSON string or comma-separated
+    brand_style = Column(String)  # e.g., "modern", "vintage", "minimalist"
+
+    # Content Strategy
+    content_type = Column(String)  # e.g., "product", "promotional", "educational"
+    content_description = Column(Text)
+
+    # Scheduling Configuration
+    start_date = Column(DateTime(timezone=True))
+    end_date = Column(DateTime(timezone=True))
+    posts_per_day = Column(Integer, default=1)
+    posting_times = Column(JSON)  # Array of time strings like ["09:00", "15:00", "21:00"]
+    timezone = Column(String, default="Asia/Kolkata")
+
+    # Platform Selection
+    platforms = Column(JSON)  # Array of platforms like ["instagram", "twitter", "facebook"]
+
+    # AI Generated Plan
+    generated_plan = Column(JSON)  # Store the AI-generated content plan
+
+    # Status
+    status = Column(String, default="draft")  # draft, active, paused, completed, cancelled
+
+    # Metadata
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # Relationships
+    user = relationship("User")
+    plan_items = relationship("AutomationPlanItem", back_populates="plan")
+
+class AutomationPlanItem(Base):
+    __tablename__ = "automation_plan_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    plan_id = Column(Integer, ForeignKey("automation_plans.id"), nullable=False)
+
+    # Content Details
+    scheduled_datetime = Column(DateTime(timezone=True), nullable=False)
+    image_description = Column(String, nullable=False)  # Short description
+    caption = Column(Text, nullable=False)
+    platforms = Column(JSON)  # Platforms for this specific item
+
+    # Generation Status
+    image_url = Column(String)
+    image_filename = Column(String)
+    status = Column(String, default="pending")  # pending, generated, scheduled, posted, failed
+
+    # Linked scheduled post
+    scheduled_post_id = Column(Integer, ForeignKey("scheduled_posts.id"), nullable=True)
+
+    # Metadata
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # Relationships
+    plan = relationship("AutomationPlan", back_populates="plan_items")
 
 # Create tables
 def create_tables():
