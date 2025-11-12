@@ -391,17 +391,44 @@ class SchedulingService:
             print(f"[scheduler] Checking for due posts at {now.isoformat()}")
             print(f"[scheduler] Pre-generation window: {pre_generation_window.isoformat()}")
 
-            due_posts: List[ScheduledPost] = (
-                db.query(ScheduledPost)
-                .filter(ScheduledPost.status.in_(["pending", "retry"]))
-                .filter(ScheduledPost.schedule_time <= pre_generation_window)
-                .filter(or_(ScheduledPost.next_attempt_after == None, ScheduledPost.next_attempt_after <= now))
-                .order_by(ScheduledPost.schedule_time, ScheduledPost.id)
-                .limit(limit)
-                .all()
-            )
+            # Get all pending posts - we'll filter manually to handle timezone issues
+            from dateutil import tz as dateutil_tz
 
-            print(f"[scheduler] Found {len(due_posts)} due posts")
+            all_pending = db.query(ScheduledPost).filter(
+                ScheduledPost.status.in_(["pending", "retry"])
+            ).order_by(ScheduledPost.schedule_time).all()
+
+            print(f"[scheduler] Total pending/retry posts: {len(all_pending)}")
+
+            # Manually filter posts that are due, handling timezone-naive datetimes
+            due_posts = []
+            for post in all_pending:
+                if not post.schedule_time:
+                    continue
+
+                # Make schedule_time timezone-aware if it's naive
+                schedule_time = post.schedule_time
+                if schedule_time.tzinfo is None:
+                    # Assume it's in the post's timezone (default IST)
+                    post_tz = dateutil_tz.gettz(post.timezone or 'Asia/Kolkata')
+                    schedule_time = schedule_time.replace(tzinfo=post_tz)
+                    print(f"[scheduler]   Post {post.id}: scheduled={post.schedule_time} → {schedule_time.isoformat()} (added {post.timezone} tz)")
+                else:
+                    print(f"[scheduler]   Post {post.id}: scheduled={schedule_time.isoformat()}")
+
+                # Check if due (within pre-generation window)
+                if schedule_time <= pre_generation_window:
+                    # Check retry logic
+                    if post.next_attempt_after is None or post.next_attempt_after <= now:
+                        due_posts.append(post)
+                        print(f"[scheduler]     → DUE! Will process this post")
+                    else:
+                        print(f"[scheduler]     → Waiting for retry (next attempt: {post.next_attempt_after})")
+
+                if len(due_posts) >= limit:
+                    break
+
+            print(f"[scheduler] Found {len(due_posts)} due posts after filtering")
 
             if not due_posts:
                 return summary

@@ -2308,6 +2308,113 @@ async def get_automation_timeline(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/debug/scheduled-posts")
+async def debug_scheduled_posts(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Debug endpoint to check scheduled posts in database
+    """
+    from datetime import timezone as dt_timezone
+    from dateutil import tz as dateutil_tz
+
+    posts = db.query(ScheduledPost).filter(
+        ScheduledPost.user_id == current_user.id,
+        ScheduledPost.status.in_(["pending", "retry"])
+    ).order_by(ScheduledPost.schedule_time).all()
+
+    now_utc = datetime.now(dt_timezone.utc)
+    now_ist = datetime.now(dateutil_tz.gettz('Asia/Kolkata'))
+
+    debug_info = {
+        'current_time_utc': now_utc.isoformat(),
+        'current_time_ist': now_ist.isoformat(),
+        'total_pending_posts': len(posts),
+        'posts': []
+    }
+
+    for post in posts:
+        post_info = {
+            'id': post.id,
+            'schedule_time': post.schedule_time.isoformat() if post.schedule_time else None,
+            'schedule_time_tzinfo': str(post.schedule_time.tzinfo) if post.schedule_time and post.schedule_time.tzinfo else 'None (naive)',
+            'timezone': post.timezone,
+            'status': post.status,
+            'platform': post.platform,
+            'caption_preview': post.caption[:50] + '...' if len(post.caption) > 50 else post.caption,
+        }
+
+        # Check if due
+        if post.schedule_time:
+            if post.schedule_time.tzinfo is None:
+                post_info['error'] = 'Schedule time has no timezone info (naive datetime)'
+            else:
+                time_until = post.schedule_time - now_utc
+                post_info['time_until_seconds'] = time_until.total_seconds()
+                post_info['is_past_due'] = time_until.total_seconds() < 0
+                post_info['is_within_3min'] = time_until.total_seconds() < 180
+
+        debug_info['posts'].append(post_info)
+
+    return JSONResponse(content=debug_info)
+
+
+@app.get("/test-immediate-post")
+async def test_immediate_post(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Create a test post scheduled for 2 minutes from now to test the scheduler
+    """
+    from datetime import timezone as dt_timezone
+    from dateutil import tz as dateutil_tz
+
+    # Create a test post scheduled for 2 minutes from now
+    now_ist = datetime.now(dateutil_tz.gettz('Asia/Kolkata'))
+    schedule_time = now_ist + timedelta(minutes=2)
+
+    # Create topic
+    topic = Topic(
+        user_id=current_user.id,
+        topic_title="TEST POST - Scheduler Verification",
+        textual_description="This is a test to verify the scheduler is working",
+        status="scheduled"
+    )
+    db.add(topic)
+    db.commit()
+    db.refresh(topic)
+
+    # Create scheduled post
+    test_post = ScheduledPost(
+        user_id=current_user.id,
+        topic_id=topic.id,
+        caption="🧪 TEST POST: This is a scheduler test post. Scheduled for " + schedule_time.strftime("%I:%M %p IST"),
+        schedule_time=schedule_time,
+        timezone="Asia/Kolkata",
+        platform="instagram",
+        status="pending",
+        job_metadata={
+            "source": "test",
+            "test": True
+        }
+    )
+    db.add(test_post)
+    db.commit()
+    db.refresh(test_post)
+
+    return JSONResponse(content={
+        'success': True,
+        'message': 'Test post created!',
+        'post_id': test_post.id,
+        'scheduled_for': schedule_time.isoformat(),
+        'scheduled_for_ist': schedule_time.strftime("%I:%M:%S %p IST on %B %d, %Y"),
+        'current_time_ist': now_ist.isoformat(),
+        'note': 'This post should be processed within 2-5 minutes. Watch the terminal logs!'
+    })
+
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
