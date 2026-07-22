@@ -14,7 +14,7 @@ sys.path.insert(0, str(project_root))
 def test_linkedin_agent_import():
     \"\"\"Test that LinkedInAgent can be imported\"\"\"
     try:
-        from linkedin_agent import LinkedInAgent
+        from agents.linkedin_agent import LinkedInAgent
         print(\"[PASS] LinkedInAgent imported successfully\")
         return True
     except ImportError as e:
@@ -27,7 +27,7 @@ def test_linkedin_agent_import():
 def test_linkedin_agent_functionality():
     \"\"\"Test LinkedInAgent basic functionality\"\"\"
     try:
-        from linkedin_agent import LinkedInAgent
+        from agents.linkedin_agent import LinkedInAgent
         
         # Check if required environment variables are set
         required_vars = [

@@ -12,7 +12,7 @@ print("Twitter functionality verification:")
 print("1. TwitterAgent class exists: ", end="")
 
 try:
-    from twitter_agent import TwitterAgent
+    from agents.twitter_agent import TwitterAgent
     print("YES")
     print(f"   - Character limit: {TwitterAgent.TWEET_CHARACTER_LIMIT}")
     print(f"   - Has post_to_twitter method: {hasattr(TwitterAgent, 'post_to_twitter')}")

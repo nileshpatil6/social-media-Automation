@@ -41,7 +41,7 @@ def test_imports():
         
         # Test Instagram agent
         try:
-            from instagram_agent import InstagramAgent
+            from agents.instagram_agent import InstagramAgent
             print("✅ Instagram agent imported successfully")
         except ValueError as e:
             print(f"⚠️  Instagram agent import warning: {e}")

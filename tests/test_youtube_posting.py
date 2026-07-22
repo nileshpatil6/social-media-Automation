@@ -14,7 +14,7 @@ sys.path.insert(0, str(project_root))
 def test_youtube_agent_import():
     \"\"\"Test that YouTubeAgent can be imported\"\"\"
     try:
-        from youtube_agent import YouTubeAgent
+        from agents.youtube_agent import YouTubeAgent
         print(\"[PASS] YouTubeAgent imported successfully\")
         return True
     except ImportError as e:
@@ -27,7 +27,7 @@ def test_youtube_agent_import():
 def test_youtube_agent_functionality():
     """Test YouTubeAgent basic functionality"""
     try:
-        from youtube_agent import YouTubeAgent
+        from agents.youtube_agent import YouTubeAgent
         
         # Check if required environment variables are set
         client_secrets = os.getenv('YOUTUBE_CLIENT_SECRETS_FILE')

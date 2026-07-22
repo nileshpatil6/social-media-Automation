@@ -4,7 +4,7 @@ Simple test to verify TwitterAgent import
 """
 
 try:
-    from twitter_agent import TwitterAgent
+    from agents.twitter_agent import TwitterAgent
     print("[PASS] TwitterAgent imported successfully")
 except ImportError as e:
     print(f"[FAIL] Failed to import TwitterAgent: {e}")

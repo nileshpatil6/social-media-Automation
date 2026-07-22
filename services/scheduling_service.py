@@ -9,11 +9,11 @@ from dateutil import parser, tz
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from instagram_agent import InstagramAgent
-from twitter_agent import TwitterAgent
-from facebook_agent import FacebookAgent
-from linkedin_agent import LinkedInAgent
-from youtube_agent import YouTubeAgent
+from agents.instagram_agent import InstagramAgent
+from agents.twitter_agent import TwitterAgent
+from agents.facebook_agent import FacebookAgent
+from agents.linkedin_agent import LinkedInAgent
+from agents.youtube_agent import YouTubeAgent
 from models.database import ScheduledPost, SessionLocal, Topic
 from services.image_upload_service import ImageUploadService
 

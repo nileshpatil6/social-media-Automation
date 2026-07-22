@@ -19,7 +19,7 @@ def test_instagram_direct():
     print("=" * 40)
     
     try:
-        from instagram_agent import InstagramAgent
+        from agents.instagram_agent import InstagramAgent
         
         agent = InstagramAgent()
         print("✅ Instagram agent initialized")

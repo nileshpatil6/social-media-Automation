@@ -3,7 +3,7 @@
 Test script to verify LinkedIn media upload fix
 \"\"\"
 import os
-from linkedin_agent import LinkedInAgent
+from agents.linkedin_agent import LinkedInAgent
 import tempfile
 
 def test_linkedin_agent():

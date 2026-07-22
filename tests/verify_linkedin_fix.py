@@ -3,7 +3,7 @@
 Verification script for the LinkedIn agent service relationship fix
 \"\"\"
 import json
-from linkedin_agent import LinkedInAgent
+from agents.linkedin_agent import LinkedInAgent
 
 def verify_fix():
     print(\"🔍 Verifying LinkedIn agent service relationship fix...\")

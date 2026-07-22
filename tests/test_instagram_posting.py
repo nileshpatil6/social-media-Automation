@@ -56,7 +56,7 @@ def test_instagram_agent():
     print("\n🧪 Testing Instagram Agent...")
     
     try:
-        from instagram_agent import InstagramAgent
+        from agents.instagram_agent import InstagramAgent
         
         # Test initialization
         agent = InstagramAgent()

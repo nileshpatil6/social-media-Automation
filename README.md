@@ -82,8 +82,8 @@ cp .env.example .env
 ```bash
 python app.py
 # or use the quick start script
-chmod +x run.sh
-./run.sh
+chmod +x scripts/run.sh
+./scripts/run.sh
 ```
 
 4. **Access the Interface:**
@@ -250,7 +250,7 @@ constraints = """
 5. **"Facebook Posting Failed" - (#200) This app is not allowed to publish to other users' timelines**
    - This error occurs when your Facebook app doesn't have the required permissions
    - You need a Page Access Token with `pages_manage_posts` permission
-   - See FACEBOOK_PERMISSIONS_FIX.md for detailed troubleshooting steps
+   - See docs/FACEBOOK_PERMISSIONS_FIX.md for detailed troubleshooting steps
 
 ### Debug Mode
 ```bash

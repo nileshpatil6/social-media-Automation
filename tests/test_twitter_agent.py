@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from twitter_agent import TwitterAgent
+from agents.twitter_agent import TwitterAgent
 
 
 class MockResponse:

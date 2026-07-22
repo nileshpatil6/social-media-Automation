@@ -14,7 +14,7 @@ sys.path.insert(0, str(project_root))
 def test_import():
     \"\"\"Test that TwitterAgent can be imported\"\"\"
     try:
-        from twitter_agent import TwitterAgent
+        from agents.twitter_agent import TwitterAgent
         print(\"[PASS] TwitterAgent imported successfully\")
         return True
     except ImportError as e:
@@ -27,7 +27,7 @@ def test_import():
 def test_basic_functionality():
     \"\"\"Test basic TwitterAgent functionality\"\"\"
     try:
-        from twitter_agent import TwitterAgent
+        from agents.twitter_agent import TwitterAgent
         
         # Test character limit constant
         if hasattr(TwitterAgent, 'TWEET_CHARACTER_LIMIT'):

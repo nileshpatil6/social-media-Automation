@@ -3,7 +3,7 @@
 Test script to verify the updated LinkedIn agent
 """
 import os
-from linkedin_agent import LinkedInAgent
+from agents.linkedin_agent import LinkedInAgent
 
 def test_linkedin_agent():
     """Test that the LinkedIn agent can be initialized with the new variables"""

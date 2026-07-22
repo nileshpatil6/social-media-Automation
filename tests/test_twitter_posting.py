@@ -13,7 +13,7 @@ from pathlib import Path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-from twitter_agent import TwitterAgent
+from agents.twitter_agent import TwitterAgent
 
 
 def test_twitter_agent_initialization():

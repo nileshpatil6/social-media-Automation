@@ -11,11 +11,11 @@ from datetime import datetime, timedelta, timezone
 from contextlib import asynccontextmanager
 
 # Import our services and models
-from instagram_agent import InstagramAgent
-from twitter_agent import TwitterAgent
-from linkedin_agent import LinkedInAgent
-from youtube_agent import YouTubeAgent
-from facebook_agent import FacebookAgent
+from agents.instagram_agent import InstagramAgent
+from agents.twitter_agent import TwitterAgent
+from agents.linkedin_agent import LinkedInAgent
+from agents.youtube_agent import YouTubeAgent
+from agents.facebook_agent import FacebookAgent
 from models.database import get_db, create_tables, User, Topic, ScheduledPost, AutomationPlan, AutomationPlanItem
 from auth.auth import (
     AuthService, get_current_active_user, UserCreate, UserLogin,

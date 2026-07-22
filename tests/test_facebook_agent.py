@@ -3,7 +3,7 @@
 Test script to verify the Facebook agent
 \"\"\"
 import os
-from facebook_agent import FacebookAgent
+from agents.facebook_agent import FacebookAgent
 
 def test_facebook_agent():
     \"\"\"Test that the Facebook agent can be initialized\"\"\"
